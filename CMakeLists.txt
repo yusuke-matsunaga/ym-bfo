@@ -25,6 +25,9 @@
 # ===================================================================
 
 set ( bfo_SOURCES
+  BfoCube.cc
+  BfoCover.cc
+  BfoMgr.cc
   )
 
 

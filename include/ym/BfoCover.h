@@ -63,8 +63,18 @@ public:
 
   /// @brief 新しいキューブを追加する．
   /// @param[in] cube 追加するキューブ
+  ///
+  /// 実際には cube のコピーを追加する．
   void
-  add_cube(BfoCube* cube);
+  add_cube(const BfoCube* cube);
+
+  /// @brief 2つのキューブの積を計算して追加する．
+  /// @param[in] cube1, cube2 積をとるキューブ
+  ///
+  /// 積が空キューブになった場合には追加しない．
+  void
+  add_product(const BfoCube* cube1,
+	      const BfoCube* cube2);
 
 
 private:

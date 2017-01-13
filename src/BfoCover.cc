@@ -73,9 +73,30 @@ BfoCover::clear()
 // @brief 新しいキューブを追加する．
 // @param[in] cube 追加するキューブ
 void
-BfoCover::add_cube(BfoCube* cube)
+BfoCover::add_cube(const BfoCube* cube)
 {
+  ASSERT_COND( cube->variable_num() == variable_num() );
+  BfoCube* cube1 = mMgr.new_cube();
+  cube1->copy(cube);
+  mCubeList.push_back(cube1);
+  sort(mCubeList.begin(), mCubeList.end());
+}
+
+// @brief 2つのキューブの積を計算して追加する．
+// @param[in] cube1, cube2 積をとるキューブ
+//
+// 積が空キューブになった場合には追加しない．
+void
+BfoCover::add_product(const BfoCube* cube1,
+		      const BfoCube* cube2)
+{
+  ASSERT_COND( cube1->variable_num() == variable_num() );
+  ASSERT_COND( cube2->variable_num() == variable_num() );
+  BfoCube* cube = mMgr.new_cube();
+  cube->copy(cube1);
+  cube->make_product(cube2);
   mCubeList.push_back(cube);
+  sort(mCubeList.begin(), mCubeList.end());
 }
 
 END_NAMESPACE_YM_BFO

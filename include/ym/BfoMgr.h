@@ -56,21 +56,33 @@ public:
   delete_cube(BfoCube* cube);
 
   /// @brief カバーの和を計算する．
+  /// @param[in] left, right オペランド
+  /// @param[out] ans 結果を格納するオブジェクト
+  void
   make_sum(const BfoCover& left,
 	   const BfoCover& right,
 	   BfoCover& ans);
 
   /// @brief カバーの差を計算する．
+  /// @param[in] left, right オペランド
+  /// @param[out] ans 結果を格納するオブジェクト
+  void
   make_diff(const BfoCover& left,
 	    const BfoCover& right,
 	    BfoCover& ans);
 
   /// @brief カバーの積を計算する．
+  /// @param[in] left, right オペランド
+  /// @param[out] ans 結果を格納するオブジェクト
+  void
   make_product(const BfoCover& left,
 	       const BfoCover& right,
 	       BfoCover& ans);
 
   /// @brief カバーの商を計算する．
+  /// @param[in] left, right オペランド
+  /// @param[out] ans 結果を格納するオブジェクト
+  void
   make_division(const BfoCover& left,
 		const BfoCover& right,
 		BfoCover& ans);
