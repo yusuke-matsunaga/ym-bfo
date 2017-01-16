@@ -44,7 +44,9 @@ enum BfoLiteral {
 };
 
 // クラスの前方宣言
-//class BfoC
+class BfoCube;
+class BfoCover;
+class BfoMgr;
 
 END_NAMESPACE_YM_BFO
 
@@ -52,6 +54,9 @@ BEGIN_NAMESPACE_YM
 
 // 親の名前空間にインポートする．
 using nsBfo::BfoLiteral;
+using nsBfo::BfoCube;
+using nsBfo::BfoCover;
+using nsBfo::BfoMgr;
 
 END_NAMESPACE_YM
 

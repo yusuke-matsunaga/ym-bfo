@@ -50,6 +50,10 @@ public:
   ymuint
   cube_num() const;
 
+  /// @brief リテラル数を返す．
+  ymuint
+  literal_num() const;
+
   /// @brief キューブを得る．
   /// @param[in] pos 位置番号 ( 0 <= pos < cube_num() )
   const BfoCube*
@@ -76,6 +80,16 @@ public:
   add_product(const BfoCube* cube1,
 	      const BfoCube* cube2);
 
+  /// @brief 内容をわかりやすい形で出力する．
+  /// @param[in] s 出力先のストリーム
+  /// @param[in] varname_list 変数名のリスト
+  ///
+  /// varname_list が省略された時には適当な名前を作る．<br>
+  /// varname_list のサイズは variable_num() 以上でなければならない．
+  void
+  print(ostream& s,
+	const vector<string>& varname_list = vector<string>()) const;
+
 
 private:
   //////////////////////////////////////////////////////////////////////
@@ -95,6 +109,35 @@ private:
   vector<BfoCube*> mCubeList;
 
 };
+
+/// @relates BfoCover
+/// @brief BfoCover の内容を出力する．
+/// @param[in] s 出力先のストリーム
+/// @param[in] cover 対象のカバー
+///
+/// cover.print(s) と等価
+ostream&
+operator<<(ostream& s,
+	   const BfoCover& cover);
+
+
+//////////////////////////////////////////////////////////////////////
+// インライン関数の定義
+//////////////////////////////////////////////////////////////////////
+
+// @brief BfoCover の内容を出力する．
+// @param[in] s 出力先のストリーム
+// @param[in] cover 対象のカバー
+//
+// cover.print(s) と等価
+inline
+ostream&
+operator<<(ostream& s,
+	   const BfoCover& cover)
+{
+  cover.print(s);
+  return s;
+}
 
 END_NAMESPACE_YM_BFO
 

@@ -7,7 +7,9 @@
 /// All rights reserved.
 
 
-#include "BfoCover.h"
+#include "ym/BfoCover.h"
+#include "ym/BfoCube.h"
+#include "ym/BfoMgr.h"
 
 
 BEGIN_NAMESPACE_YM_BFO
@@ -20,7 +22,7 @@ BEGIN_NAMESPACE_YM_BFO
 // @param[in] cube_mgr キューブマネージャ
 //
 // キューブを一つも持たない空のカバーとなる．
-BfoCover::BfoCover(BfoCubeMgr& cube_mgr) :
+BfoCover::BfoCover(BfoMgr& cube_mgr) :
   mMgr(cube_mgr)
 {
 }
@@ -45,6 +47,18 @@ ymuint
 BfoCover::cube_num() const
 {
   return mCubeList.size();
+}
+
+// @brief リテラル数を返す．
+ymuint
+BfoCover::literal_num() const
+{
+  ymuint ans = 0;
+  ymuint n = cube_num();
+  for (ymuint i = 0; i < n; ++ i) {
+    ans += cube(i)->literal_num();
+  }
+  return ans;
 }
 
 // @brief キューブを得る．
@@ -97,6 +111,25 @@ BfoCover::add_product(const BfoCube* cube1,
   cube->make_product(cube2);
   mCubeList.push_back(cube);
   sort(mCubeList.begin(), mCubeList.end());
+}
+
+// @brief 内容をわかりやすい形で出力する．
+// @param[in] s 出力先のストリーム
+// @param[in] varname_list 変数名のリスト
+//
+// varname_list が省略された時には適当な名前を作る．<br>
+// varname_list のサイズは variable_num() 以上でなければならない．
+void
+BfoCover::print(ostream& s,
+		const vector<string>& varname_list) const
+{
+  ymuint n = cube_num();
+  const char* plus = "";
+  for (ymuint i = 0; i < n; ++ i) {
+    s << plus;
+    plus = " + ";
+    cube(i)->print(s, varname_list);
+  }
 }
 
 END_NAMESPACE_YM_BFO

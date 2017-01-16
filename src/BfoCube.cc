@@ -7,7 +7,7 @@
 /// All rights reserved.
 
 
-#include "BfoCube.h"
+#include "ym/BfoCube.h"
 
 
 BEGIN_NAMESPACE_YM_BFO
@@ -28,6 +28,21 @@ BfoCube::BfoCube(ymuint variable_num) :
   }
 }
 
+/// @brief リテラル数を返す．
+ymuint
+BfoCube::literal_num() const
+{
+#warning "TODO: 効率のよい実装に変える．"
+  ymuint ans = 0;
+  ymuint n = variable_num();
+  for (ymuint i = 0; i < n; ++ i) {
+    if ( literal(i) != kBfoLitX ) {
+      ++ ans;
+    }
+  }
+  return ans;
+}
+
 // @brief 内容をコピーする．
 // @param[in] src コピー元のキューブ
 void
@@ -46,7 +61,7 @@ BfoCube::copy(const BfoCube* src)
 // ここではキューブの表す論理関数の含意を考える<br>
 // だからリテラル集合としては真逆になる．
 bool
-BfoCube::check_contain(const BfuCube* src)
+BfoCube::check_contain(const BfoCube* src) const
 {
   ASSERT_COND( variable_num() == src->variable_num() );
   ymuint n = _block_num();
@@ -97,25 +112,50 @@ BfoCube::make_diff(const BfoCube* src)
   }
 }
 
-// @relates BfoCube
-// @brief BfoCube の内容を出力する．
+// @brief 内容をわかりやすい形で出力する．
 // @param[in] s 出力先のストリーム
-// @param[in] cube 対象のキューブ(のポインタ)
+// @param[in] varname_list 変数名のリスト
 //
-// 末尾に改行は**つけない**
-ostream&
-operator<<(ostream& s,
-	   const BfoCube* cube)
+// varname_list が省略された時には適当な名前を作る．<br>
+// varname_list のサイズは variable_num() 以上でなければならない．
+void
+BfoCube::print(ostream& s,
+	       const vector<string>& varname_list) const
 {
-  ymuint n = cube->variable_num();
+  ASSERT_COND( varname_list.empty() || varname_list.size() >= variable_num() );
+  ymuint n = variable_num();
+  const char* spc = "";
   for (ymuint i = 0; i < n; ++ i) {
-    switch ( cube->literal(i) ) {
-    case kBfoLitX: s << '-'; break;
-    case kBfoLitP: s << '1'; break;
-    case kBfoLitN: s << '0'; break;
+    BfoLiteral lit = literal(i);
+    if ( lit == kBfoLitP ) {
+      s << spc << varname_list[i];
+      spc = " ";
+    }
+    else if ( lit == kBfoLitN ) {
+      s << spc << varname_list[i] << "'";
+      spc = " ";
     }
   }
-  reutrn s;
+}
+
+// @brief print内で変数名を作る関数
+// @param[in] pos 変数番号 ( 0 <= pos < variable_num() )
+// @param[in] varname_list 変数名のリスト
+//
+// varname_list が空の時には適当な名前を作る．
+string
+BfoCube::_varname(ymuint pos,
+		  const vector<string>& varname_list) const
+{
+  if ( varname_list.empty() ) {
+    // variable_num() に応じて変数名の長さが変わる．
+    // 26 個以内なら a - z に割り当てる．
+    if ( variable_num() <= 26 ) {
+
+  }
+  else {
+    return varname_list[pos];
+  }
 }
 
 // @relates BfoCube

@@ -7,7 +7,9 @@
 /// All rights reserved.
 
 
-#include "BfoMgr.h"
+#include "ym/BfoMgr.h"
+#include "ym/BfoCube.h"
+#include "ym/BfoCover.h"
 
 
 BEGIN_NAMESPACE_YM_BFO
@@ -68,8 +70,8 @@ BfoMgr::make_sum(const BfoCover& left,
   ymuint rpos2 = 0;
   ans.clear();
   while ( rpos1 < n1 && rpos2 < n2 ) {
-    BfoCube* cube1 = left.cube(rpos1);
-    BfoCube* cube2 = right.cube(rpos2);
+    const BfoCube* cube1 = left.cube(rpos1);
+    const BfoCube* cube2 = right.cube(rpos2);
     int comp_res = compare(cube1, cube2);
     if ( comp_res == -1 ) {
       ans.add_cube(cube1);
@@ -86,11 +88,11 @@ BfoMgr::make_sum(const BfoCover& left,
     }
   }
   for ( ; rpos1 < n1; ++ rpos1) {
-    BfoCube* cube = left.cube(rpos1);
+    const BfoCube* cube = left.cube(rpos1);
     ans.add_cube(cube);
   }
   for ( ; rpos2 < n2; ++ rpos2) {
-    BfoCube* cube = right.cube(rpos2);
+    const BfoCube* cube = right.cube(rpos2);
     ans.add_cube(cube);
   }
 }
@@ -113,8 +115,8 @@ BfoMgr::make_diff(const BfoCover& left,
   ymuint rpos2 = 0;
   ans.clear();
   while ( rpos1 < n1 && rpos2 < n2 ) {
-    BfoCube* cube1 = left.cube(rpos1);
-    BfoCube* cube2 = right.cube(rpos2);
+    const BfoCube* cube1 = left.cube(rpos1);
+    const BfoCube* cube2 = right.cube(rpos2);
     int comp_res = compare(cube1, cube2);
     if ( comp_res == -1 ) {
       ans.add_cube(cube1);
@@ -129,7 +131,7 @@ BfoMgr::make_diff(const BfoCover& left,
     }
   }
   for ( ; rpos1 < n1; ++ rpos1) {
-    BfoCube* cube = left.cube(rpos1);
+    const BfoCube* cube = left.cube(rpos1);
     ans.add_cube(cube);
   }
 }
@@ -180,7 +182,7 @@ BfoMgr::make_division(const BfoCover& left,
     return;
   }
 
-  vector<vector<const BfoCube*> > u_array(n2);
+  vector<vector<BfoCube*> > u_array(n2);
   for (ymuint i = 0; i < n2; ++ i) {
     const BfoCube* p_cube = right.cube(i);
     for (ymuint j = 0; j < n1; ++ j) {
@@ -196,12 +198,12 @@ BfoMgr::make_division(const BfoCover& left,
   }
 
   // u_array[0] 〜 u_array[n2 - 1] の共通部分を計算する．
-  vector<const BfoCube*> q_list;
+  vector<BfoCube*> q_list;
   {
     ymuint n = u_array[0].size();
     q_list.reserve(n);
     for (ymuint i = 0; i < n; ++ i) {
-      const BfoCube* cube = u_array[0][i];
+      BfoCube* cube = u_array[0][i];
       q_list.push_back(cube);
     }
   }
@@ -212,13 +214,13 @@ BfoMgr::make_division(const BfoCover& left,
     ymuint n0 = q_list.size();
     ymuint n1 = u_array[i].size();
     while ( rpos0 < n0 && rpos1 < n1 ) {
-      const BfoCube* cube0 = q_list[rpos0];
-      const BfoCube* cube1 = u_array[i][rpos1];
+      BfoCube* cube0 = q_list[rpos0];
+      BfoCube* cube1 = u_array[i][rpos1];
       int cmp_res = compare(cube0, cube1);
       if ( cmp_res < 0 ) {
 	++ rpos0;
       }
-      else if ( comp_res > 0 ) {
+      else if ( cmp_res > 0 ) {
 	++ rpos1;
       }
       else {
@@ -251,10 +253,10 @@ BfoMgr::make_division(const BfoCover& left,
 
 // @brief BfoCube の本当のサイズ
 ymuint
-BfuCubeMgr::_cube_size() const
+BfoMgr::_cube_size() const
 {
   ymuint block_num = (mVarNum + 31) / 32;
-  return sizeof(BfuCube) + sizeof(ymuint64) * (block_num - 1);
+  return sizeof(BfoCube) + sizeof(ymuint64) * (block_num - 1);
 }
 
 END_NAMESPACE_YM_BFO
