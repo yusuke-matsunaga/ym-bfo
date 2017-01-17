@@ -43,6 +43,37 @@ private:
 
 };
 
+// 変数の数が違うだけのクラス
+// もっとスマートなやり方があるはず．
+class CubeTest2 :
+  public ::testing::Test
+{
+public:
+
+  /// @brief コンストラクタ
+  CubeTest2() : mMgr(100) { }
+
+
+public:
+  //////////////////////////////////////////////////////////////////////
+  // 外部インターフェイス
+  //////////////////////////////////////////////////////////////////////
+
+  /// @brief マネージャを返す．
+  BfoMgr&
+  mgr() { return mMgr; }
+
+
+private:
+  //////////////////////////////////////////////////////////////////////
+  // データメンバ
+  //////////////////////////////////////////////////////////////////////
+
+  // マネージャ
+  BfoMgr mMgr;
+
+};
+
 TEST_F(CubeTest, nullcube)
 {
   BfoCube* cube = mgr().new_cube();
@@ -160,19 +191,97 @@ TEST_F(CubeTest, literal_num)
   EXPECT_EQ( 2, cube2->literal_num() );
 }
 
-TEST_F(CubeTest, print)
+TEST_F(CubeTest, print1)
 {
-  BfoCube* cube1 = mgr().new_cube();
-  ostringstream tmp1;
-  tmp1 << cube1;
-  EXPECT_EQ( string(), tmp1.str() );
+  BfoCube* cube= mgr().new_cube();
 
-  BfoCube* cube2 = mgr().new_cube();
-  cube2->set_literal(0, kBfoLitP);
-  cube2->set_literal(10, kBfoLitN);
-  ostringstream tmp2;
-  tmp2 << cube2;
-  EXPECT_EQ( string("a k'"), tmp2.str() );
+  ostringstream tmp;
+  tmp << cube;
+
+  EXPECT_EQ( string(), tmp.str() );
+}
+
+TEST_F(CubeTest, print2)
+{
+  BfoCube* cube = mgr().new_cube();
+  cube->set_literal(0, kBfoLitP);
+  cube->set_literal(10, kBfoLitN);
+
+  ostringstream tmp;
+  tmp << cube;
+
+  EXPECT_EQ( string("a k'"), tmp.str() );
+}
+
+TEST_F(CubeTest, print3)
+{
+  BfoCube* cube = mgr().new_cube();
+  cube->set_literal(0, kBfoLitP);
+  cube->set_literal(10, kBfoLitN);
+
+  vector<string> varname_list(mgr().variable_num());
+  for (ymuint i = 0; i < mgr().variable_num(); ++ i) {
+    ostringstream buf;
+    buf << "x" << i;
+    varname_list[i] = buf.str();
+  }
+
+  ostringstream tmp;
+  cube->print(tmp, varname_list);
+
+  EXPECT_EQ( string("x0 x10'"), tmp.str() );
+}
+
+TEST_F(CubeTest2, print1)
+{
+  BfoCube* cube = mgr().new_cube();
+
+  ostringstream tmp;
+  tmp << cube;
+
+  EXPECT_EQ( string(), tmp.str() );
+}
+
+TEST_F(CubeTest2, print2)
+{
+  BfoCube* cube = mgr().new_cube();
+  cube->set_literal(0, kBfoLitP);
+  cube->set_literal(10, kBfoLitN);
+
+  ostringstream tmp;
+  tmp << cube;
+
+  EXPECT_EQ( string("aa ak'"), tmp.str() );
+}
+
+TEST_F(CubeTest2, print3)
+{
+  BfoCube* cube = mgr().new_cube();
+  cube->set_literal(30, kBfoLitP);
+  cube->set_literal(60, kBfoLitN);
+
+  ostringstream tmp;
+  tmp << cube;
+  EXPECT_EQ( string("be ci'"), tmp.str() );
+}
+
+TEST_F(CubeTest2, print4)
+{
+  BfoCube* cube = mgr().new_cube();
+  cube->set_literal(30, kBfoLitP);
+  cube->set_literal(60, kBfoLitN);
+
+  vector<string> varname_list(mgr().variable_num());
+  for (ymuint i = 0; i < mgr().variable_num(); ++ i) {
+    ostringstream buf;
+    buf << "x" << i;
+    varname_list[i] = buf.str();
+  }
+
+  ostringstream tmp;
+  cube->print(tmp, varname_list);
+
+  EXPECT_EQ( string("x30 x60'"), tmp.str() );
 }
 
 END_NAMESPACE_YM_BFO

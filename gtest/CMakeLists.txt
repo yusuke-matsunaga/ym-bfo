@@ -38,6 +38,40 @@ target_link_libraries ( CubeTest
   ${GTEST_BOTH_LIBRARIES}
   )
 
+add_executable ( CoverTest
+  CoverTest.cc
+  $<TARGET_OBJECTS:ym_common_d>
+  $<TARGET_OBJECTS:ym_bfo_d>
+  )
+
+target_compile_options ( CoverTest
+  PRIVATE "-g"
+  )
+
+target_link_libraries ( CoverTest
+  ${YM_LIB_DEPENDS}
+  pthread
+  ${GTEST_BOTH_LIBRARIES}
+  )
+
+add_executable ( MgrTest
+  MgrTest.cc
+  $<TARGET_OBJECTS:ym_common_d>
+  $<TARGET_OBJECTS:ym_bfo_d>
+  )
+
+target_compile_options ( MgrTest
+  PRIVATE "-g"
+  )
+
+target_link_libraries ( MgrTest
+  ${YM_LIB_DEPENDS}
+  pthread
+  ${GTEST_BOTH_LIBRARIES}
+  )
+
 add_test ( BfoTest
   CubeTest
+  CoverTest
+  MgrTest
   )

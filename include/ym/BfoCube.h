@@ -10,6 +10,7 @@
 
 
 #include "ym/bfo_nsdef.h"
+#include "ym/BfoMgr.h"
 
 
 BEGIN_NAMESPACE_YM_BFO
@@ -20,17 +21,31 @@ BEGIN_NAMESPACE_YM_BFO
 ///
 /// 常に固定サイズのビット配列として実装する．<br>
 /// 1つの変数につき2ビットを使用する．<br>
-/// 少し特殊なことをしているので普通にアロケートすることはできない．
 //////////////////////////////////////////////////////////////////////
 class BfoCube
 {
-  friend class BfoMgr;
+  friend class BfoCover;
 
-private:
+public:
 
   /// @brief コンストラクタ
-  /// @param[in] variable_num 変数の数
-  BfoCube(ymuint variable_num);
+  /// @param[in] mgr マネージャ
+  /// @param[in] lit_list キューブを表すリテラルのリスト
+  explicit
+  BfoCube(BfoMgr& mgr,
+	  const vector<BfoLiteral>& lit_list = vector<BfoLiteral>());
+
+  /// @brief コピーコンストラクタ
+  /// @param[in] src コピー元のオブジェクト
+  BfoCube(const BfoCube& src);
+
+  /// @brief 内容を指定するコンストラクタ
+  /// @param[in] mgr マネージャ
+  /// @param[in] body キューブのパタンを表す本体
+  ///
+  /// 危険なので普通は使わないように
+  BfoCube(BfoMgr& mgr,
+	  ymuint64* body);
 
   /// @brief デストラクタ
   ~BfoCube();
@@ -41,85 +56,73 @@ public:
   // 外部インターフェイス
   //////////////////////////////////////////////////////////////////////
 
+  /// @brief マネージャを返す．
+  BfoMgr&
+  mgr() const;
+
   /// @brief 変数の数を返す．
   ymuint
   variable_num() const;
-
-  /// @brief 内容を読み出す．
-  /// @param[in] pos 位置番号 ( 0 <= pos < variable_num() )
-  BfoLiteral
-  literal(ymuint pos) const;
-
-  /// @brief 内容を設定する．
-  /// @param[in] pos 位置番号 ( 0 <= pos < variable_num() )
-  /// @param [in] lit リテラルの値
-  void
-  set_literal(ymuint pos,
-	      BfoLiteral lit);
 
   /// @brief リテラル数を返す．
   ymuint
   literal_num() const;
 
-  /// @brief 内容をコピーする．
-  /// @param[in] src コピー元のキューブ
-  void
-  copy(const BfoCube* src);
+  /// @brief 内容を読み出す．
+  /// @param[in] pos 位置番号 ( 0 <= pos < variable_num() )
+  BfoPol
+  literal(ymuint pos) const;
 
   /// @brief オペランドのキューブに含まれていたら true を返す．
-  /// @param[in] src オペランドのキューブ
+  /// @param[in] right オペランドのキューブ
   ///
   /// ここではキューブの表す論理関数の含意を考える<br>
-  /// だからリテラル集合としては真逆になる．
+  /// だからリテラル集合としてはオペランドのキューブを含むことになる．
   bool
-  check_contain(const BfoCube* src) const;
+  check_containment(const BfoCube& right) const;
+
+  /// @brief 2つのキューブに共通なリテラルがあれば true を返す．
+  /// @param[in] right オペランドのキューブ
+  bool
+  operator&&(const BfoCube& right) const;
 
   /// @brief 論理積を計算し自身に代入する．
-  /// @param[in] src オペランドのキューブ
-  /// @return 結果が NULL Cube になったら false を返す．
+  /// @param[in] right オペランドのキューブ
+  /// @return 演算後の自身の参照を返す．
   ///
-  /// false を返した場合の内容は不定
+  /// 相反するリテラルとの積があったら答はからのキューブとなる．
+  const BfoCube&
+  operator&=(const BfoCube& right);
+
+#if 0
+  /// @brief 共通部分を計算し自身に代入する．
+  /// @param[in] right オペランドのキューブ
+  /// @return 結果が NULL Cube になったら false を返す．
   bool
-  make_product(const BfoCube* src);
+  make_intersect(const BfoCube* src);
 
   /// @brief オペランドに含まれているリテラルを取り除く
   /// @param[in] src オペランドのキューブ
   void
   make_diff(const BfoCube* src);
+#endif
 
   /// @brief 内容をわかりやすい形で出力する．
   /// @param[in] s 出力先のストリーム
-  /// @param[in] varname_list 変数名のリスト
-  ///
-  /// varname_list が省略された時には適当な名前を作る．<br>
-  /// varname_list のサイズは variable_num() 以上でなければならない．
   void
-  print(ostream& s,
-	const vector<string>& varname_list = vector<string>()) const;
+  print(ostream& s) const;
+
 
 private:
   //////////////////////////////////////////////////////////////////////
   // 内部で用いられる関数
   //////////////////////////////////////////////////////////////////////
 
-  /// @brief ブロック数を得る．
-  ymuint
-  _block_num() const;
-
-  /// @brief print内で変数名を作る関数
-  /// @param[in] pos 変数番号 ( 0 <= pos < variable_num() )
-  /// @param[in] varname_list 変数名のリスト
-  ///
-  /// varname_list が空の時には適当な名前を作る．
-  string
-  _varname(ymuint pos,
-	   const vector<string>& varname_list) const;
-
   // friend 関数の宣言
   friend
   int
-  compare(const BfoCube* left,
-	  const BfoCube* right);
+  compare(const BfoCube& left,
+	  const BfoCube& right);
 
 
 private:
@@ -127,12 +130,11 @@ private:
   // データメンバ
   //////////////////////////////////////////////////////////////////////
 
-  // 変数の数
-  ymuint mVarNum;
+  // マネージャ
+  BfoMgr& mMgr;
 
   // 内容を表すビットベクタ
-  // 実際には本当の要素数に応じたサイズが確保される．
-  ymuint64 mBody[1];
+  ymuint64* mBody;
 
 };
 
@@ -144,44 +146,89 @@ private:
 /// cube->print(s) と等価
 ostream&
 operator<<(ostream& s,
-	   const BfoCube* cube);
+	   const BfoCube& cube);
 
 /// @relates BfoCube
-/// @brief BfoCube(のポインタ)の比較演算子
+/// @brief BfoCubeの比較演算子
 /// @param[in] left, right オペランド
 /// @retval -1 left < right
 /// @retval  0 left = right
 /// @retval  1 left > right
 int
-compare(const BfoCube* left,
-	const BfoCube* right);
+compare(const BfoCube& left,
+	const BfoCube& right);
+
+/// @relates BfoCube
+/// @brief BfoCubeの比較演算子(LT)
+/// @param[in] left, right オペランド
+/// @retval true  left < right
+/// @retval false left >= right
+bool
+operator<(const BfoCube& left,
+	  const BfoCube& right);
+
+/// @relates BfoCube
+/// @brief BfoCubeの比較演算子(GT)
+/// @param[in] left, right オペランド
+/// @retval true  left > right
+/// @retval false left <= right
+bool
+operator>(const BfoCube& left,
+	  const BfoCube& right);
+
+/// @relates BfoCube
+/// @brief BfoCubeの比較演算子(LE)
+/// @param[in] left, right オペランド
+/// @retval true  left < right
+/// @retval false left >= right
+bool
+operator<=(const BfoCube& left,
+	   const BfoCube& right);
+
+/// @relates BfoCube
+/// @brief BfoCubeの比較演算子(GE)
+/// @param[in] left, right オペランド
+/// @retval true  left < right
+/// @retval false left >= right
+bool
+operator>=(const BfoCube& left,
+	   const BfoCube& right);
 
 
 //////////////////////////////////////////////////////////////////////
 // インライン関数の定義
 //////////////////////////////////////////////////////////////////////
 
+// @brief マネージャを返す．
+inline
+BfoMgr&
+BfoCube::mgr() const
+{
+  return mMgr;
+}
+
 // @brief 変数の数を返す．
 inline
 ymuint
 BfoCube::variable_num() const
 {
-  return mVarNum;
+  return mgr().variable_num();
 }
 
 // @brief 内容を読み出す．
 // @param[in] pos 位置番号 ( 0 <= pos < variable_num() )
 inline
-BfoLiteral
+BfoPol
 BfoCube::literal(ymuint pos) const
 {
   ASSERT_COND( pos < variable_num() );
-  ymuint blk = pos / 32;
-  // ソートしたときの見栄えの問題で左(MSB)から始める．
-  ymuint sft = (32 - (pos % 32)) * 2;
-  return static_cast<BfoLiteral>((mBody[blk] >> sft) & 3ULL);
+
+  ymuint blk = BfoMgr::block_pos(pos);
+  ymuint sft = BfoMgr::shift_num(pos);
+  return static_cast<BfoPol>((mBody[blk] >> sft) & 3ULL);
 }
 
+#if 0
 // @brief 内容を設定する．
 // @param[in] pos 位置番号 ( 0 <= pos < variable_num() )
 // @param [in] lit リテラルの値
@@ -197,26 +244,67 @@ BfoCube::set_literal(ymuint pos,
   mBody[blk] &= ~(3ULL << sft);
   mBody[blk] |= (static_cast<ymuint64>(lit) << sft);
 }
+#endif
 
-// @brief ブロック数を得る．
+// @brief BfoCubeの比較演算子(LT)
+// @param[in] left, right オペランド
+// @retval true  left < right
+// @retval false left >= right
 inline
-ymuint
-BfoCube::_block_num() const
+bool
+operator<(const BfoCube& left,
+	  const BfoCube& right)
 {
-  return (mVarNum + 31) / 32;
+  return compare(left, right) < 0;
+}
+
+// @brief BfoCubeの比較演算子(GT)
+// @param[in] left, right オペランド
+// @retval true  left > right
+// @retval false left <= right
+inline
+bool
+operator>(const BfoCube& left,
+	  const BfoCube& right)
+{
+  return compare(left, right) > 0;
+}
+
+// @brief BfoCubeの比較演算子(LE)
+// @param[in] left, right オペランド
+// @retval true  left < right
+// @retval false left >= right
+inline
+bool
+operator<=(const BfoCube& left,
+	   const BfoCube& right)
+{
+  return compare(left, right) <= 0;
+}
+
+// @brief BfoCubeの比較演算子(GE)
+// @param[in] left, right オペランド
+// @retval true  left < right
+// @retval false left >= right
+inline
+bool
+operator>=(const BfoCube& left,
+	   const BfoCube& right)
+{
+  return compare(left, right) >= 0;
 }
 
 // @brief BfoCube の内容を出力する．
 // @param[in] s 出力先のストリーム
-// @param[in] cube 対象のキューブ(のポインタ)
+// @param[in] cube 対象のキューブ
 //
-// cube->print(s) と等価
+// cube.print(s) と等価
 inline
 ostream&
 operator<<(ostream& s,
-	   const BfoCube* cube)
+	   const BfoCube& cube)
 {
-  cube->print(s);
+  cube.print(s);
   return s;
 }
 

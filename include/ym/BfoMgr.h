@@ -10,7 +10,6 @@
 
 
 #include "ym/bfo_nsdef.h"
-#include "ym/UnitAlloc.h"
 
 
 BEGIN_NAMESPACE_YM_BFO
@@ -19,9 +18,8 @@ BEGIN_NAMESPACE_YM_BFO
 /// @class BfoMgr BfoMgr.h "BfoMgr.h"
 /// @brief BfoCube, BfoCover を管理するクラス
 ///
-/// BfoCube は特殊な構造を持っているため普通のコンストラクタ/デストラクタ
-/// が利用できない．
-/// 全てこのクラスを用いて生成/破壊を行う．
+/// といっても実際の役割は入力数を覚えておくことと
+/// 変数名のリストを持っておくことだけ．
 //////////////////////////////////////////////////////////////////////
 class BfoMgr
 {
@@ -29,7 +27,15 @@ public:
 
   /// @brief コンストラクタ
   /// @param[in] variable_num 変数の数
+  ///
+  /// 変数名はデフォルトのものが使用される．
   BfoMgr(ymuint variable_num);
+
+  /// @brief コンストラクタ
+  /// @param[in] varname_list 変数名のリスト
+  ///
+  /// varname_list のサイズが変数の数になる．
+  BfoMgr(const vector<string>& varname_list);
 
   /// @brief デストラクタ
   ~BfoMgr();
@@ -44,58 +50,54 @@ public:
   ymuint
   variable_num() const;
 
-  /// @brief キューブを生成する．
+  /// @brief 変数名を返す．
+  /// @param[in] varid 変数番号 ( 0 <= varid < variable_num() )
+  string
+  varname(ymuint varid) const;
+
+
+public:
+  //////////////////////////////////////////////////////////////////////
+  // BfoCube/BfoCover のための関数
+  //////////////////////////////////////////////////////////////////////
+
+  /// @brief キューブ/カバー用の領域を確保する．
+  /// @param[in] cube_num キューブ数
   ///
-  /// 内容はすべて kBfoLitX で初期化される．
-  BfoCube*
-  new_cube();
+  /// キューブの時は cube_num = 1 とする．
+  ymuint64*
+  new_body(ymuint cube_num = 1);
 
-  /// @brief キューブを削除する．
-  /// @param[in] cube 対象のキューブ
+  /// @brief キューブ/カバー用の領域を削除する．
+  /// @param[in] p 領域を指すポインタ
+  /// @param[in] cube_num キューブ数
+  ///
+  /// キューブの時は cube_num = 1 とする．
   void
-  delete_cube(BfoCube* cube);
+  delete_body(ymuint64* p,
+	      ymuint cube_num = 1);
 
-  /// @brief カバーの和を計算する．
-  /// @param[in] left, right オペランド
-  /// @param[out] ans 結果を格納するオブジェクト
-  void
-  make_sum(const BfoCover& left,
-	   const BfoCover& right,
-	   BfoCover& ans);
+  /// @brief ブロック位置を計算する．
+  /// @param[in] var_id 変数番号
+  static
+  ymuint
+  block_pos(ymuint var_id);
 
-  /// @brief カバーの差を計算する．
-  /// @param[in] left, right オペランド
-  /// @param[out] ans 結果を格納するオブジェクト
-  void
-  make_diff(const BfoCover& left,
-	    const BfoCover& right,
-	    BfoCover& ans);
+  /// @brief シフト量を計算する．
+  /// @param[in] var_id 変数番号
+  static
+  ymuint
+  shift_num(ymuint var_id);
 
-  /// @brief カバーの積を計算する．
-  /// @param[in] left, right オペランド
-  /// @param[out] ans 結果を格納するオブジェクト
-  void
-  make_product(const BfoCover& left,
-	       const BfoCover& right,
-	       BfoCover& ans);
-
-  /// @brief カバーの商を計算する．
-  /// @param[in] left, right オペランド
-  /// @param[out] ans 結果を格納するオブジェクト
-  void
-  make_division(const BfoCover& left,
-		const BfoCover& right,
-		BfoCover& ans);
+  /// @brief キューブ1つ分のブロックサイズを計算する．
+  ymuint
+  cube_size() const;
 
 
 private:
   //////////////////////////////////////////////////////////////////////
   // 内部で用いられる関数
   //////////////////////////////////////////////////////////////////////
-
-  /// @brief BfoCube の本当のサイズ
-  ymuint
-  _cube_size() const;
 
 
 private:
@@ -106,8 +108,8 @@ private:
   // 変数の数
   ymuint mVarNum;
 
-  // キューブ用のメモリアロケータ
-  UnitAlloc mAlloc;
+  // 変数名のリスト
+  vector<string> mVarNameList;
 
 };
 
@@ -122,6 +124,43 @@ ymuint
 BfoMgr::variable_num() const
 {
   return mVarNum;
+}
+
+// @brief 変数名を返す．
+// @param[in] varid 変数番号 ( 0 <= varid < variable_num() )
+inline
+string
+BfoMgr::varname(ymuint varid) const
+{
+  ASSERT_COND( varid < variable_num() );
+  return mVarNameList[varid];
+}
+
+// @brief ブロック位置を計算する．
+// @param[in] var_id 変数番号
+inline
+ymuint
+BfoMgr::block_pos(ymuint var_id)
+{
+  return var_id / 32;
+}
+
+// @brief シフト量を計算する．
+// @param[in] var_id 変数番号
+inline
+ymuint
+BfoMgr::shift_num(ymuint var_id)
+{
+  // ソートしたときの見栄えの問題で左(MSB)から始める．
+  return (32 - (var_id % 32)) * 2;
+}
+
+// @brief キューブ1つ分のブロックサイズを計算する．
+inline
+ymuint
+BfoMgr::cube_size() const
+{
+  return (variable_num() + 31) / 32;
 }
 
 END_NAMESPACE_YM_BFO

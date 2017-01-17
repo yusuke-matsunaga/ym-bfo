@@ -8,8 +8,6 @@
 
 
 #include "ym/BfoMgr.h"
-#include "ym/BfoCube.h"
-#include "ym/BfoCover.h"
 
 
 BEGIN_NAMESPACE_YM_BFO
@@ -20,38 +18,52 @@ BEGIN_NAMESPACE_YM_BFO
 
 // @brief コンストラクタ
 // @param[in] variable_num 変数の数
+//
+// 変数名はデフォルトのものが使用される．
 BfoMgr::BfoMgr(ymuint variable_num) :
   mVarNum(variable_num),
-  mAlloc(_cube_size())
+  mVarNameList(mVarNum)
+{
+}
+
+// @brief コンストラクタ
+// @param[in] varname_list 変数名のリスト
+//
+// varname_list のサイズが変数の数になる．
+BfoMgr::BfoMgr(const vector<string>& varname_list) :
+  mVarNum(varname_list.size()),
+  mVarNameList(varname_list)
 {
 }
 
 // @brief デストラクタ
 BfoMgr::~BfoMgr()
 {
-  // このインスタンスが確保した BfoCube は mAlloc の
-  // デストラクタで自動的に破壊される．
 }
 
-// @brief キューブを生成する．
+// @brief キューブ/カバー用の領域を確保する．
+// @param[in] cube_num キューブ数
 //
-// 内容はすべて kBfoLitX で初期化される．
-BfoCube*
-BfoMgr::new_cube()
+// キューブの時は cube_num = 1 とする．
+ymuint64*
+BfoMgr::new_body(ymuint cube_num)
 {
-  void* p = mAlloc.get_memory(_cube_size());
-  return new (p) BfoCube(variable_num());
+  return new ymuint64[cube_size() * cube_num];
 }
 
-// @brief キューブを削除する．
-// @param[in] cube 対象のキューブ
+// @brief キューブ/カバー用の領域を削除する．
+// @param[in] p 領域を指すポインタ
+// @param[in] cube_num キューブ数
+//
+// キューブの時は cube_num = 1 とする．
 void
-BfoMgr::delete_cube(BfoCube* cube)
+BfoMgr::delete_body(ymuint64* p,
+		    ymuint cube_num)
 {
-  void* p = static_cast<void*>(cube);
-  mAlloc.put_memory(_cube_size(), p);
+  delete [] p;
 }
 
+#if 0
 // @brief カバーの和を計算する．
 // @param[in] left, right オペランド
 // @param[out] ans 結果を格納するオブジェクト
@@ -155,7 +167,8 @@ BfoMgr::make_product(const BfoCover& left,
     const BfoCube* cube1 = left.cube(rpos1);
     for (ymuint rpos2 = 0; rpos2 < n2; ++ rpos2) {
       const BfoCube* cube2 = right.cube(rpos2);
-      ans.add_product(cube1, cube2);
+      BfoCube* new_cube = ans.add_cube(cube1);
+      new_cube->make_product(cube2);
     }
   }
 }
@@ -250,13 +263,6 @@ BfoMgr::make_division(const BfoCover& left,
     }
   }
 }
-
-// @brief BfoCube の本当のサイズ
-ymuint
-BfoMgr::_cube_size() const
-{
-  ymuint block_num = (mVarNum + 31) / 32;
-  return sizeof(BfoCube) + sizeof(ymuint64) * (block_num - 1);
-}
+#endif
 
 END_NAMESPACE_YM_BFO

@@ -8,6 +8,7 @@
 
 
 #include "ym/BfoCube.h"
+#include "ym/BfoLiteral.h"
 
 
 BEGIN_NAMESPACE_YM_BFO
@@ -17,15 +18,66 @@ BEGIN_NAMESPACE_YM_BFO
 //////////////////////////////////////////////////////////////////////
 
 // @brief コンストラクタ
-// @param[in] variable_num 変数の数
-BfoCube::BfoCube(ymuint variable_num) :
-  mVarNum(variable_num)
+// @param[in] mgr ネージャ
+// @param[in] lit_list キューブを表すリテラルのリスト
+BfoCube::BfoCube(BfoMgr& mgr,
+		 const vector<BfoLiteral>& lit_list) :
+  mMgr(mgr)
 {
-  ymuint n = _block_num();
+  mBody = mgr.new_body();
+
+  // まず空に初期化する．
+  ymuint n = mMgr.cube_size();
   for (ymuint i = 0; i < n; ++ i) {
-    // kBfoLitX は 0 なので all-0 は 0ULL
     mBody[i] = 0ULL;
   }
+
+  // lit_list に従って内容を設定する．
+  for (ymuint i = 0; i < lit_list.size(); ++ i) {
+    BfoLiteral lit = lit_list[i];
+    ymuint var = lit.varid();
+    ymuint blk = BfoMgr::block_pos(var);
+    ymuint sft = BfoMgr::shift_num(var);
+    ymuint64 pat = 0ULL;
+    if ( lit.is_positive() ) {
+      pat = kBfoPolP;
+    }
+    else {
+      pat = kBfoPolN;
+    }
+    mBody[blk] |= (pat << sft);
+  }
+}
+
+// @brief コピーコンストラクタ
+// @param[in] src コピー元のオブジェクト
+BfoCube::BfoCube(const BfoCube& src) :
+  mMgr(src.mMgr)
+{
+  mBody = mMgr.new_body();
+
+  ymuint n = mMgr.cube_size();
+  for (ymuint i = 0; i < n; ++ i) {
+    mBody[i] = src.mBody[i];
+  }
+}
+
+// @brief 内容を指定するコンストラクタ
+// @param[in] mgr マネージャ
+// @param[in] body キューブのパタンを表す本体
+//
+// 危険なので普通は使わないように
+BfoCube::BfoCube(BfoMgr& mgr,
+		 ymuint64* body) :
+  mMgr(mgr),
+  mBody(body)
+{
+}
+
+// @brief デストラクタ
+BfoCube::~BfoCube()
+{
+  mMgr.delete_body(mBody);
 }
 
 /// @brief リテラル数を返す．
@@ -36,23 +88,11 @@ BfoCube::literal_num() const
   ymuint ans = 0;
   ymuint n = variable_num();
   for (ymuint i = 0; i < n; ++ i) {
-    if ( literal(i) != kBfoLitX ) {
+    if ( literal(i) != kBfoPolX ) {
       ++ ans;
     }
   }
   return ans;
-}
-
-// @brief 内容をコピーする．
-// @param[in] src コピー元のキューブ
-void
-BfoCube::copy(const BfoCube* src)
-{
-  ASSERT_COND( variable_num() == src->variable_num() );
-  ymuint n = _block_num();
-  for (ymuint i = 0; i < n; ++ i) {
-    mBody[i] = src->mBody[i];
-  }
 }
 
 // @brief オペランドのキューブに含まれていたら true を返す．
@@ -61,30 +101,48 @@ BfoCube::copy(const BfoCube* src)
 // ここではキューブの表す論理関数の含意を考える<br>
 // だからリテラル集合としては真逆になる．
 bool
-BfoCube::check_contain(const BfoCube* src) const
+BfoCube::check_containment(const BfoCube& right) const
 {
-  ASSERT_COND( variable_num() == src->variable_num() );
-  ymuint n = _block_num();
+  ASSERT_COND( variable_num() == right.variable_num() );
+
+  ymuint n = mMgr.cube_size();
   for (ymuint i = 0; i < n; ++ i) {
-    if ( (~mBody[i] & src->mBody[i]) != 0ULL ) {
+    if ( (~mBody[i] & right.mBody[i]) != 0ULL ) {
       return false;
     }
   }
   return true;
 }
 
-// @brief 論理積を計算し自身に代入する．
-// @param[in] src オペランドのキューブ
-// @return 結果が NULL Cube になったら false を返す．
-//
-// false を返した場合の内容は不定
+// @brief 2つのキューブに共通なリテラルがあれば true を返す．
+// @param[in] right オペランドのキューブ
 bool
-BfoCube::make_product(const BfoCube* src)
+BfoCube::operator&&(const BfoCube& right) const
 {
-  ASSERT_COND( variable_num() == src->variable_num() );
-  ymuint n = _block_num();
+  ASSERT_COND( variable_num() == right.variable_num() );
+
+  ymuint n = mMgr.cube_size();
   for (ymuint i = 0; i < n; ++ i) {
-    mBody[i] |= src->mBody[i];
+    if ( mBody[i] & right.mBody[i] ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// @brief 論理積を計算し自身に代入する．
+// @param[in] right オペランドのキューブ
+// @return 演算後の自身の参照を返す．
+//
+// 相反するリテラルとの積があったら答は空のキューブとなる．
+const BfoCube&
+BfoCube::operator&=(const BfoCube& right)
+{
+  ASSERT_COND( variable_num() == right.variable_num() );
+
+  ymuint n = mMgr.cube_size();
+  for (ymuint i = 0; i < n; ++ i) {
+    mBody[i] |= right.mBody[i];
     // x・x' のチェックを行う．
     ymuint64 tmp = mBody[i];
     ymuint64 mask1 = 0x5555555555555555ULL;
@@ -93,11 +151,34 @@ BfoCube::make_product(const BfoCube* src)
     ymuint64 tmp2 = tmp & mask2;
     if ( (tmp1 & (tmp2 >> 1)) != 0ULL ) {
       // 同じ変数の異なる極性のリテラルがあった．
-      return false;
+      // 空のキューブにする．
+      for (ymuint j = 0; j < n; ++ j) {
+	mBody[j] = 0ULL;
+      }
+      break;
     }
   }
 
-  return true;
+  return *this;
+}
+
+#if 0
+// @brief 共通部分を計算し自身に代入する．
+// @param[in] src オペランドのキューブ
+// @return 結果が NULL Cube になったら false を返す．
+bool
+BfoCube::make_intersect(const BfoCube* src)
+{
+  ASSERT_COND( variable_num() == src->variable_num() );
+
+  ymuint64 tmp = 0ULL;
+  ymuint n = mMgr.cube_size();
+  for (ymuint i = 0; i < n; ++ i) {
+    mBody[i] &= src->mBody[i];
+    tmp |= mBody[i];
+  }
+
+  return tmp != 0ULL;
 }
 
 // @brief オペランドに含まれているリテラルを取り除く
@@ -106,73 +187,50 @@ void
 BfoCube::make_diff(const BfoCube* src)
 {
   ASSERT_COND( variable_num() == src->variable_num() );
-  ymuint n = _block_num();
+
+  ymuint n = mMgr.cube_size();
   for (ymuint i = 0; i < n; ++ i) {
     mBody[i] &= ~src->mBody[i];
   }
 }
+#endif
 
 // @brief 内容をわかりやすい形で出力する．
 // @param[in] s 出力先のストリーム
-// @param[in] varname_list 変数名のリスト
-//
-// varname_list が省略された時には適当な名前を作る．<br>
-// varname_list のサイズは variable_num() 以上でなければならない．
 void
-BfoCube::print(ostream& s,
-	       const vector<string>& varname_list) const
+BfoCube::print(ostream& s) const
 {
-  ASSERT_COND( varname_list.empty() || varname_list.size() >= variable_num() );
-  ymuint n = variable_num();
   const char* spc = "";
+  ymuint n = variable_num();
   for (ymuint i = 0; i < n; ++ i) {
-    BfoLiteral lit = literal(i);
-    if ( lit == kBfoLitP ) {
-      s << spc << varname_list[i];
+    BfoPol pol = literal(i);
+    if ( pol == kBfoPolP ) {
+      s << spc << mgr().varname(i);
       spc = " ";
     }
-    else if ( lit == kBfoLitN ) {
-      s << spc << varname_list[i] << "'";
+    else if ( pol == kBfoPolN ) {
+      s << spc << mgr().varname(i) << "'";
       spc = " ";
     }
-  }
-}
-
-// @brief print内で変数名を作る関数
-// @param[in] pos 変数番号 ( 0 <= pos < variable_num() )
-// @param[in] varname_list 変数名のリスト
-//
-// varname_list が空の時には適当な名前を作る．
-string
-BfoCube::_varname(ymuint pos,
-		  const vector<string>& varname_list) const
-{
-  if ( varname_list.empty() ) {
-    // variable_num() に応じて変数名の長さが変わる．
-    // 26 個以内なら a - z に割り当てる．
-    if ( variable_num() <= 26 ) {
-
-  }
-  else {
-    return varname_list[pos];
   }
 }
 
 // @relates BfoCube
-// @brief BfoCube(のポインタ)の比較演算子
+// @brief BfoCubeの比較演算子
 // @param[in] left, right オペランド
 // @retval -1 left < right
 // @retval  0 left = right
 // @retval  1 left > right
 int
-compare(const BfoCube* left,
-	const BfoCube* right)
+compare(const BfoCube& left,
+	const BfoCube& right)
 {
-  ASSERT_COND( left->variable_num() == right->variable_num() );
-  ymuint nb = left->_block_num();
+  ASSERT_COND( left.variable_num() == right.variable_num() );
+
+  ymuint nb = left.mMgr.cube_size();
   for (ymuint i = 0; i < nb; ++ i) {
-    ymuint64 p1 = left->mBody[i];
-    ymuint64 p2 = right->mBody[i];
+    ymuint64 p1 = left.mBody[i];
+    ymuint64 p2 = right.mBody[i];
     if ( p1 < p2 ) {
       return -1;
     }

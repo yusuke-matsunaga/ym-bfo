@@ -33,17 +33,8 @@ END_NAMESPACE_YM
 
 BEGIN_NAMESPACE_YM_BFO
 
-/// @brief リテラルを表す列挙型
-enum BfoLiteral {
-  /// @brief なし
-  kBfoLitX = 0,
-  /// @brief 否定のリテラル
-  kBfoLitN = 1,
-  /// @brief 肯定のリテラル
-  kBfoLitP = 2,
-};
-
 // クラスの前方宣言
+class BfoLiteral;
 class BfoCube;
 class BfoCover;
 class BfoMgr;
@@ -51,6 +42,16 @@ class BfoMgr;
 END_NAMESPACE_YM_BFO
 
 BEGIN_NAMESPACE_YM
+
+/// @brief リテラルの極性を表す列挙型
+enum BfoPol {
+  /// @brief なし
+  kBfoPolX = 0,
+  /// @brief 否定のリテラル
+  kBfoPolN = 1,
+  /// @brief 肯定のリテラル
+  kBfoPolP = 2,
+};
 
 // 親の名前空間にインポートする．
 using nsBfo::BfoLiteral;
