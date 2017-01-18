@@ -149,6 +149,16 @@ operator<<(ostream& s,
 	   const BfoCube& cube);
 
 /// @relates BfoCube
+/// @brief BfoCube の論理積を計算する
+/// @param[in] left, right オペランド
+///
+/// リテラル集合としてみると和集合となる<br>
+/// ただし，相反するリテラルが含まれていたら空キューブとなる．
+BfoCube
+operator&(const BfoCube& left,
+	  const BfoCube& right);
+
+/// @relates BfoCube
 /// @brief BfoCubeの比較演算子
 /// @param[in] left, right オペランド
 /// @retval -1 left < right
@@ -245,6 +255,19 @@ BfoCube::set_literal(ymuint pos,
   mBody[blk] |= (static_cast<ymuint64>(lit) << sft);
 }
 #endif
+
+// @brief BfoCube の論理積を計算する
+// @param[in] left, right オペランド
+//
+// リテラル集合としてみると和集合となる<br>
+// ただし，相反するリテラルが含まれていたら空キューブとなる．
+inline
+BfoCube
+operator&(const BfoCube& left,
+	  const BfoCube& right)
+{
+  return BfoCube(left).operator&=(right);
+}
 
 // @brief BfoCubeの比較演算子(LT)
 // @param[in] left, right オペランド
