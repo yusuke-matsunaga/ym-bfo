@@ -271,6 +271,44 @@ make_product(ymuint64* dst,
   return true;
 }
 
+// @brief 一方のキューブが他方のキューブに含まれているか調べる．
+// @param[in] pat1, pat2 オペランドのキューブを表すパタンベクタ
+// @param[in] nb パタンのワード長
+// @return pat1 が pat2 に含まれていたら true を返す．
+bool
+check_containment(ymuint64* pat1,
+		  ymuint64* pat2,
+		  ymuint nb)
+{
+  for (ymuint i = 0; i < nb; ++ i) {
+    if ( (~pat1[i] & pat2[i]) != 0ULL ) {
+      return false;
+    }
+  }
+  return true;
+}
+
+// @brief キューブによるコファクターを求める．
+// @param[out] dst 結果を格納するパタン
+// @param[in] pat1, pat2 オペランドのキューブを表すパタンベクタ
+// @param[in] nb パタンのワード長
+// @return 正しく割ることができたら true を返す．
+bool
+make_cofactor(ymuint64* dst,
+	      ymuint64* pat1,
+	      ymuint64* pat2,
+	      ymuint nb)
+{
+  for (ymuint i = 0; i < nb; ++ i) {
+    if ( (~pat1[i] & pat2[i]) != 0ULL ) {
+      // この場合の dst の値は不定
+      return false;
+    }
+    dst[i] = pat1[i] & ~pat2[i];
+  }
+  return true;
+}
+
 END_NONAMESPACE
 
 // @brief 論理和を計算する．
@@ -418,7 +456,7 @@ BfoCover::operator*(const BfoCover& right) const
   }
 
   ymuint64* cbody = mMgr.new_body(nans);
-  ymuint wpos;
+  ymuint wpos = 0;
   for (ymuint rpos1 = 0; rpos1 < nc1; ++ rpos1) {
     for (ymuint rpos2 = 0; rpos2 < nc2; ++ rpos2) {
       if ( make_product(cbody + wpos * nb, mBody + rpos1 * nb, right.mBody + rpos2 * nb, nb) ) {
@@ -451,6 +489,29 @@ BfoCover::operator/(const BfoCover& right) const
 BfoCover
 BfoCover::operator/(const BfoCube& cube) const
 {
+  // 結果のキューブ数を数える．
+  ymuint nans = 0;
+  ymuint nb = mgr().cube_size();
+  ymuint nc = cube_num();
+  for (ymuint i = 0; i < nc; ++ i) {
+    if ( check_containment(mBody + i * nb, cube.mBody, nb) ) {
+      ++ nans;
+    }
+  }
+
+  ymuint64* cbody = mgr().new_body(nans);
+  ymuint wpos = 0;
+  for (ymuint i = 0; i < nc; ++ i) {
+    if ( make_cofactor(cbody + wpos * nb, mBody + i * nb, cube.mBody, nb) ) {
+      ++ wpos;
+    }
+    if ( wpos == nans ) {
+      break;
+    }
+  }
+  ASSERT_COND( wpos == nans );
+
+  return BfoCover(mgr(), nans, cbody);
 }
 
 // @brief リテラルのコファクターを計算する．
@@ -459,6 +520,36 @@ BfoCover::operator/(const BfoCube& cube) const
 BfoCover
 BfoCover::operator/(BfoLiteral lit) const
 {
+  // 結果のキューブ数を数える．
+  ymuint nans = 0;
+  ymuint var_id = lit.varid();
+  BfoPol pat = lit.is_positive() ? kBfoPolP : kBfoPolN;
+  ymuint nc = cube_num();
+  for (ymuint i = 0; i < nc; ++ i) {
+    if ( literal(i, var_id) == pat ) {
+      ++ nans;
+    }
+  }
+
+  ymuint64* cbody = mgr().new_body(nans);
+  ymuint nb = mgr().cube_size();
+  ymuint blk = BfoMgr::block_pos(var_id);
+  ymuint sft = BfoMgr::shift_num(var_id);
+  ymuint64 mask = ~(3UL << sft);
+  ymuint wpos = 0;
+  for (ymuint i = 0; i < nc; ++ i) {
+    if ( literal(i, var_id) == pat ) {
+      copy(cbody + wpos * nb, mBody + i * nb, nb);
+      cbody[blk] &= mask;
+      ++ wpos;
+      if ( wpos == nans ) {
+	break;
+      }
+    }
+  }
+  ASSERT_COND( wpos == nans );
+
+  return BfoCover(mgr(), nans, cbody);
 }
 
 // @brief 共通なキューブを返す．
