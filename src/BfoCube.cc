@@ -200,19 +200,7 @@ BfoCube::make_diff(const BfoCube* src)
 void
 BfoCube::print(ostream& s) const
 {
-  const char* spc = "";
-  ymuint n = variable_num();
-  for (ymuint i = 0; i < n; ++ i) {
-    BfoPol pol = literal(i);
-    if ( pol == kBfoPolP ) {
-      s << spc << mgr().varname(i);
-      spc = " ";
-    }
-    else if ( pol == kBfoPolN ) {
-      s << spc << mgr().varname(i) << "'";
-      spc = " ";
-    }
-  }
+  mgr().print(s, 1, mBody);
 }
 
 // @relates BfoCube

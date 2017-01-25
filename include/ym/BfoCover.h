@@ -10,6 +10,8 @@
 
 
 #include "ym/bfo_nsdef.h"
+#include "ym/BfoCube.h"
+#include "ym/BfoLiteral.h"
 #include "ym/BfoMgr.h"
 
 
@@ -223,6 +225,22 @@ operator<<(ostream& s,
 // インライン関数の定義
 //////////////////////////////////////////////////////////////////////
 
+// @brief 内容をしていたコンストラクタ
+// @param[in] mgr マネージャ
+// @param[in] cube_num キューブ数
+// @param[in] body 内容のパタンを表す本体
+//
+// この関数は危険ならの普通は使わないこと
+inline
+BfoCover::BfoCover(BfoMgr& mgr,
+		   ymuint cube_num,
+		   ymuint64* body) :
+  mMgr(mgr),
+  mCubeNum(cube_num),
+  mBody(body)
+{
+}
+
 // @brief マネージャを返す．
 inline
 BfoMgr&
@@ -253,14 +271,81 @@ BfoCover::cube_num() const
 inline
 BfoPol
 BfoCover::literal(ymuint cube_id,
-		ymuint var_id) const
+		  ymuint var_id) const
 {
   ASSERT_COND( cube_id < cube_num() );
-  ASSERT_COND( var_id < variable_num() );
 
-  ymuint blk = BfoMgr::block_pos(var_id) + mgr().cube_size() * cube_id;
-  ymuint sft = BfoMgr::shift_num(var_id);
-  return static_cast<BfoPol>((mBody[blk] >> sft) & 3ULL);
+  return mgr().literal(mBody, cube_id, var_id);
+}
+
+// @brief 論理和を計算する．
+// @param[in] right オペランド
+// @return 計算結果を返す．
+inline
+BfoCover
+BfoCover::operator+(const BfoCover& right) const
+{
+  return mgr().make_sum(cube_num(), mBody, right.cube_num(), right.mBody);
+}
+
+// @brief 差分を計算する．
+// @param[in] right オペランド
+// @return 計算結果を返す．
+inline
+BfoCover
+BfoCover::operator-(const BfoCover& right) const
+{
+  return mgr().make_diff(cube_num(), mBody, right.cube_num(), right.mBody);
+}
+
+// @brief 論理積を計算する．
+// @param[in] right オペランド
+// @return 計算結果を返す．
+inline
+BfoCover
+BfoCover::operator*(const BfoCover& right) const
+{
+  return mgr().make_product(cube_num(), mBody, right.cube_num(), right.mBody);
+}
+
+// @brief algebraic division を計算する．
+// @param[in] right オペランド
+// @return 計算結果を返す．
+inline
+BfoCover
+BfoCover::operator/(const BfoCover& right) const
+{
+  return mgr().make_division(cube_num(), mBody, right.cube_num(), right.mBody);
+}
+
+// @brief キューブのコファクターを計算する．
+// @param[in] cube 対象のキューブ
+// @return 計算結果を返す．
+inline
+BfoCover
+BfoCover::operator/(const BfoCube& cube) const
+{
+  return mgr().make_division(cube_num(), mBody, cube.mBody);
+}
+
+// @brief リテラルのコファクターを計算する．
+// @param[in] lit 対象のリテラル
+// @return 計算結果を返す．
+inline
+BfoCover
+BfoCover::operator/(BfoLiteral lit) const
+{
+  return mgr().make_division(cube_num(), mBody, lit);
+}
+
+// @brief 共通なキューブを返す．
+//
+// 共通なキューブがない場合には空のキューブを返す．
+inline
+BfoCube
+BfoCover::common_cube() const
+{
+  return mgr().common_cube(cube_num(), mBody);
 }
 
 // @brief BfoCover の内容を出力する．

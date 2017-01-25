@@ -54,70 +54,85 @@ TEST_F(CoverTest, nullcover)
   EXPECT_EQ( 0, cover.literal_num() );
 }
 
-TEST_F(CoverTest, add_cube1)
+TEST_F(CoverTest, constructor1)
 {
-  BfoCover cover(mgr());
+  // キューブのリスト(リテラルのリストのリスト)からのコンストラクタのテスト
+  vector<vector<BfoLiteral> > cube_list(2);
+  cube_list[0].push_back(BfoLiteral(0, kBfoPolP));
+  cube_list[0].push_back(BfoLiteral(1, kBfoPolP));
+  cube_list[1].push_back(BfoLiteral(2, kBfoPolP));
+  cube_list[1].push_back(BfoLiteral(2, kBfoPolN));
 
-  BfoCube* cube = cover.add_cube();
-  EXPECT_EQ( 1, cover.cube_num() );
-  EXPECT_EQ( mgr().variable_num(), cube->variable_num() );
-  EXPECT_EQ( 0, cube->literal_num() );
+  BfoCover cover(mgr(), cube_list);
 
-  cube->set_literal(0, kBfoLitP);
-  cube->set_literal(1, kBfoLitN);
+  EXPECT_EQ( 2, cover.cube_num() );
+  EXPECT_EQ( mgr().variable_num(), cover.variable_num() );
+  EXPECT_EQ( 4, cover.literal_num() );
 
-  // cover.cube(0) が今設定した cube であることを確認する．
-  const BfoCube* cube1 = cover.cube(0);
-  EXPECT_EQ( kBfoLitP, cube1->literal(0) );
-  EXPECT_EQ( kBfoLitN, cube1->literal(1) );
+  EXPECT_EQ( kBfoPolP, cover.literal(0, 0) );
+  EXPECT_EQ( kBfoPolP, cover.literal(0, 1) );
   for (ymuint i = 2; i < mgr().variable_num(); ++ i) {
-    EXPECT_EQ( kBfoLitX, cube1->literal(i) );
+    EXPECT_EQ( kBfoPolX, cover.literal(0, i) );
   }
 
-  EXPECT_EQ( 2, cover.literal_num() );
+  EXPECT_EQ( kBfoPolN, cover.literal(1, 0) );
+  EXPECT_EQ( kBfoPolX, cover.literal(1, 1) );
+  EXPECT_EQ( kBfoPolP, cover.literal(1, 2) );
+  for (ymuint i = 3; i < mgr().variable_num(); ++ i) {
+    EXPECT_EQ( kBfoPolX, cover.literal(1, i) );
+  }
 }
 
-TEST_F(CoverTest, add_cube2)
+TEST_F(CoverTest, constructor2)
 {
-  BfoCover cover(mgr());
+  // コピーコンストラクタのテスト
+  vector<vector<BfoLiteral> > cube_list(2);
+  cube_list[0].push_back(BfoLiteral(0, kBfoPolP));
+  cube_list[0].push_back(BfoLiteral(1, kBfoPolP));
+  cube_list[1].push_back(BfoLiteral(2, kBfoPolP));
+  cube_list[1].push_back(BfoLiteral(2, kBfoPolN));
 
-  BfoCube* src_cube = mgr().new_cube();
+  BfoCover src_cover(mgr(), cube_list);
 
-  src_cube->set_literal(0, kBfoLitP);
-  src_cube->set_literal(1, kBfoLitN);
+  BfoCover cover(src_cover);
 
-  cover.add_cube(src_cube);
+  EXPECT_EQ( 2, cover.cube_num() );
+  EXPECT_EQ( mgr().variable_num(), cover.variable_num() );
+  EXPECT_EQ( 4, cover.literal_num() );
+
+  EXPECT_EQ( kBfoPolP, cover.literal(0, 0) );
+  EXPECT_EQ( kBfoPolP, cover.literal(0, 1) );
+  for (ymuint i = 2; i < mgr().variable_num(); ++ i) {
+    EXPECT_EQ( kBfoPolX, cover.literal(0, i) );
+  }
+
+  EXPECT_EQ( kBfoPolN, cover.literal(1, 0) );
+  EXPECT_EQ( kBfoPolX, cover.literal(1, 1) );
+  EXPECT_EQ( kBfoPolP, cover.literal(1, 2) );
+  for (ymuint i = 3; i < mgr().variable_num(); ++ i) {
+    EXPECT_EQ( kBfoPolX, cover.literal(1, i) );
+  }
+}
+
+TEST_F(CoverTest, constructor3)
+{
+  // キューブからの変換コンストラクタのテスト
+  vector<BfoLiteral> lit_list;
+  lit_list.push_back(BfoLiteral(0, kBfoPolP));
+  lit_list.push_back(BfoLiteral(1, kBfoPolN));
+  BfoCube src_cube(mgr(), lit_list);
+
+  BfoCover cover(src_cube);
 
   EXPECT_EQ( 1, cover.cube_num() );
   EXPECT_EQ( 2, cover.literal_num() );
 
   // cover.cube(0) が今設定した src_cube と等しいことを確認する．
-  const BfoCube* cube1 = cover.cube(0);
-  EXPECT_EQ( kBfoLitP, cube1->literal(0) );
-  EXPECT_EQ( kBfoLitN, cube1->literal(1) );
+  EXPECT_EQ( kBfoPolP, cover.literal(0, 0) );
+  EXPECT_EQ( kBfoPolN, cover.literal(0, 1) );
   for (ymuint i = 2; i < mgr().variable_num(); ++ i) {
-    EXPECT_EQ( kBfoLitX, cube1->literal(i) );
+    EXPECT_EQ( kBfoPolX, cover.literal(0, i) );
   }
-}
-
-TEST_F(CoverTest, clear)
-{
-  BfoCover cover(mgr());
-
-  BfoCube* src_cube = mgr().new_cube();
-
-  src_cube->set_literal(0, kBfoLitP);
-  src_cube->set_literal(1, kBfoLitN);
-
-  cover.add_cube(src_cube);
-
-  EXPECT_EQ( 1, cover.cube_num() );
-  EXPECT_EQ( 2, cover.literal_num() );
-
-  cover.clear();
-
-  EXPECT_EQ( 0, cover.cube_num() );
-  EXPECT_EQ( 0, cover.literal_num() );
 }
 
 TEST_F(CoverTest, print1)
@@ -132,15 +147,13 @@ TEST_F(CoverTest, print1)
 
 TEST_F(CoverTest, print2)
 {
-  BfoCover cover(mgr());
+  vector<vector<BfoLiteral> > cube_list(2);
+  cube_list[0].push_back(BfoLiteral(0, kBfoPolP));
+  cube_list[0].push_back(BfoLiteral(1, kBfoPolN));
+  cube_list[1].push_back(BfoLiteral(0, kBfoPolN));
+  cube_list[1].push_back(BfoLiteral(2, kBfoPolP));
 
-  BfoCube* cube1 = cover.add_cube();
-  cube1->set_literal(0, kBfoLitP);
-  cube1->set_literal(1, kBfoLitN);
-
-  BfoCube* cube2 = cover.add_cube();
-  cube2->set_literal(0, kBfoLitN);
-  cube2->set_literal(2, kBfoLitP);
+  BfoCover cover(mgr(), cube_list);
 
   ostringstream tmp;
   tmp << cover;
@@ -148,17 +161,16 @@ TEST_F(CoverTest, print2)
   EXPECT_EQ( string("aa ab' + aa' ac"), tmp.str() );
 }
 
+#if 0
 TEST_F(CoverTest, print3)
 {
-  BfoCover cover(mgr());
+  vector<vector<BfoLiteral> > cube_list(2);
+  cube_list[0].push_back(BfoLiteral(0, kBfoPolP));
+  cube_list[0].push_back(BfoLiteral(1, kBfoPolN));
+  cube_list[1].push_back(BfoLiteral(0, kBfoPolN));
+  cube_list[1].push_back(BfoLiteral(2, kBfoPolP));
 
-  BfoCube* cube1 = cover.add_cube();
-  cube1->set_literal(0, kBfoLitP);
-  cube1->set_literal(1, kBfoLitN);
-
-  BfoCube* cube2 = cover.add_cube();
-  cube2->set_literal(0, kBfoLitN);
-  cube2->set_literal(2, kBfoLitP);
+  BfoCover cover(mgr(), cube_list);
 
   vector<string> varname_list(mgr().variable_num());
   for (ymuint i = 0; i < mgr().variable_num(); ++ i) {
@@ -172,5 +184,6 @@ TEST_F(CoverTest, print3)
 
   EXPECT_EQ( string("x0 x1' + x0' x2"), tmp.str() );
 }
+#endif
 
 END_NAMESPACE_YM_BFO
