@@ -27,21 +27,8 @@ BfoCover::BfoCover(BfoMgr& mgr,
   mCubeNum(cube_list.size())
 {
   mBody = mMgr.new_body(mCubeNum);
-  ymuint nb = mMgr.cube_size();
-  ymuint offset = 0;
   for (ymuint i = 0; i < mCubeNum; ++ i) {
-    for (ymuint j = 0; j < nb; ++ j) {
-      mBody[i * nb + j] = 0ULL;
-    }
-    for (ymuint j = 0; j < cube_list[i].size(); ++ j) {
-      BfoLiteral lit = cube_list[i][j];
-      ymuint var_id = lit.varid();
-      ymuint64 pat = lit.is_positive() ? kBfoPolP : kBfoPolN;
-      ymuint blk = BfoMgr::block_pos(var_id) + offset;
-      ymuint sft = BfoMgr::shift_num(var_id);
-      mBody[blk] |= (pat << sft);
-    }
-    offset += nb;
+    mMgr.set_cube(mBody, i, cube_list[i]);
   }
 }
 
@@ -52,9 +39,8 @@ BfoCover::BfoCover(const BfoCover& src) :
   mCubeNum(src.mCubeNum)
 {
   mBody = mMgr.new_body(mCubeNum);
-  ymuint n = mMgr.cube_size() * mCubeNum;
-  for (ymuint i = 0; i < n; ++ i) {
-    mBody[i] = src.mBody[i];
+  for (ymuint i = 0; i < mCubeNum; ++ i) {
+    mMgr.copy(mBody, i, src.mBody, i);
   }
 }
 
@@ -69,9 +55,8 @@ BfoCover::operator=(const BfoCover& src)
     mMgr.delete_body(mBody, mCubeNum);
     mCubeNum = src.mCubeNum;
     mBody = mMgr.new_body(mCubeNum);
-    ymuint n = mMgr.cube_size() * mCubeNum;
-    for (ymuint i = 0; i < n; ++ i) {
-      mBody[i] = src.mBody[i];
+    for (ymuint i = 0; i < mCubeNum; ++ i) {
+      mMgr.copy(mBody, i, src.mBody, i);
     }
   }
 
@@ -87,10 +72,7 @@ BfoCover::BfoCover(const BfoCube& cube) :
   mCubeNum(1)
 {
   mBody = mMgr.new_body(1);
-  ymuint n = mMgr.cube_size();
-  for (ymuint i = 0; i < n; ++ i) {
-    mBody[i] = cube.mBody[i];
-  }
+  mMgr.copy(mBody, 0, cube.mBody, 0);
 }
 
 // @brief デストラクタ
@@ -99,25 +81,6 @@ BfoCover::BfoCover(const BfoCube& cube) :
 BfoCover::~BfoCover()
 {
   mMgr.delete_body(mBody, mCubeNum);
-}
-
-// @brief リテラル数を返す．
-ymuint
-BfoCover::literal_num() const
-{
-#warning "TODO: もっとスマートなやり方にする．"
-  ymuint nc = cube_num();
-  ymuint nv = variable_num();
-  ymuint ans = 0;
-  for (ymuint i = 0; i < nc; ++ i) {
-    for (ymuint j = 0; j < nv; ++ j) {
-      if ( literal(i, j) != kBfoPolX ) {
-	++ ans;
-      }
-    }
-  }
-
-  return ans;
 }
 
 // @brief 指定されたリテラルの出現回数を返す．
@@ -139,56 +102,6 @@ BfoCover::literal_num(BfoLiteral lit) const
 
   return ans;
 }
-
-#if 0
-// @brief 論理和を計算して代入する．
-// @param[in] right オペランド
-// @return 演算後の自身への参照を返す．
-const BfoCover&
-BfoCover::operator+=(const BfoCover& right)
-{
-}
-
-// @brief 差分を計算して代入する．
-// @param[in] right オペランド
-// @return 演算後の自身への参照を返す．
-const BfoCover&
-BfoCover::operator-=(const BfoCover& right)
-{
-}
-
-// @brief 論理積を計算して代入する．
-// @param[in] right オペランド
-// @return 演算後の自身への参照を返す．
-const BfoCover&
-BfoCover::operator*=(const BfoCover& right)
-{
-}
-
-// @brief algebraic division を行って代入する．
-// @param[in] right オペランド
-// @return 演算後の自身への参照を返す．
-const BfoCover&
-BfoCover::operator/=(const BfoCover& right)
-{
-}
-
-// @brief キューブのコファクターを計算して代入する．
-// @param[in] cube 対象のキューブ
-// @return 演算後の自身への参照を返す．
-BfoCover
-BfoCover::operator/=(const BfoCube& cube)
-{
-}
-
-// @brief リテラルのコファクターを計算して代入する．
-// @param[in] lit 対象のリテラル
-// @return 演算後の自身への参照を返す．
-const BfoCover&
-BfoCover::operator/=(BfoLiteral lit)
-{
-}
-#endif
 
 // @brief 内容をわかりやすい形で出力する．
 // @param[in] s 出力先のストリーム

@@ -252,23 +252,26 @@ BfoCube::literal(ymuint pos) const
   return mgr().literal(mBody, 0, pos);
 }
 
-#if 0
-// @brief 内容を設定する．
-// @param[in] pos 位置番号 ( 0 <= pos < variable_num() )
-// @param [in] lit リテラルの値
+// @brief リテラル数を返す．
 inline
-void
-BfoCube::set_literal(ymuint pos,
-		     BfoLiteral lit)
+ymuint
+BfoCube::literal_num() const
 {
-  ASSERT_COND( pos < variable_num() );
-  ymuint blk = pos / 32;
-  // ソートしたときの見栄えの問題で左(MSB)から始める．
-  ymuint sft = (32 - (pos % 32)) * 2;
-  mBody[blk] &= ~(3ULL << sft);
-  mBody[blk] |= (static_cast<ymuint64>(lit) << sft);
+  return mgr().literal_num(1, mBody);
 }
-#endif
+
+// @brief オペランドのキューブに含まれていたら true を返す．
+// @param[in] src オペランドのキューブ
+//
+// ここではキューブの表す論理関数の含意を考える<br>
+// だからリテラル集合としては真逆になる．
+inline
+bool
+BfoCube::check_containment(const BfoCube& right) const
+{
+  ASSERT_COND( variable_num() == right.variable_num() );
+  return mgr().check_containment(mBody, 0, right.mBody, 0);
+}
 
 // @brief BfoCube の論理積を計算する
 // @param[in] left, right オペランド
@@ -281,6 +284,22 @@ operator&(const BfoCube& left,
 	  const BfoCube& right)
 {
   return BfoCube(left).operator&=(right);
+}
+
+// @relates BfoCube
+// @brief BfoCubeの比較演算子
+// @param[in] left, right オペランド
+// @retval -1 left < right
+// @retval  0 left = right
+// @retval  1 left > right
+inline
+int
+compare(const BfoCube& left,
+	const BfoCube& right)
+{
+  ASSERT_COND( left.variable_num() == right.variable_num() );
+
+  return left.mgr().compare(left.mBody, 0, right.mBody, 0);
 }
 
 // @relates BfoCube

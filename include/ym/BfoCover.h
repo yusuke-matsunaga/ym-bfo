@@ -20,6 +20,11 @@ BEGIN_NAMESPACE_YM_BFO
 //////////////////////////////////////////////////////////////////////
 /// @class BfoCover BfoCover.h "BfoCover.h"
 /// @brief カバー(積和形論理式)を表すクラス
+///
+/// 中身は positional cube matrix 表現を用いたビットベクタ<br>
+/// ビットベクタの内容は一旦，設定されたら変わることはない<br>
+/// キューブはワードレベルの順序で整列しているものと仮定している<br>
+/// 実際の操作は BfoMgr が行う．
 //////////////////////////////////////////////////////////////////////
 class BfoCover
 {
@@ -98,44 +103,6 @@ public:
   literal(ymuint cube_id,
 	  ymuint var_id) const;
 
-#if 0
-  /// @brief 論理和を計算して代入する．
-  /// @param[in] right オペランド
-  /// @return 演算後の自身への参照を返す．
-  const BfoCover&
-  operator+=(const BfoCover& right);
-
-  /// @brief 差分を計算して代入する．
-  /// @param[in] right オペランド
-  /// @return 演算後の自身への参照を返す．
-  const BfoCover&
-  operator-=(const BfoCover& right);
-
-  /// @brief 論理積を計算して代入する．
-  /// @param[in] right オペランド
-  /// @return 演算後の自身への参照を返す．
-  const BfoCover&
-  operator*=(const BfoCover& right);
-
-  /// @brief algebraic division を行って代入する．
-  /// @param[in] right オペランド
-  /// @return 演算後の自身への参照を返す．
-  const BfoCover&
-  operator/=(const BfoCover& right);
-
-  /// @brief キューブのコファクターを計算して代入する．
-  /// @param[in] cube 対象のキューブ
-  /// @return 演算後の自身への参照を返す．
-  BfoCover
-  operator/=(const BfoCube& cube);
-
-  /// @brief リテラルのコファクターを計算して代入する．
-  /// @param[in] lit 対象のリテラル
-  /// @return 演算後の自身への参照を返す．
-  const BfoCover&
-  operator/=(BfoLiteral lit);
-#endif
-
   /// @brief 論理和を計算する．
   /// @param[in] right オペランド
   /// @return 計算結果を返す．
@@ -171,6 +138,42 @@ public:
   /// @return 計算結果を返す．
   BfoCover
   operator/(BfoLiteral lit) const;
+
+  /// @brief 論理和を計算して代入する．
+  /// @param[in] right オペランド
+  /// @return 演算後の自身への参照を返す．
+  const BfoCover&
+  operator+=(const BfoCover& right);
+
+  /// @brief 差分を計算して代入する．
+  /// @param[in] right オペランド
+  /// @return 演算後の自身への参照を返す．
+  const BfoCover&
+  operator-=(const BfoCover& right);
+
+  /// @brief 論理積を計算して代入する．
+  /// @param[in] right オペランド
+  /// @return 演算後の自身への参照を返す．
+  const BfoCover&
+  operator*=(const BfoCover& right);
+
+  /// @brief algebraic division を行って代入する．
+  /// @param[in] right オペランド
+  /// @return 演算後の自身への参照を返す．
+  const BfoCover&
+  operator/=(const BfoCover& right);
+
+  /// @brief キューブのコファクターを計算して代入する．
+  /// @param[in] cube 対象のキューブ
+  /// @return 演算後の自身への参照を返す．
+  BfoCover
+  operator/=(const BfoCube& cube);
+
+  /// @brief リテラルのコファクターを計算して代入する．
+  /// @param[in] lit 対象のリテラル
+  /// @return 演算後の自身への参照を返す．
+  const BfoCover&
+  operator/=(BfoLiteral lit);
 
   /// @brief 共通なキューブを返す．
   ///
@@ -265,6 +268,14 @@ BfoCover::cube_num() const
   return mCubeNum;
 }
 
+// @brief リテラル数を返す．
+inline
+ymuint
+BfoCover::literal_num() const
+{
+  return mgr().literal_num(cube_num(), mBody);
+}
+
 // @brief 内容を返す．
 // @param[in] cube_id キューブ番号 ( 0 <= cube_id < cube_num() )
 // @param[in] var_id 変数番号 ( 0 <= var_id < variable_num() )
@@ -336,6 +347,66 @@ BfoCover
 BfoCover::operator/(BfoLiteral lit) const
 {
   return mgr().make_division(cube_num(), mBody, lit);
+}
+
+// @brief 論理和を計算して代入する．
+// @param[in] right オペランド
+// @return 演算後の自身への参照を返す．
+inline
+const BfoCover&
+BfoCover::operator+=(const BfoCover& right)
+{
+  return *this;
+}
+
+// @brief 差分を計算して代入する．
+// @param[in] right オペランド
+// @return 演算後の自身への参照を返す．
+inline
+const BfoCover&
+BfoCover::operator-=(const BfoCover& right)
+{
+  return *this;
+}
+
+// @brief 論理積を計算して代入する．
+// @param[in] right オペランド
+// @return 演算後の自身への参照を返す．
+inline
+const BfoCover&
+BfoCover::operator*=(const BfoCover& right)
+{
+  return *this;
+}
+
+// @brief algebraic division を行って代入する．
+// @param[in] right オペランド
+// @return 演算後の自身への参照を返す．
+inline
+const BfoCover&
+BfoCover::operator/=(const BfoCover& right)
+{
+  return *this;
+}
+
+// @brief キューブのコファクターを計算して代入する．
+// @param[in] cube 対象のキューブ
+// @return 演算後の自身への参照を返す．
+inline
+BfoCover
+BfoCover::operator/=(const BfoCube& cube)
+{
+  return *this;
+}
+
+// @brief リテラルのコファクターを計算して代入する．
+// @param[in] lit 対象のリテラル
+// @return 演算後の自身への参照を返す．
+inline
+const BfoCover&
+BfoCover::operator/=(BfoLiteral lit)
+{
+  return *this;
 }
 
 // @brief 共通なキューブを返す．

@@ -61,6 +61,38 @@ public:
   // BfoCube/BfoCover のための関数
   //////////////////////////////////////////////////////////////////////
 
+  /// @brief ビットベクタからリテラルを取り出す．
+  /// @param[in] bv ビットベクタ
+  /// @param[in] cube_id キューブ番号
+  /// @param[in] var_id 変数番号 ( 0 <= var_id < variable_num() )
+  BfoPol
+  literal(const ymuint64* bv,
+	  ymuint cube_id,
+	  ymuint var_id);
+
+  /// @brief ビットベクタ上のリテラル数を数える．
+  /// @param[in] nc キューブ数
+  /// @param[in] bv カバーを表すビットベクタ
+  ymuint
+  literal_num(ymuint nc,
+	      const ymuint64* bv);
+
+  /// @brief キューブ/カバー用の領域を確保する．
+  /// @param[in] cube_num キューブ数
+  ///
+  /// キューブの時は cube_num = 1 とする．
+  ymuint64*
+  new_body(ymuint cube_num = 1);
+
+  /// @brief キューブ/カバー用の領域を削除する．
+  /// @param[in] p 領域を指すポインタ
+  /// @param[in] cube_num キューブ数
+  ///
+  /// キューブの時は cube_num = 1 とする．
+  void
+  delete_body(ymuint64* p,
+	      ymuint cube_num = 1);
+
   /// @brief 2つのカバーの論理和を計算する．
   /// @param[in] nc1 1つめのカバーのキューブ数
   /// @param[in] bv1 1つめのカバーを表すビットベクタ
@@ -138,14 +170,112 @@ public:
   common_cube(ymuint nc1,
 	      const ymuint64* bv1);
 
-  /// @brief ビットベクタからリテラルを取り出す．
-  /// @param[in] bv ビットベクタ
-  /// @param[in] cube_id キューブ番号
-  /// @param[in] var_id 変数番号 ( 0 <= var_id < variable_num() )
-  BfoPol
-  literal(const ymuint64* bv,
-	  ymuint cube_id,
-	  ymuint var_id);
+  /// @brief キューブ(を表すビットベクタ)の比較を行う．
+  /// @param[in] bv1 1つめのカバーを表すビットベクタ
+  /// @param[in] pos1 1つめのキューブ番号
+  /// @param[in] bv2 2つめのカバーを表すビットベクタ
+  /// @param[in] pos2 2つめのキューブ番号
+  /// @retval -1 bv1 <  bv2
+  /// @retval  0 bv1 == bv2
+  /// @retval  1 bv1 >  bv2
+  int
+  compare(const ymuint64* bv1,
+	  ymuint pos1,
+	  const ymuint64* bv2,
+	  ymuint pos2);
+
+  /// @brief 2つのキューブの積が空でない時 true を返す．
+  /// @param[in] bv1 1つめのカバーを表すビットベクタ
+  /// @param[in] pos1 1つめのキューブ番号
+  /// @param[in] bv2 2つめのカバーを表すビットベクタ
+  /// @param[in] pos2 2つめのキューブ番号
+  bool
+  check_product(const ymuint64* bv1,
+		ymuint pos1,
+		const ymuint64* bv2,
+		ymuint pos2);
+
+  /// @brief 一方のキューブが他方のキューブに含まれているか調べる．
+  /// @param[in] bv1 1つめのカバーを表すビットベクタ
+  /// @param[in] pos1 1つめのキューブ番号
+  /// @param[in] bv2 2つめのカバーを表すビットベクタ
+  /// @param[in] pos2 2つめのキューブ番号
+  /// @return 1つめのキューブが2つめのキューブ に含まれていたら true を返す．
+  bool
+  check_containment(const ymuint64* bv1,
+		    ymuint pos1,
+		    const ymuint64* bv2,
+		    ymuint pos2);
+
+  /// @brief リテラルの集合からキューブを表すビットベクタにセットする．
+  /// @param[in] dst_bv コピー先のビットベクタ
+  /// @param[in] dst_pos コピー先のキューブ番号
+  /// @param[in] lit_list リテラルのリスト
+  void
+  set_cube(ymuint64* dst_bv,
+	   ymuint dst_pos,
+	   const vector<BfoLiteral>& lit_list);
+
+  /// @brief キューブ(を表すビットベクタ)のコピーを行う．
+  /// @param[in] dst_bv コピー先のビットベクタ
+  /// @param[in] dst_pos コピー先のキューブ番号
+  /// @param[in] src_bv ソースのビットベクタ
+  /// @param[in] src_pos ソースのキューブ番号
+  void
+  copy(ymuint64* dst_bv,
+       ymuint dst_pos,
+       const ymuint64* src_bv,
+       ymuint src_pos);
+
+  /// @brief 2つのキューブの積を計算する．
+  /// @param[in] dst_bv コピー先のビットベクタ
+  /// @param[in] dst_pos コピー先のキューブ番号
+  /// @param[in] bv1 1つめのカバーを表すビットベクタ
+  /// @param[in] pos1 1つめのキューブ番号
+  /// @param[in] bv2 2つめのカバーを表すビットベクタ
+  /// @param[in] pos2 2つめのキューブ番号
+  /// @retval true 積が空でなかった．
+  /// @retval false 積が空だった．
+  bool
+  make_product(ymuint64* dst_bv,
+	       ymuint dst_pos,
+	       const ymuint64* bv1,
+	       ymuint pos1,
+	       const ymuint64* bv2,
+	       ymuint pos2);
+
+  /// @brief キューブによるコファクターを求める．
+  /// @param[in] dst_bv コピー先のビットベクタ
+  /// @param[in] dst_pos コピー先のキューブ番号
+  /// @param[in] bv1 1つめのカバーを表すビットベクタ
+  /// @param[in] pos1 1つめのキューブ番号
+  /// @param[in] bv2 2つめのカバーを表すビットベクタ
+  /// @param[in] pos2 2つめのキューブ番号
+  /// @return 正しく割ることができたら true を返す．
+  bool
+  make_cofactor(ymuint64* dst_bv,
+		ymuint dst_pos,
+		const ymuint64* bv1,
+		ymuint pos1,
+		const ymuint64* bv2,
+		ymuint pos2);
+
+  /// @brief カバー/キューブの内容を出力する．
+  /// @param[in] s 出力先のストリーム
+  /// @param[in] nc キューブ数
+  /// @param[in] bv カバー/キューブを表すビットベクタ
+  ///
+  /// キューブの場合は nc を 1 とする．
+  void
+  print(ostream& s,
+	ymuint nc,
+	const ymuint64* bv);
+
+
+private:
+  //////////////////////////////////////////////////////////////////////
+  // 内部で用いられる関数
+  //////////////////////////////////////////////////////////////////////
 
   /// @brief ブロック位置を計算する．
   /// @param[in] var_id 変数番号
@@ -162,39 +292,6 @@ public:
   /// @brief キューブ1つ分のブロックサイズを計算する．
   ymuint
   cube_size() const;
-
-  /// @brief カバー/キューブの内容を出力する．
-  /// @param[in] s 出力先のストリーム
-  /// @param[in] nc キューブ数
-  /// @param[in] bv カバー/キューブを表すビットベクタ
-  ///
-  /// キューブの場合は nc を 1 とする．
-  void
-  print(ostream& s,
-	ymuint nc,
-	const ymuint64* bv);
-
-  /// @brief キューブ/カバー用の領域を確保する．
-  /// @param[in] cube_num キューブ数
-  ///
-  /// キューブの時は cube_num = 1 とする．
-  ymuint64*
-  new_body(ymuint cube_num = 1);
-
-  /// @brief キューブ/カバー用の領域を削除する．
-  /// @param[in] p 領域を指すポインタ
-  /// @param[in] cube_num キューブ数
-  ///
-  /// キューブの時は cube_num = 1 とする．
-  void
-  delete_body(ymuint64* p,
-	      ymuint cube_num = 1);
-
-
-private:
-  //////////////////////////////////////////////////////////////////////
-  // 内部で用いられる関数
-  //////////////////////////////////////////////////////////////////////
 
 
 private:
