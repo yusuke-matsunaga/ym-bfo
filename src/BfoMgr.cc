@@ -14,6 +14,23 @@
 
 BEGIN_NAMESPACE_YM_BFO
 
+BEGIN_NONAMESPACE
+
+// 名前を作る．
+string
+_varname(ymuint id)
+{
+  string ans;
+  if ( id >= 26 ) {
+    ans = _varname(id / 26);
+  }
+  char c = static_cast<char>('a' + (id % 26));
+  ans += c;
+  return ans;
+}
+
+END_NONAMESPACE
+
 //////////////////////////////////////////////////////////////////////
 // クラス BfoMgr
 //////////////////////////////////////////////////////////////////////
@@ -26,6 +43,11 @@ BfoMgr::BfoMgr(ymuint variable_num) :
   mVarNum(variable_num),
   mVarNameList(mVarNum)
 {
+  // 変数名を作る．
+  // 変数番号を26進数で表して文字列にする．
+  for (ymuint i = 0; i < mVarNum; ++ i) {
+    mVarNameList[i] = _varname(i);
+  }
 }
 
 // @brief コンストラクタ
@@ -437,6 +459,8 @@ BfoMgr::make_division(ymuint nc1,
       copy(cbody + i * nb, tmp + pos * nb, nb);
     }
   }
+  // 作業領域のビットベクタを解放する．
+  delete_body(tmp, nc1);
 
   return BfoCover(*this, nans, cbody);
 }

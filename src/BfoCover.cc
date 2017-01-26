@@ -30,10 +30,13 @@ BfoCover::BfoCover(BfoMgr& mgr,
   ymuint nb = mMgr.cube_size();
   ymuint offset = 0;
   for (ymuint i = 0; i < mCubeNum; ++ i) {
+    for (ymuint j = 0; j < nb; ++ j) {
+      mBody[i * nb + j] = 0ULL;
+    }
     for (ymuint j = 0; j < cube_list[i].size(); ++ j) {
       BfoLiteral lit = cube_list[i][j];
       ymuint var_id = lit.varid();
-      BfoPol pat = lit.is_positive() ? kBfoPolP : kBfoPolN;
+      ymuint64 pat = lit.is_positive() ? kBfoPolP : kBfoPolN;
       ymuint blk = BfoMgr::block_pos(var_id) + offset;
       ymuint sft = BfoMgr::shift_num(var_id);
       mBody[blk] |= (pat << sft);

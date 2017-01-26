@@ -266,7 +266,7 @@ ymuint
 BfoMgr::shift_num(ymuint var_id)
 {
   // ソートしたときの見栄えの問題で左(MSB)から始める．
-  return (32 - (var_id % 32)) * 2;
+  return (31 - (var_id % 32)) * 2;
 }
 
 // @brief キューブ1つ分のブロックサイズを計算する．

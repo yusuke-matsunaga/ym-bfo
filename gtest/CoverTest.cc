@@ -58,10 +58,10 @@ TEST_F(CoverTest, constructor1)
 {
   // キューブのリスト(リテラルのリストのリスト)からのコンストラクタのテスト
   vector<vector<BfoLiteral> > cube_list(2);
-  cube_list[0].push_back(BfoLiteral(0, kBfoPolP));
-  cube_list[0].push_back(BfoLiteral(1, kBfoPolP));
-  cube_list[1].push_back(BfoLiteral(2, kBfoPolP));
-  cube_list[1].push_back(BfoLiteral(2, kBfoPolN));
+  cube_list[0].push_back(BfoLiteral(0, false));
+  cube_list[0].push_back(BfoLiteral(1, false));
+  cube_list[1].push_back(BfoLiteral(0, true));
+  cube_list[1].push_back(BfoLiteral(2, false));
 
   BfoCover cover(mgr(), cube_list);
 
@@ -87,10 +87,10 @@ TEST_F(CoverTest, constructor2)
 {
   // コピーコンストラクタのテスト
   vector<vector<BfoLiteral> > cube_list(2);
-  cube_list[0].push_back(BfoLiteral(0, kBfoPolP));
-  cube_list[0].push_back(BfoLiteral(1, kBfoPolP));
-  cube_list[1].push_back(BfoLiteral(2, kBfoPolP));
-  cube_list[1].push_back(BfoLiteral(2, kBfoPolN));
+  cube_list[0].push_back(BfoLiteral(0, false));
+  cube_list[0].push_back(BfoLiteral(1, false));
+  cube_list[1].push_back(BfoLiteral(0, true));
+  cube_list[1].push_back(BfoLiteral(2, false));
 
   BfoCover src_cover(mgr(), cube_list);
 
@@ -118,8 +118,8 @@ TEST_F(CoverTest, constructor3)
 {
   // キューブからの変換コンストラクタのテスト
   vector<BfoLiteral> lit_list;
-  lit_list.push_back(BfoLiteral(0, kBfoPolP));
-  lit_list.push_back(BfoLiteral(1, kBfoPolN));
+  lit_list.push_back(BfoLiteral(0, false));
+  lit_list.push_back(BfoLiteral(1, true));
   BfoCube src_cube(mgr(), lit_list);
 
   BfoCover cover(src_cube);
@@ -148,42 +148,58 @@ TEST_F(CoverTest, print1)
 TEST_F(CoverTest, print2)
 {
   vector<vector<BfoLiteral> > cube_list(2);
-  cube_list[0].push_back(BfoLiteral(0, kBfoPolP));
-  cube_list[0].push_back(BfoLiteral(1, kBfoPolN));
-  cube_list[1].push_back(BfoLiteral(0, kBfoPolN));
-  cube_list[1].push_back(BfoLiteral(2, kBfoPolP));
+  cube_list[0].push_back(BfoLiteral(0, false));
+  cube_list[0].push_back(BfoLiteral(1, true));
+  cube_list[1].push_back(BfoLiteral(0, true));
+  cube_list[1].push_back(BfoLiteral(2, false));
 
   BfoCover cover(mgr(), cube_list);
 
   ostringstream tmp;
   tmp << cover;
 
-  EXPECT_EQ( string("aa ab' + aa' ac"), tmp.str() );
+  EXPECT_EQ( string("a b' + a' c"), tmp.str() );
 }
 
-#if 0
 TEST_F(CoverTest, print3)
 {
   vector<vector<BfoLiteral> > cube_list(2);
-  cube_list[0].push_back(BfoLiteral(0, kBfoPolP));
-  cube_list[0].push_back(BfoLiteral(1, kBfoPolN));
-  cube_list[1].push_back(BfoLiteral(0, kBfoPolN));
-  cube_list[1].push_back(BfoLiteral(2, kBfoPolP));
+  cube_list[0].push_back(BfoLiteral(26, false));
+  cube_list[0].push_back(BfoLiteral(27, true));
+  cube_list[1].push_back(BfoLiteral(26, true));
+  cube_list[1].push_back(BfoLiteral(28, false));
 
   BfoCover cover(mgr(), cube_list);
 
-  vector<string> varname_list(mgr().variable_num());
-  for (ymuint i = 0; i < mgr().variable_num(); ++ i) {
+  ostringstream tmp;
+  tmp << cover;
+
+  EXPECT_EQ( string("ba bb' + ba' bc"), tmp.str() );
+}
+
+TEST_F(CoverTest, print4)
+{
+  // これ CoverTest を使う意味がない．
+  vector<string> varname_list(30);
+  for (ymuint i = 0; i < 30; ++ i) {
     ostringstream buf;
     buf << "x" << i;
     varname_list[i] = buf.str();
   }
+  BfoMgr mgr(varname_list);
+
+  vector<vector<BfoLiteral> > cube_list(2);
+  cube_list[0].push_back(BfoLiteral(0, false));
+  cube_list[0].push_back(BfoLiteral(1, true));
+  cube_list[1].push_back(BfoLiteral(0, true));
+  cube_list[1].push_back(BfoLiteral(2, false));
+
+  BfoCover cover(mgr, cube_list);
 
   ostringstream tmp;
-  cover.print(tmp, varname_list);
+  cover.print(tmp);
 
   EXPECT_EQ( string("x0 x1' + x0' x2"), tmp.str() );
 }
-#endif
 
 END_NAMESPACE_YM_BFO

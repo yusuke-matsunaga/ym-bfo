@@ -9,6 +9,7 @@
 
 #include "gtest/gtest.h"
 #include "ym/BfoCube.h"
+#include "ym/BfoLiteral.h"
 #include "ym/BfoMgr.h"
 
 
@@ -76,60 +77,67 @@ private:
 
 TEST_F(CubeTest, nullcube)
 {
-  BfoCube* cube = mgr().new_cube();
+  BfoCube cube(mgr());
 
-  EXPECT_EQ( mgr().variable_num(), cube->variable_num() );
+  EXPECT_EQ( mgr().variable_num(), cube.variable_num() );
 
-  ymuint n = cube->variable_num();
+  ymuint n = cube.variable_num();
   for (ymuint i = 0; i < n; ++ i) {
-    BfoLiteral lit = cube->literal(i);
-    EXPECT_EQ( kBfoLitX, lit ) << "cube[" << i << "] is not X";
+    EXPECT_EQ( kBfoPolX, cube.literal(i) ) << "cube[" << i << "] is not X";
   }
 }
 
 TEST_F(CubeTest, set_literal)
 {
-  BfoCube* cube = mgr().new_cube();
+  vector<BfoLiteral> lit_list;
+  lit_list.push_back(BfoLiteral(0, false));
+  lit_list.push_back(BfoLiteral(2, true));
 
-  ymuint n = cube->variable_num();
-  for (ymuint i = 0; i < n; ++ i) {
-    cube->set_literal(i, kBfoLitP);
+  BfoCube cube(mgr(), lit_list);
+
+  EXPECT_EQ( mgr().variable_num(), cube.variable_num() );
+  EXPECT_EQ( 2, cube.literal_num() );
+  EXPECT_EQ( kBfoPolP, cube.literal(0) ) << "cube[0] is not 1";
+  EXPECT_EQ( kBfoPolX, cube.literal(1) ) << "cube[1] is not X";
+  EXPECT_EQ( kBfoPolN, cube.literal(2) ) << "cube[2] is not 0";
+  for (ymuint i = 3; i < mgr().variable_num(); ++ i) {
+    EXPECT_EQ( kBfoPolX, cube.literal(i) ) << "cube[" << i << "] is not X";
   }
-  EXPECT_EQ( kBfoLitP, cube->literal(0) );
-
-  cube->set_literal(1, kBfoLitX);
-  EXPECT_EQ( kBfoLitX, cube->literal(1) );
-
-  cube->set_literal(2, kBfoLitN);
-  EXPECT_EQ( kBfoLitN, cube->literal(2) );
 }
 
 TEST_F(CubeTest, copy)
 {
-  BfoCube* cube1 = mgr().new_cube();
-  cube1->set_literal(0, kBfoLitP);
-  cube1->set_literal(10, kBfoLitN);
+  vector<BfoLiteral> lit_list;
+  lit_list.push_back(BfoLiteral(0, false));
+  lit_list.push_back(BfoLiteral(10, true));
 
-  BfoCube* cube2 = mgr().new_cube();
-  cube2->copy(cube1);
+  BfoCube src_cube(mgr(), lit_list);
 
-  EXPECT_EQ( kBfoLitP, cube2->literal(0) );
-  EXPECT_EQ( kBfoLitX, cube2->literal(1) );
-  EXPECT_EQ( kBfoLitN, cube2->literal(10) );
+  BfoCube cube(src_cube);
 
-  EXPECT_EQ( 0, compare(cube1, cube2) );
+  EXPECT_EQ( kBfoPolP, cube.literal(0) ) << "cube[0] is not 1";
+  EXPECT_EQ( kBfoPolN, cube.literal(10) ) << "cube[10] is not 0";
+  for (ymuint i = 1; i < mgr().variable_num(); ++ i) {
+    if ( i == 10 ) {
+      continue;
+    }
+    EXPECT_EQ( kBfoPolX, cube.literal(i) ) << "cube[" << i << "] is not X";
+  }
+
+  EXPECT_EQ( src_cube, cube );
 }
 
+#if 0
 TEST_F(CubeTest, check_contain)
 {
   BfoCube* cube1 = mgr().new_cube();
-  cube1->set_literal(0, kBfoLitP);
-  cube1->set_literal(1, kBfoLitP);
-  cube1->set_literal(2, kBfoLitN);
+  cube1->set_literal(0, kBfoPolP);
+  cube1->set_literal(1, kBfoPolP);
+  cube1->set_literal(2, kBfoPolN);
 
   BfoCube* cube2 = mgr().new_cube();
-  cube2->set_literal(0, kBfoLitP);
-  cube2->set_literal(2, kBfoLitN);
+  cube2->set_literal(0, kBfoPolP);
+  cube2->set_literal(2, kBfoPolN);
 
   EXPECT_TRUE( cube1->check_contain(cube2) );
   EXPECT_FALSE( cube2->check_contain(cube1) );
@@ -138,27 +146,27 @@ TEST_F(CubeTest, check_contain)
 TEST_F(CubeTest, make_product1)
 {
   BfoCube* cube1 = mgr().new_cube();
-  cube1->set_literal(0, kBfoLitP);
+  cube1->set_literal(0, kBfoPolP);
 
   BfoCube* cube2 = mgr().new_cube();
-  cube2->set_literal(1, kBfoLitN);
+  cube2->set_literal(1, kBfoPolN);
 
   EXPECT_TRUE( cube1->make_product(cube2) );
-  EXPECT_EQ( kBfoLitP, cube1->literal(0) );
-  EXPECT_EQ( kBfoLitN, cube1->literal(1) );
+  EXPECT_EQ( kBfoPolP, cube1->literal(0) );
+  EXPECT_EQ( kBfoPolN, cube1->literal(1) );
   for (ymuint i = 2; i < mgr().variable_num(); ++ i) {
-    EXPECT_EQ( kBfoLitX, cube1->literal(i) ) << " i = " << i;
+    EXPECT_EQ( kBfoPolX, cube1->literal(i) ) << " i = " << i;
   }
 }
 
 TEST_F(CubeTest, make_product2)
 {
   BfoCube* cube1 = mgr().new_cube();
-  cube1->set_literal(0, kBfoLitP);
-  cube1->set_literal(1, kBfoLitP);
+  cube1->set_literal(0, kBfoPolP);
+  cube1->set_literal(1, kBfoPolP);
 
   BfoCube* cube2 = mgr().new_cube();
-  cube2->set_literal(1, kBfoLitN);
+  cube2->set_literal(1, kBfoPolN);
 
   EXPECT_FALSE( cube1->make_product(cube2) );
 }
@@ -166,17 +174,17 @@ TEST_F(CubeTest, make_product2)
 TEST_F(CubeTest, make_diff)
 {
   BfoCube* cube1 = mgr().new_cube();
-  cube1->set_literal(0, kBfoLitP);
-  cube1->set_literal(1, kBfoLitP);
+  cube1->set_literal(0, kBfoPolP);
+  cube1->set_literal(1, kBfoPolP);
 
   BfoCube* cube2 = mgr().new_cube();
-  cube2->set_literal(1, kBfoLitP);
+  cube2->set_literal(1, kBfoPolP);
 
   cube1->make_diff(cube2);
-  EXPECT_EQ( kBfoLitP, cube1->literal(0) );
-  EXPECT_EQ( kBfoLitX, cube1->literal(1) );
+  EXPECT_EQ( kBfoPolP, cube1->literal(0) );
+  EXPECT_EQ( kBfoPolX, cube1->literal(1) );
   for (ymuint i = 2; i < mgr().variable_num(); ++ i) {
-    EXPECT_EQ( kBfoLitX, cube1->literal(i) ) << " i = " << i;
+    EXPECT_EQ( kBfoPolX, cube1->literal(i) ) << " i = " << i;
   }
 }
 
@@ -186,8 +194,8 @@ TEST_F(CubeTest, literal_num)
   EXPECT_EQ( 0, cube1->literal_num() );
 
   BfoCube* cube2 = mgr().new_cube();
-  cube2->set_literal(0, kBfoLitP);
-  cube2->set_literal(10, kBfoLitN);
+  cube2->set_literal(0, kBfoPolP);
+  cube2->set_literal(10, kBfoPolN);
   EXPECT_EQ( 2, cube2->literal_num() );
 }
 
@@ -204,8 +212,8 @@ TEST_F(CubeTest, print1)
 TEST_F(CubeTest, print2)
 {
   BfoCube* cube = mgr().new_cube();
-  cube->set_literal(0, kBfoLitP);
-  cube->set_literal(10, kBfoLitN);
+  cube.set_literal(0, kBfoPolP);
+  cube.set_literal(10, kBfoPolN);
 
   ostringstream tmp;
   tmp << cube;
@@ -216,8 +224,8 @@ TEST_F(CubeTest, print2)
 TEST_F(CubeTest, print3)
 {
   BfoCube* cube = mgr().new_cube();
-  cube->set_literal(0, kBfoLitP);
-  cube->set_literal(10, kBfoLitN);
+  cube.set_literal(0, kBfoPolP);
+  cube.set_literal(10, kBfoPolN);
 
   vector<string> varname_list(mgr().variable_num());
   for (ymuint i = 0; i < mgr().variable_num(); ++ i) {
@@ -227,7 +235,7 @@ TEST_F(CubeTest, print3)
   }
 
   ostringstream tmp;
-  cube->print(tmp, varname_list);
+  cube.print(tmp, varname_list);
 
   EXPECT_EQ( string("x0 x10'"), tmp.str() );
 }
@@ -245,8 +253,8 @@ TEST_F(CubeTest2, print1)
 TEST_F(CubeTest2, print2)
 {
   BfoCube* cube = mgr().new_cube();
-  cube->set_literal(0, kBfoLitP);
-  cube->set_literal(10, kBfoLitN);
+  cube.set_literal(0, kBfoPolP);
+  cube.set_literal(10, kBfoPolN);
 
   ostringstream tmp;
   tmp << cube;
@@ -257,8 +265,8 @@ TEST_F(CubeTest2, print2)
 TEST_F(CubeTest2, print3)
 {
   BfoCube* cube = mgr().new_cube();
-  cube->set_literal(30, kBfoLitP);
-  cube->set_literal(60, kBfoLitN);
+  cube.set_literal(30, kBfoPolP);
+  cube.set_literal(60, kBfoPolN);
 
   ostringstream tmp;
   tmp << cube;
@@ -268,8 +276,8 @@ TEST_F(CubeTest2, print3)
 TEST_F(CubeTest2, print4)
 {
   BfoCube* cube = mgr().new_cube();
-  cube->set_literal(30, kBfoLitP);
-  cube->set_literal(60, kBfoLitN);
+  cube.set_literal(30, kBfoPolP);
+  cube.set_literal(60, kBfoPolN);
 
   vector<string> varname_list(mgr().variable_num());
   for (ymuint i = 0; i < mgr().variable_num(); ++ i) {
@@ -279,9 +287,9 @@ TEST_F(CubeTest2, print4)
   }
 
   ostringstream tmp;
-  cube->print(tmp, varname_list);
+  cube.print(tmp, varname_list);
 
   EXPECT_EQ( string("x30 x60'"), tmp.str() );
 }
-
+#endif
 END_NAMESPACE_YM_BFO

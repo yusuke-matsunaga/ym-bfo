@@ -54,6 +54,8 @@ target_link_libraries ( CoverTest
   ${GTEST_BOTH_LIBRARIES}
   )
 
+if ( 0 )
+
 add_executable ( MgrTest
   MgrTest.cc
   $<TARGET_OBJECTS:ym_common_d>
@@ -69,6 +71,7 @@ target_link_libraries ( MgrTest
   pthread
   ${GTEST_BOTH_LIBRARIES}
   )
+endif ( 0 )
 
 add_test ( BfoTest
   CubeTest

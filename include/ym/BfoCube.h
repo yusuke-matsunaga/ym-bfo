@@ -169,6 +169,24 @@ compare(const BfoCube& left,
 	const BfoCube& right);
 
 /// @relates BfoCube
+/// @brief BfoCubeの比較演算子(EQ)
+/// @param[in] left, right オペランド
+/// @retval true  left == right
+/// @retval false left != right
+bool
+operator==(const BfoCube& left,
+	   const BfoCube& right);
+
+/// @relates BfoCube
+/// @brief BfoCubeの比較演算子(NE)
+/// @param[in] left, right オペランド
+/// @retval true  left != right
+/// @retval false left == right
+bool
+operator!=(const BfoCube& left,
+	   const BfoCube& right);
+
+/// @relates BfoCube
 /// @brief BfoCubeの比較演算子(LT)
 /// @param[in] left, right オペランド
 /// @retval true  left < right
@@ -231,11 +249,7 @@ inline
 BfoPol
 BfoCube::literal(ymuint pos) const
 {
-  ASSERT_COND( pos < variable_num() );
-
-  ymuint blk = BfoMgr::block_pos(pos);
-  ymuint sft = BfoMgr::shift_num(pos);
-  return static_cast<BfoPol>((mBody[blk] >> sft) & 3ULL);
+  return mgr().literal(mBody, 0, pos);
 }
 
 #if 0
@@ -267,6 +281,32 @@ operator&(const BfoCube& left,
 	  const BfoCube& right)
 {
   return BfoCube(left).operator&=(right);
+}
+
+// @relates BfoCube
+// @brief BfoCubeの比較演算子(EQ)
+// @param[in] left, right オペランド
+// @retval true  left == right
+// @retval false left != right
+inline
+bool
+operator==(const BfoCube& left,
+	   const BfoCube& right)
+{
+  return compare(left, right) == 0;
+}
+
+// @relates BfoCube
+// @brief BfoCubeの比較演算子(NE)
+// @param[in] left, right オペランド
+// @retval true  left != right
+// @retval false left == right
+inline
+bool
+operator!=(const BfoCube& left,
+	   const BfoCube& right)
+{
+  return compare(left, right) != 0;
 }
 
 // @brief BfoCubeの比較演算子(LT)
