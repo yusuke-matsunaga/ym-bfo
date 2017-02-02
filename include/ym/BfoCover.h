@@ -406,7 +406,7 @@ BfoCover::operator+(const BfoCover& right) const
   ymuint nc2 = right.cube_num();
   ymuint cap = get_capacity(nc1 + nc2);
   ymuint64* body = mgr().new_body(cap);
-  ymuint nc = mgr().make_sum(body, nc1, mBody, nc2, right.mBody);
+  ymuint nc = mgr().sum(body, nc1, mBody, nc2, right.mBody);
 
   return BfoCover(mgr(), nc, cap, body);
 }
@@ -425,7 +425,7 @@ BfoCover::operator+=(const BfoCover& right)
   ymuint old_cap = mCubeCap;
   ymuint64* old_body = mBody;
   resize(nc1 + nc2);
-  mCubeNum = mgr().make_sum(mBody, nc1, old_body, nc2, right.mBody);
+  mCubeNum = mgr().sum(mBody, nc1, old_body, nc2, right.mBody);
   if ( old_body != mBody ) {
     mgr().delete_body(old_body, old_cap);
   }
@@ -446,7 +446,7 @@ BfoCover::operator-(const BfoCover& right) const
   ymuint nc2 = right.cube_num();
   ymuint cap = get_capacity(nc1);
   ymuint64* body = mgr().new_body(cap);
-  ymuint nc = mgr().make_diff(body, nc1, mBody, nc2, right.mBody);
+  ymuint nc = mgr().diff(body, nc1, mBody, nc2, right.mBody);
 
   return BfoCover(mgr(), nc, cap, body);
 }
@@ -463,7 +463,7 @@ BfoCover::operator-=(const BfoCover& right)
   ymuint nc1 = cube_num();
   ymuint nc2 = right.cube_num();
   // 結果のキューブ数は減るだけなのでキューブ容量の変更はしない．
-  mCubeNum = mgr().make_diff(mBody, nc1, mBody, nc2, right.mBody);
+  mCubeNum = mgr().diff(mBody, nc1, mBody, nc2, right.mBody);
 
   return *this;
 }
@@ -481,7 +481,7 @@ BfoCover::operator*(const BfoCover& right) const
   ymuint nc2 = right.cube_num();
   ymuint cap = get_capacity(nc1 * nc2);
   ymuint64* body = mgr().new_body(cap);
-  ymuint nc = mgr().make_product(body, nc1, mBody, nc2, right.mBody);
+  ymuint nc = mgr().product(body, nc1, mBody, nc2, right.mBody);
 
   return BfoCover(mgr(), nc, cap, body);
 }
@@ -500,7 +500,7 @@ BfoCover::operator*=(const BfoCover& right)
   ymuint old_cap = mCubeCap;
   ymuint64* old_body = mBody;
   resize(nc1 * nc2);
-  mCubeNum = mgr().make_product(mBody, nc1, old_body, nc2, right.mBody);
+  mCubeNum = mgr().product(mBody, nc1, old_body, nc2, right.mBody);
   if ( old_body != mBody ) {
     mgr().delete_body(old_body, old_cap);
   }
@@ -521,7 +521,7 @@ BfoCover::operator/(const BfoCover& right) const
   ymuint nc2 = right.cube_num();
   ymuint cap = get_capacity(nc1 / nc2);
   ymuint64* body = mgr().new_body(cap);
-  ymuint nc = mgr().make_division(body, nc1, mBody, nc2, right.mBody);
+  ymuint nc = mgr().division(body, nc1, mBody, nc2, right.mBody);
 
   return BfoCover(mgr(), nc, cap, body);
 }
@@ -538,7 +538,7 @@ BfoCover::operator/=(const BfoCover& right)
   ymuint nc1 = cube_num();
   ymuint nc2 = right.cube_num();
   // 結果のキューブ数は減るだけなのでキューブ容量は変更しない．
-  mCubeNum = mgr().make_division(mBody, nc1, mBody, nc2, right.mBody);
+  mCubeNum = mgr().division(mBody, nc1, mBody, nc2, right.mBody);
 
   return *this;
 }
@@ -555,7 +555,7 @@ BfoCover::operator/(const BfoCube& cube) const
   ymuint nc1 = cube_num();
   ymuint cap = get_capacity(nc1);
   ymuint64* body = mgr().new_body(cap);
-  ymuint nc = mgr().make_division(body, nc1, mBody, 1, cube.mBody);
+  ymuint nc = mgr().division(body, nc1, mBody, 1, cube.mBody);
 
   return BfoCover(mgr(), nc, cap, body);
 }
@@ -571,7 +571,7 @@ BfoCover::operator/=(const BfoCube& cube)
 
   ymuint nc1 = cube_num();
   // 結果のキューブ数は減るだけなのでキューブ容量は変更しない．
-  mCubeNum = mgr().make_division(mBody, nc1, mBody, 1, cube.mBody);
+  mCubeNum = mgr().division(mBody, nc1, mBody, 1, cube.mBody);
 
   return *this;
 }
@@ -586,7 +586,7 @@ BfoCover::operator/(BfoLiteral lit) const
   ymuint nc1 = cube_num();
   ymuint cap = get_capacity(nc1);
   ymuint64* body = mgr().new_body(cap);
-  ymuint nc = mgr().make_division(body, nc1, mBody, lit);
+  ymuint nc = mgr().division(body, nc1, mBody, lit);
 
   return BfoCover(mgr(), nc, cap, body);
 }
@@ -600,7 +600,7 @@ BfoCover::operator/=(BfoLiteral lit)
 {
   ymuint nc1 = cube_num();
   // 結果のキューブ数は減るだけなのでキューブ容量は変更しない．
-  mCubeNum = mgr().make_division(mBody, nc1, mBody, lit);
+  mCubeNum = mgr().division(mBody, nc1, mBody, lit);
 
   return *this;
 }

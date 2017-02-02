@@ -104,11 +104,11 @@ public:
   /// dst_bv には十分な容量があると仮定する．<br>
   /// dst_bv == bv1 の場合もあり得る．<br>
   ymuint
-  make_sum(ymuint64* dst_bv,
-	   ymuint nc1,
-	   const ymuint64* bv1,
-	   ymuint nc2,
-	   const ymuint64* bv2);
+  sum(ymuint64* dst_bv,
+      ymuint nc1,
+      const ymuint64* bv1,
+      ymuint nc2,
+      const ymuint64* bv2);
 
   /// @brief 2つのカバーの差分を計算する．
   /// @param[in] dst_bv 結果を格納するビットベクタ
@@ -118,11 +118,11 @@ public:
   /// @param[in] bv2 2つめのカバーを表すビットベクタ
   /// @return 結果のキューブ数を返す．
   ymuint
-  make_diff(ymuint64* dst_bv,
-	    ymuint nc1,
-	    const ymuint64* bv1,
-	    ymuint nc2,
-	    const ymuint64* bv2);
+  diff(ymuint64* dst_bv,
+       ymuint nc1,
+       const ymuint64* bv1,
+       ymuint nc2,
+       const ymuint64* bv2);
 
   /// @brief 2つのカバーの論理積を計算する．
   /// @param[in] dst_bv 結果を格納するビットベクタ
@@ -132,11 +132,11 @@ public:
   /// @param[in] bv2 2つめのカバーを表すビットベクタ
   /// @return 結果のキューブ数を返す．
   ymuint
-  make_product(ymuint64* dst_bv,
-	       ymuint nc1,
-	       const ymuint64* bv1,
-	       ymuint nc2,
-	       const ymuint64* bv2);
+  product(ymuint64* dst_bv,
+	  ymuint nc1,
+	  const ymuint64* bv1,
+	  ymuint nc2,
+	  const ymuint64* bv2);
 
   /// @brief カバーの代数的除算を行う．
   /// @param[in] dst_bv 結果を格納するビットベクタ
@@ -146,23 +146,11 @@ public:
   /// @param[in] bv2 2つめのカバー(除数)を表すビットベクタ
   /// @return 結果のキューブ数を返す．
   ymuint
-  make_division(ymuint64* dst_bv,
-		ymuint nc1,
-		const ymuint64* bv1,
-		ymuint nc2,
-		const ymuint64* bv2);
-
-#if 0
-  /// @brief カバーをキューブで割る(コファクター演算)．
-  /// @param[in] nc1 カバーのキューブ数
-  /// @param[in] bv1 カバーを表すビットベクタ
-  /// @param[in] bv2 キューブを表すビットベクタ
-  /// @return 結果のカバーを返す．
-  BfoCover
-  make_division(ymuint nc1,
-		const ymuint64* bv1,
-		const ymuint64* bv2);
-#endif
+  division(ymuint64* dst_bv,
+	   ymuint nc1,
+	   const ymuint64* bv1,
+	   ymuint nc2,
+	   const ymuint64* bv2);
 
   /// @brief カバーをリテラルで割る(コファクター演算)．
   /// @param[in] dst_bv 結果を格納するビットベクタ
@@ -171,10 +159,10 @@ public:
   /// @param[in] lit 対象のリテラル
   /// @return 結果のキューブ数を返す．
   ymuint
-  make_division(ymuint64* dst_bv,
-		ymuint nc1,
-		const ymuint64* bv1,
-		BfoLiteral lit);
+  division(ymuint64* dst_bv,
+	   ymuint nc1,
+	   const ymuint64* bv1,
+	   BfoLiteral lit);
 
   /// @brief カバー中のすべてのキューブの共通部分を求める．
   /// @param[in] dst_bv 結果を格納するビットベクタ
@@ -196,6 +184,14 @@ public:
 	     ymuint cube_num,
 	     const ymuint64* src_bv);
 
+
+public:
+  //////////////////////////////////////////////////////////////////////
+  // キューブに対する処理
+  // 基本的にはキューブはビットベクタの先頭アドレスとキューブ位置で表す．
+  // キューブのサイズ(変数の個数に依存)によってキューブの開始アドレスは変化する．
+  //////////////////////////////////////////////////////////////////////
+
   /// @brief キューブ(を表すビットベクタ)の比較を行う．
   /// @param[in] bv1 1つめのカバーを表すビットベクタ
   /// @param[in] pos1 1つめのキューブ番号
@@ -205,10 +201,10 @@ public:
   /// @retval  0 bv1 == bv2
   /// @retval  1 bv1 >  bv2
   int
-  compare(const ymuint64* bv1,
-	  ymuint pos1,
-	  const ymuint64* bv2,
-	  ymuint pos2);
+  cube_compare(const ymuint64* bv1,
+	       ymuint pos1,
+	       const ymuint64* bv2,
+	       ymuint pos2);
 
   /// @brief 2つのキューブの積が空でない時 true を返す．
   /// @param[in] bv1 1つめのカバーを表すビットベクタ
@@ -216,10 +212,10 @@ public:
   /// @param[in] bv2 2つめのカバーを表すビットベクタ
   /// @param[in] pos2 2つめのキューブ番号
   bool
-  check_product(const ymuint64* bv1,
-		ymuint pos1,
-		const ymuint64* bv2,
-		ymuint pos2);
+  cube_check_product(const ymuint64* bv1,
+		     ymuint pos1,
+		     const ymuint64* bv2,
+		     ymuint pos2);
 
   /// @brief 一方のキューブが他方のキューブに含まれているか調べる．
   /// @param[in] bv1 1つめのカバーを表すビットベクタ
@@ -228,10 +224,10 @@ public:
   /// @param[in] pos2 2つめのキューブ番号
   /// @return 1つめのキューブが2つめのキューブ に含まれていたら true を返す．
   bool
-  check_containment(const ymuint64* bv1,
-		    ymuint pos1,
-		    const ymuint64* bv2,
-		    ymuint pos2);
+  cube_check_containment(const ymuint64* bv1,
+			 ymuint pos1,
+			 const ymuint64* bv2,
+			 ymuint pos2);
 
   /// @brief ２つのキューブに共通なリテラルがあれば true を返す．
   /// @param[in] bv1 1つめのカバーを表すビットベクタ
@@ -240,17 +236,17 @@ public:
   /// @param[in] pos2 2つめのキューブ番号
   /// @return ２つのキューブに共通なリテラルがあれば true を返す．
   bool
-  check_intersect(const ymuint64* bv1,
-		  ymuint pos1,
-		  const ymuint64* bv2,
-		  ymuint pos2);
+  cube_check_intersect(const ymuint64* bv1,
+		       ymuint pos1,
+		       const ymuint64* bv2,
+		       ymuint pos2);
 
   /// @brief リテラルの集合からキューブを表すビットベクタにセットする．
   /// @param[in] dst_bv コピー先のビットベクタ
   /// @param[in] dst_pos コピー先のキューブ番号
   /// @param[in] lit_list リテラルのリスト
   void
-  set_cube(ymuint64* dst_bv,
+  cube_set(ymuint64* dst_bv,
 	   ymuint dst_pos,
 	   const vector<BfoLiteral>& lit_list);
 

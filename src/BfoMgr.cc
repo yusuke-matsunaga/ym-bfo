@@ -162,13 +162,13 @@ BfoMgr::delete_body(ymuint64* p,
 // dst_bv には十分な容量があると仮定する．<br>
 // dst_bv == bv1 の場合もあり得る．<br>
 ymuint
-BfoMgr::make_sum(ymuint64* dst_bv,
-		 ymuint nc1,
-		 const ymuint64* bv1,
-		 ymuint nc2,
-		 const ymuint64* bv2)
+BfoMgr::sum(ymuint64* dst_bv,
+	    ymuint nc1,
+	    const ymuint64* bv1,
+	    ymuint nc2,
+	    const ymuint64* bv2)
 {
-  // dst_bv == bv1 の時は bv1 のコピーを作る．
+  /// dst_bv == bv1 の時は bv1 のコピーを作る．
   resize_buff(nc1);
   cover_copy(mTmpBuff, nc1, bv1);
   bv1 = mTmpBuff;
@@ -177,7 +177,7 @@ BfoMgr::make_sum(ymuint64* dst_bv,
   ymuint rpos2 = 0;
   ymuint wpos = 0;
   while ( rpos1 < nc1 && rpos2 < nc2 ) {
-    int res = compare(bv1, rpos1, bv2, rpos2);
+    int res = cube_compare(bv1, rpos1, bv2, rpos2);
     if ( res < 0 ) {
       cube_copy(dst_bv, wpos, bv1, rpos1);
       ++ rpos1;
@@ -215,17 +215,17 @@ BfoMgr::make_sum(ymuint64* dst_bv,
 // @param[in] bv2 2つめのカバーを表すビットベクタ
 // @return 結果のキューブ数を返す．
 ymuint
-BfoMgr::make_diff(ymuint64* dst_bv,
-		  ymuint nc1,
-		  const ymuint64* bv1,
-		  ymuint nc2,
-		  const ymuint64* bv2)
+BfoMgr::diff(ymuint64* dst_bv,
+	     ymuint nc1,
+	     const ymuint64* bv1,
+	     ymuint nc2,
+	     const ymuint64* bv2)
 {
   ymuint rpos1 = 0;
   ymuint rpos2 = 0;
   ymuint wpos = 0;
   while ( rpos1 < nc1 && rpos2 < nc2 ) {
-    int res = compare(bv1, rpos1, bv2, rpos2);
+    int res = cube_compare(bv1, rpos1, bv2, rpos2);
     if ( res < 0 ) {
       cube_copy(dst_bv, wpos, bv1, rpos1);
       ++ rpos1;
@@ -256,11 +256,11 @@ BfoMgr::make_diff(ymuint64* dst_bv,
 // @param[in] bv2 2つめのカバーを表すビットベクタ
 // @return 結果のキューブ数を返す．
 ymuint
-BfoMgr::make_product(ymuint64* dst_bv,
-		     ymuint nc1,
-		     const ymuint64* bv1,
-		     ymuint nc2,
-		     const ymuint64* bv2)
+BfoMgr::product(ymuint64* dst_bv,
+		ymuint nc1,
+		const ymuint64* bv1,
+		ymuint nc2,
+		const ymuint64* bv2)
 {
   // dst_bv == bv1 の時は bv1 のコピーを作る．
   resize_buff(nc1);
@@ -289,11 +289,11 @@ BfoMgr::make_product(ymuint64* dst_bv,
 // @param[in] bv2 2つめのカバー(除数)を表すビットベクタ
 // @return 結果のキューブ数を返す．
 ymuint
-BfoMgr::make_division(ymuint64* dst_bv,
-		      ymuint nc1,
-		      const ymuint64* bv1,
-		      ymuint nc2,
-		      const ymuint64* bv2)
+BfoMgr::division(ymuint64* dst_bv,
+		 ymuint nc1,
+		 const ymuint64* bv1,
+		 ymuint nc2,
+		 const ymuint64* bv2)
 {
   // 作業領域のビットベクタを確保する．
   // 大きさは nc1
@@ -329,7 +329,7 @@ BfoMgr::make_division(ymuint64* dst_bv,
     ymuint c = 1;
     vector<ymuint> tmp_list;
     for (ymuint i2 = i + 1; i2 < nc1; ++ i2) {
-      if ( compare(mTmpBuff, i, mTmpBuff, i2) == 0 ) {
+      if ( cube_compare(mTmpBuff, i, mTmpBuff, i2) == 0 ) {
 	++ c;
 	// i 番目のキューブと等しかったキューブ位置を記録する．
 	tmp_list.push_back(i2);
@@ -362,10 +362,10 @@ BfoMgr::make_division(ymuint64* dst_bv,
 // @param[in] lit 対象のリテラル
 // @return 結果のキューブ数を返す．
 ymuint
-BfoMgr::make_division(ymuint64* dst_bv,
-		      ymuint nc1,
-		      const ymuint64* bv1,
-		      BfoLiteral lit)
+BfoMgr::division(ymuint64* dst_bv,
+		 ymuint nc1,
+		 const ymuint64* bv1,
+		 BfoLiteral lit)
 {
   ymuint var_id = lit.varid();
   ymuint blk = block_pos(var_id);
@@ -428,10 +428,10 @@ BfoMgr::common_cube(ymuint64* dst_bv,
 // @retval  0 bv1 == bv2
 // @retval  1 bv1 >  bv2
 int
-BfoMgr::compare(const ymuint64* bv1,
-		ymuint pos1,
-		const ymuint64* bv2,
-		ymuint pos2)
+BfoMgr::cube_compare(const ymuint64* bv1,
+		     ymuint pos1,
+		     const ymuint64* bv2,
+		     ymuint pos2)
 {
   ymuint nb = cube_size();
   const ymuint64* _bv1 = bv1 + pos1 * nb;
@@ -454,10 +454,10 @@ BfoMgr::compare(const ymuint64* bv1,
 // @param[in] bv2 2つめのカバーを表すビットベクタ
 // @param[in] pos2 2つめのキューブ番号
 bool
-BfoMgr::check_product(const ymuint64* bv1,
-		      ymuint pos1,
-		      const ymuint64* bv2,
-		      ymuint pos2)
+BfoMgr::cube_check_product(const ymuint64* bv1,
+			   ymuint pos1,
+			   const ymuint64* bv2,
+			   ymuint pos2)
 {
   ymuint nb = cube_size();
   const ymuint64* _bv1 = bv1 + pos1 * nb;
@@ -483,10 +483,10 @@ BfoMgr::check_product(const ymuint64* bv1,
 // @param[in] pos2 2つめのキューブ番号
 // @return 1つめのキューブが2つめのキューブ に含まれていたら true を返す．
 bool
-BfoMgr::check_containment(const ymuint64* bv1,
-			  ymuint pos1,
-			  const ymuint64* bv2,
-			  ymuint pos2)
+BfoMgr::cube_check_containment(const ymuint64* bv1,
+			       ymuint pos1,
+			       const ymuint64* bv2,
+			       ymuint pos2)
 {
   ymuint nb = cube_size();
   const ymuint64* _bv1 = bv1 + pos1 * nb;
@@ -506,10 +506,10 @@ BfoMgr::check_containment(const ymuint64* bv1,
 // @param[in] pos2 2つめのキューブ番号
 // @return ２つのキューブに共通なリテラルがあれば true を返す．
 bool
-BfoMgr::check_intersect(const ymuint64* bv1,
-			ymuint pos1,
-			const ymuint64* bv2,
-			ymuint pos2)
+BfoMgr::cube_check_intersect(const ymuint64* bv1,
+			     ymuint pos1,
+			     const ymuint64* bv2,
+			     ymuint pos2)
 {
   ymuint nb = cube_size();
   const ymuint64* _bv1 = bv1 + pos1 * nb;
@@ -527,7 +527,7 @@ BfoMgr::check_intersect(const ymuint64* bv1,
 // @param[in] dst_pos コピー先のキューブ番号
 // @param[in] lit_list リテラルのリスト
 void
-BfoMgr::set_cube(ymuint64* dst_bv,
+BfoMgr::cube_set(ymuint64* dst_bv,
 		 ymuint dst_pos,
 		 const vector<BfoLiteral>& lit_list)
 {

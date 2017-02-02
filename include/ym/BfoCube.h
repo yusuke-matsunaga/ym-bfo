@@ -248,7 +248,7 @@ BfoCube::BfoCube(BfoMgr& mgr,
   mMgr(mgr),
   mBody(mMgr.new_body())
 {
-  mMgr.set_cube(mBody, 0, lit_list);
+  mMgr.cube_set(mBody, 0, lit_list);
 }
 
 // @brief コピーコンストラクタ
@@ -348,7 +348,7 @@ BfoCube::check_containment(const BfoCube& right) const
 {
   ASSERT_COND( variable_num() == right.variable_num() );
 
-  return mgr().check_containment(mBody, 0, right.mBody, 0);
+  return mgr().cube_check_containment(mBody, 0, right.mBody, 0);
 }
 
 // @brief 2つのキューブに共通なリテラルがあれば true を返す．
@@ -359,7 +359,7 @@ BfoCube::check_intersect(const BfoCube& right) const
 {
   ASSERT_COND( variable_num() == right.variable_num() );
 
-  return mgr().check_intersect(mBody, 0, right.mBody, 0);
+  return mgr().cube_check_intersect(mBody, 0, right.mBody, 0);
 }
 
 // @brief 論理積を計算し自身に代入する．
@@ -427,7 +427,7 @@ compare(const BfoCube& left,
 {
   ASSERT_COND( left.variable_num() == right.variable_num() );
 
-  return left.mgr().compare(left.mBody, 0, right.mBody, 0);
+  return left.mgr().cube_compare(left.mBody, 0, right.mBody, 0);
 }
 
 // @relates BfoCube
