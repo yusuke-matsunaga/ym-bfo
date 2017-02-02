@@ -91,6 +91,43 @@ TEST_F(CoverTest, constructor1)
   }
 }
 
+TEST_F(CoverTest, constructor1r)
+{
+  // キューブのリストからのコンストラクタのテスト
+  vector<BfoCube> cube_list;
+  {
+    vector<BfoLiteral> tmp_list;
+    tmp_list.push_back(BfoLiteral(0, true));
+    tmp_list.push_back(BfoLiteral(2, false));
+    cube_list.push_back(BfoCube(mgr(), tmp_list));
+  }
+  {
+    vector<BfoLiteral> tmp_list;
+    tmp_list.push_back(BfoLiteral(0, false));
+    tmp_list.push_back(BfoLiteral(1, false));
+    cube_list.push_back(BfoCube(mgr(), tmp_list));
+  }
+
+  BfoCover cover(mgr(), cube_list);
+
+  EXPECT_EQ( 2, cover.cube_num() );
+  EXPECT_EQ( mgr().variable_num(), cover.variable_num() );
+  EXPECT_EQ( 4, cover.literal_num() );
+
+  EXPECT_EQ( kBfoPolP, cover.literal(0, 0) );
+  EXPECT_EQ( kBfoPolP, cover.literal(0, 1) );
+  for (ymuint i = 2; i < mgr().variable_num(); ++ i) {
+    EXPECT_EQ( kBfoPolX, cover.literal(0, i) );
+  }
+
+  EXPECT_EQ( kBfoPolN, cover.literal(1, 0) );
+  EXPECT_EQ( kBfoPolX, cover.literal(1, 1) );
+  EXPECT_EQ( kBfoPolP, cover.literal(1, 2) );
+  for (ymuint i = 3; i < mgr().variable_num(); ++ i) {
+    EXPECT_EQ( kBfoPolX, cover.literal(1, i) );
+  }
+}
+
 TEST_F(CoverTest, constructor2)
 {
   // コピーコンストラクタのテスト
@@ -189,14 +226,14 @@ TEST_F(CoverTest, print3)
   vector<BfoCube> cube_list;
   {
     vector<BfoLiteral> tmp_list;
-    tmp_list.push_back(BfoLiteral(0, false));
-    tmp_list.push_back(BfoLiteral(1, true));
+    tmp_list.push_back(BfoLiteral(26, false));
+    tmp_list.push_back(BfoLiteral(27, true));
     cube_list.push_back(BfoCube(mgr(), tmp_list));
   }
   {
     vector<BfoLiteral> tmp_list;
-    tmp_list.push_back(BfoLiteral(0, true));
-    tmp_list.push_back(BfoLiteral(2, false));
+    tmp_list.push_back(BfoLiteral(26, true));
+    tmp_list.push_back(BfoLiteral(28, false));
     cube_list.push_back(BfoCube(mgr(), tmp_list));
   }
 
@@ -208,9 +245,8 @@ TEST_F(CoverTest, print3)
   EXPECT_EQ( string("ba bb' + ba' bc"), tmp.str() );
 }
 
-TEST_F(CoverTest, print4)
+TEST(CoverTest2, print4)
 {
-  // これ CoverTest を使う意味がない．
   vector<string> varname_list(30);
   for (ymuint i = 0; i < 30; ++ i) {
     ostringstream buf;

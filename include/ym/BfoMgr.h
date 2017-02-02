@@ -93,6 +93,17 @@ public:
   delete_body(ymuint64* p,
 	      ymuint cube_num = 1);
 
+
+public:
+  //////////////////////////////////////////////////////////////////////
+  // カバーを表すビットベクタに対する処理
+  // 基本的に最初に結果を格納するビットベクタのポインタを引数にとる．
+  // 結果のキューブ数は事前にはわからないので最大のキューブ数を計算し
+  // 領域を確保しておく必要がある．
+  // オペランドのカバーはビットベクタとキューブ数の組で表す．
+  // 結果のキューブ数を関数の戻り値として返す．
+  //////////////////////////////////////////////////////////////////////
+
   /// @brief 2つのカバーの論理和を計算する．
   /// @param[in] dst_bv 結果を格納するビットベクタ
   /// @param[in] nc1 1つめのカバーのキューブ数
@@ -176,13 +187,24 @@ public:
 	      const ymuint64* bv1);
 
   /// @brief カバー(を表すビットベクタ)のコピーを行う．
-  /// @param[in] dst_bv コピー先のビットベクタ
   /// @param[in] cube_num キューブ数
+  /// @param[in] dst_bv コピー先のビットベクタ
+  /// @param[in] dst_pos コピー先のキューブ位置
   /// @param[in] src_bv ソースのビットベクタ
+  /// @param[in] src_pos ソースのキューブ位置
   void
-  cover_copy(ymuint64* dst_bv,
-	     ymuint cube_num,
-	     const ymuint64* src_bv);
+  cover_copy(ymuint cube_num,
+	     ymuint64* dst_bv,
+	     ymuint dst_pos,
+	     const ymuint64* src_bv,
+	     ymuint src_pos);
+
+  /// @brief カバー(を表すビットベクタ)を整列する．
+  /// @param[in] cube_num キューブ数
+  /// @param[in] bv ビットベクタ
+  void
+  sort(ymuint cube_num,
+       ymuint64* bv);
 
 
 public:
@@ -318,6 +340,17 @@ private:
   // 内部で用いられる関数
   //////////////////////////////////////////////////////////////////////
 
+  /// @brief マージソートを行う下請け関数
+  /// @param[in] bv 対象のビットベクタ
+  /// @param[in] start 開始位置
+  /// @param[in] end 終了位置
+  ///
+  /// bv[start] - bv[end - 1] の領域をソートする．
+  void
+  _sort(ymuint64* bv,
+	ymuint start,
+	ymuint end);
+
   /// @brief ブロック位置を計算する．
   /// @param[in] var_id 変数番号
   static
@@ -333,6 +366,10 @@ private:
   /// @brief キューブ1つ分のブロックサイズを計算する．
   ymuint
   cube_size() const;
+
+  /// @brief mTmpBuff を初期化する．
+  void
+  init_buff();
 
   /// @brief mTmpBuff に必要な領域を確保する．
   /// @param[in] req_size 要求するキューブ数
@@ -397,6 +434,18 @@ BfoMgr::literal(const ymuint64* bv,
   ymuint blk = block_pos(var_id) + cube_size() * cube_id;
   ymuint sft = shift_num(var_id);
   return static_cast<BfoPol>((bv[blk] >> sft) & 3ULL);
+}
+
+// @brief カバー(を表すビットベクタ)を整列する．
+// @param[in] cube_num キューブ数
+// @param[in] bv ビットベクタ
+inline
+void
+BfoMgr::sort(ymuint cube_num,
+	     ymuint64* bv)
+{
+  // 下請け関数を呼ぶだけ
+  _sort(bv, 0, cube_num);
 }
 
 // @brief ブロック位置を計算する．

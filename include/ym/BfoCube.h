@@ -10,6 +10,7 @@
 
 
 #include "ym/bfo_nsdef.h"
+#include "ym/BfoLiteral.h"
 #include "ym/BfoMgr.h"
 
 
@@ -36,6 +37,14 @@ public:
   explicit
   BfoCube(BfoMgr& mgr,
 	  const vector<BfoLiteral>& lit_list = vector<BfoLiteral>());
+
+  /// @brief コンストラクタ
+  /// @param[in] mgr マネージャ
+  /// @param[in] lit リテラル
+  ///
+  /// 単一のリテラルからなるキューブを作る．
+  BfoCube(BfoMgr& mgr,
+	  BfoLiteral lit);
 
   /// @brief コピーコンストラクタ
   /// @param[in] src コピー元のオブジェクト
@@ -136,7 +145,7 @@ private:
   //////////////////////////////////////////////////////////////////////
 
   // マネージャ
-  BfoMgr& mMgr;
+  BfoMgr* mMgr;
 
   // 内容を表すビットベクタ
   ymuint64* mBody;
@@ -240,15 +249,32 @@ operator<<(ostream& s,
 //////////////////////////////////////////////////////////////////////
 
 // @brief コンストラクタ
-// @param[in] mgr ネージャ
+// @param[in] mgr マネージャ
 // @param[in] lit_list キューブを表すリテラルのリスト
 inline
 BfoCube::BfoCube(BfoMgr& mgr,
 		 const vector<BfoLiteral>& lit_list) :
-  mMgr(mgr),
-  mBody(mMgr.new_body())
+  mMgr(&mgr),
+  mBody(mMgr->new_body())
 {
-  mMgr.cube_set(mBody, 0, lit_list);
+  mMgr->cube_set(mBody, 0, lit_list);
+}
+
+// @brief コンストラクタ
+// @param[in] mgr マネージャ
+// @param[in] lit リテラル
+//
+// 単一のリテラルからなるキューブを作る．
+inline
+BfoCube::BfoCube(BfoMgr& mgr,
+		 BfoLiteral lit) :
+  mMgr(&mgr),
+  mBody(mMgr->new_body())
+{
+  // わざわざ vector<BfoLiteral> を作っているので
+  // あまり効率はよくなけど，BfoMgr に別の関数を
+  // 作るほどのことではないと判断した．
+  mMgr->cube_set(mBody, 0, vector<BfoLiteral>(1, lit));
 }
 
 // @brief コピーコンストラクタ
@@ -257,8 +283,8 @@ inline
 BfoCube::BfoCube(const BfoCube& src) :
   mMgr(src.mMgr)
 {
-  mBody = mMgr.new_body();
-  mMgr.cube_copy(mBody, 0, src.mBody, 0);
+  mBody = mMgr->new_body();
+  mMgr->cube_copy(mBody, 0, src.mBody, 0);
 }
 
 // @brief 内容を指定するコンストラクタ
@@ -269,7 +295,7 @@ BfoCube::BfoCube(const BfoCube& src) :
 inline
 BfoCube::BfoCube(BfoMgr& mgr,
 		 ymuint64* body) :
-  mMgr(mgr),
+  mMgr(&mgr),
   mBody(body)
 {
 }
@@ -284,14 +310,14 @@ BfoCube::operator=(const BfoCube& src)
   if ( &src != this ) {
     if ( &mMgr != &src.mMgr ) {
       // マネージャが異なっていたら mBody を作り直す．
-      mMgr.delete_body(mBody);
+      mMgr->delete_body(mBody);
       mMgr = src.mMgr;
-      mBody = mMgr.new_body();
+      mBody = mMgr->new_body();
     }
     else {
       // マネージャが同じなら mBody は使いまわす．
     }
-    mMgr.cube_copy(mBody, 0, src.mBody, 0);
+    mMgr->cube_copy(mBody, 0, src.mBody, 0);
   }
 
   return *this;
@@ -301,7 +327,7 @@ BfoCube::operator=(const BfoCube& src)
 inline
 BfoCube::~BfoCube()
 {
-  mMgr.delete_body(mBody);
+  mMgr->delete_body(mBody);
 }
 
 // @brief マネージャを返す．
@@ -309,7 +335,7 @@ inline
 BfoMgr&
 BfoCube::mgr() const
 {
-  return mMgr;
+  return *mMgr;
 }
 
 // @brief 変数の数を返す．
@@ -373,7 +399,10 @@ BfoCube::operator&=(const BfoCube& right)
 {
   ASSERT_COND( variable_num() == right.variable_num() );
 
-  mgr().cube_product(mBody, 0, mBody, 0, right.mBody, 0);
+  bool res = mgr().cube_product(mBody, 0, mBody, 0, right.mBody, 0);
+  if ( !res ) {
+    mgr().cube_clear(mBody, 0);
+  }
 
   return *this;
 }
@@ -400,7 +429,10 @@ BfoCube::operator/=(const BfoCube& right)
 {
   ASSERT_COND( variable_num() == right.variable_num() );
 
-  mgr().cube_cofactor(mBody, 0, mBody, 0, right.mBody, 0);
+  bool res = mgr().cube_cofactor(mBody, 0, mBody, 0, right.mBody, 0);
+  if ( !res ) {
+    mgr().cube_clear(mBody, 0);
+  }
 
   return *this;
 }

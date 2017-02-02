@@ -15,69 +15,118 @@
 
 BEGIN_NAMESPACE_YM_BFO
 
-class MgrTest :
-  public ::testing::Test
+TEST(MgrTest, constructor1)
 {
-public:
+  ymuint variable_num = 10;
 
-  /// @brief コンストラクタ
-  MgrTest() : mMgr(20) { }
+  BfoMgr mgr(variable_num);
 
+  EXPECT_EQ( variable_num, mgr.variable_num() );
+  EXPECT_EQ( string("a"), mgr.varname(0) );
+}
 
-public:
-  //////////////////////////////////////////////////////////////////////
-  // 外部インターフェイス
-  //////////////////////////////////////////////////////////////////////
-
-  /// @brief マネージャを返す．
-  BfoMgr&
-  mgr() { return mMgr; }
-
-
-private:
-  //////////////////////////////////////////////////////////////////////
-  // データメンバ
-  //////////////////////////////////////////////////////////////////////
-
-  // マネージャ
-  BfoMgr mMgr;
-
-};
-
-#if 0
-TEST_F(MgrTest, new_delete)
+TEST(MgrTest, constructor1big)
 {
-  for (ymuint i = 0; i < 10000000; ++ i) {
-    BfoCube cube;
+  ymuint variable_num = 100;
 
+  BfoMgr mgr(variable_num);
+
+  EXPECT_EQ( variable_num, mgr.variable_num() );
+  EXPECT_EQ( string("a"), mgr.varname(0) );
+  EXPECT_EQ( string("ba"), mgr.varname(26) );
+}
+
+TEST(MgrTest, constructor2)
+{
+  vector<string> varname_list;
+  varname_list.push_back("x0");
+  varname_list.push_back("x1");
+  varname_list.push_back("y0");
+  varname_list.push_back("y1");
+
+  BfoMgr mgr(varname_list);
+
+  EXPECT_EQ( varname_list.size(), mgr.variable_num() );
+  for (ymuint i = 0; i < varname_list.size(); ++ i) {
+    string varname = varname_list[i];
+    EXPECT_EQ( varname, mgr.varname(i) );
   }
 }
 
-TEST_F(MgrTest, make_sum)
+TEST(MgrTest, new_delete1)
 {
-  BfoCover cover1(mgr());
-  BfoCover cover2(mgr());
+  ymuint variable_num = 10;
 
-  BfoCube* cube1 = cover1.add_cube();
-  cube1->set_literal(0, kBfoLitP);
+  BfoMgr mgr(variable_num);
 
-  BfoCube* cube2 = cover1.add_cube();
-  cube2->set_literal(1, kBfoLitN);
-
-  BfoCube* cube3 = cover2.add_cube();
-  cube3->set_literal(0, kBfoLitP);
-
-  BfoCube* cube4 = cover2.add_cube();
-  cube4->set_literal(2, kBfoLitP);
-
-  BfoCover cover3(mgr());
-  mgr().make_sum(cover1, cover2, cover3);
-
-  ostringstream tmp;
-  tmp << cover3;
-
-  EXPECT_EQ( string("a + b' + c"), tmp.str() );
+  ymuint n = 1000;
+  vector<ymuint64*> body_list(1000);
+  for (ymuint i = 0; i < n; ++ i) {
+    ymuint64* body = mgr.new_body();
+    body_list[i] = body;
+  }
+  for (ymuint i = 0; i < n; ++ i) {
+    ymuint64* body = body_list[i];
+    mgr.delete_body(body);
+  }
 }
-#endif
+
+TEST(MgrTest, new_delete2)
+{
+  ymuint variable_num = 100;
+
+  BfoMgr mgr(variable_num);
+
+  ymuint n = 1000;
+  vector<ymuint64*> body_list(1000);
+  for (ymuint i = 0; i < n; ++ i) {
+    ymuint64* body = mgr.new_body();
+    body_list[i] = body;
+  }
+  for (ymuint i = 0; i < n; ++ i) {
+    ymuint64* body = body_list[i];
+    mgr.delete_body(body);
+  }
+}
+
+TEST(MgrTest, new_delete3)
+{
+  ymuint variable_num = 10;
+
+  BfoMgr mgr(variable_num);
+
+  ymuint n = 1000;
+  vector<ymuint64*> body_list(1000);
+  for (ymuint i = 0; i < n; ++ i) {
+    ymuint cube_num = i % 10;
+    ymuint64* body = mgr.new_body(cube_num);
+    body_list[i] = body;
+  }
+  for (ymuint i = 0; i < n; ++ i) {
+    ymuint cube_num = i % 10;
+    ymuint64* body = body_list[i];
+    mgr.delete_body(body, cube_num);
+  }
+}
+
+TEST(MgrTest, new_delete4)
+{
+  ymuint variable_num = 100;
+
+  BfoMgr mgr(variable_num);
+
+  ymuint n = 1000;
+  vector<ymuint64*> body_list(1000);
+  for (ymuint i = 0; i < n; ++ i) {
+    ymuint cube_num = i % 10;
+    ymuint64* body = mgr.new_body(cube_num);
+    body_list[i] = body;
+  }
+  for (ymuint i = 0; i < n; ++ i) {
+    ymuint cube_num = i % 10;
+    ymuint64* body = body_list[i];
+    mgr.delete_body(body, cube_num);
+  }
+}
 
 END_NAMESPACE_YM_BFO

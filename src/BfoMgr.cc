@@ -48,6 +48,8 @@ BfoMgr::BfoMgr(ymuint variable_num) :
   for (ymuint i = 0; i < mVarNum; ++ i) {
     mVarNameList[i] = _varname(i);
   }
+
+  init_buff();
 }
 
 // @brief コンストラクタ
@@ -58,11 +60,13 @@ BfoMgr::BfoMgr(const vector<string>& varname_list) :
   mVarNum(varname_list.size()),
   mVarNameList(varname_list)
 {
+  init_buff();
 }
 
 // @brief デストラクタ
 BfoMgr::~BfoMgr()
 {
+  delete_body(mTmpBuff, mTmpBuffSize);
 }
 
 BEGIN_NONAMESPACE
@@ -170,7 +174,7 @@ BfoMgr::sum(ymuint64* dst_bv,
 {
   /// dst_bv == bv1 の時は bv1 のコピーを作る．
   resize_buff(nc1);
-  cover_copy(mTmpBuff, nc1, bv1);
+  cover_copy(nc1, mTmpBuff, 0, bv1, 0);
   bv1 = mTmpBuff;
 
   ymuint rpos1 = 0;
@@ -264,7 +268,7 @@ BfoMgr::product(ymuint64* dst_bv,
 {
   // dst_bv == bv1 の時は bv1 のコピーを作る．
   resize_buff(nc1);
-  cover_copy(mTmpBuff, nc1, bv1);
+  cover_copy(nc1, mTmpBuff, 0, bv1, 0);
   bv1 = mTmpBuff;
 
   // 単純には答の積項数は2つの積項数の積だが
@@ -419,6 +423,72 @@ BfoMgr::common_cube(ymuint64* dst_bv,
   }
 }
 
+// @brief マージソートを行う下請け関数
+// @param[in] bv 対象のビットベクタ
+// @param[in] start 開始位置
+// @param[in] end 終了位置
+//
+// bv[start] - bv[end - 1] の領域をソートする．
+void
+BfoMgr::_sort(ymuint64* bv,
+	      ymuint start,
+	      ymuint end)
+{
+  ymuint n = end - start;
+  if ( n <= 1 ) {
+    return;
+  }
+  if ( n == 2 ) {
+    if ( cube_compare(bv, 0, bv, 1) < 0 ) {
+      // 交換する．
+      resize_buff(1);
+      cube_copy(mTmpBuff, 0, bv, 0);
+      cube_copy(bv, 0, bv, 1);
+      cube_copy(bv, 1, mTmpBuff, 0);
+    }
+    return;
+  }
+
+  // 半分に分割してそれぞれソートする．
+  ymuint hn = (n + 1) / 2;
+  ymuint start1 = start;
+  ymuint end1 = start + hn;
+  ymuint start2 = end1;
+  ymuint end2 = end;
+  _sort(bv, start1, end1);
+  _sort(bv, start2, end2);
+
+  // マージする．
+  // 前半部分を一旦 mTmpBuff にコピーする．
+  resize_buff(hn);
+  cover_copy(hn, mTmpBuff, 0, bv, start1);
+  ymuint rpos1 = 0;
+  ymuint rpos2 = start2;
+  ymuint wpos = start1;
+  while ( rpos1 < hn && rpos2 < end2 ) {
+    int comp_res = cube_compare(mTmpBuff, rpos1, bv, rpos2);
+    if ( comp_res > 0 ) {
+      cube_copy(bv, wpos, mTmpBuff, rpos1);
+      ++ wpos;
+      ++ rpos1;
+    }
+    else if ( comp_res < 0 ) {
+      cube_copy(bv, wpos, bv, rpos2);
+      ++ wpos;
+      ++ rpos2;
+    }
+    else {
+      // 重複したキューブはエラー
+      ASSERT_NOT_REACHED;
+    }
+  }
+  for ( ; rpos1 < hn; ++ rpos1, ++ wpos) {
+    cube_copy(bv, wpos, mTmpBuff, rpos1);
+  }
+  // 後半部分が残っている時はそのままでいいはず．
+  ASSERT_COND( rpos2 == wpos );
+}
+
 // @brief キューブ(を表すビットベクタ)の比較を行う．
 // @param[in] bv1 1つめのカバーを表すビットベクタ
 // @param[in] pos1 1つめのキューブ番号
@@ -436,12 +506,13 @@ BfoMgr::cube_compare(const ymuint64* bv1,
   ymuint nb = cube_size();
   const ymuint64* _bv1 = bv1 + pos1 * nb;
   const ymuint64* _bv2 = bv2 + pos2 * nb;
-  for (ymuint i = 0; i < nb; ++ i, ++ bv1, ++ _bv2) {
-    int res = *_bv1 - *_bv2;
-    if ( res < 0 ) {
+  for (ymuint i = 0; i < nb; ++ i, ++ _bv1, ++ _bv2) {
+    ymuint64 pat1 = *_bv1;
+    ymuint64 pat2 = *_bv2;
+    if ( pat1 < pat2 ) {
       return -1;
     }
-    else if ( res > 0 ) {
+    else if ( pat1 > pat2 ) {
       return 1;
     }
   }
@@ -550,18 +621,24 @@ BfoMgr::cube_set(ymuint64* dst_bv,
 }
 
 // @brief カバー(を表すビットベクタ)のコピーを行う．
-// @param[in] dst_bv コピー先のビットベクタ
 // @param[in] cube_num キューブ数
+// @param[in] dst_bv コピー先のビットベクタ
+// @param[in] dst_pos コピー先のキューブ位置
 // @param[in] src_bv ソースのビットベクタ
+// @param[in] src_pos ソースのキューブ位置
 void
-BfoMgr::cover_copy(ymuint64* dst_bv,
-		   ymuint cube_num,
-		   const ymuint64* src_bv)
+BfoMgr::cover_copy(ymuint cube_num,
+		   ymuint64* dst_bv,
+		   ymuint dst_pos,
+		   const ymuint64* src_bv,
+		   ymuint src_pos)
 {
   ymuint nb = cube_size();
   ymuint n = nb * cube_num;
-  for (ymuint i = 0; i < n; ++ i, ++ dst_bv, ++ src_bv) {
-    *dst_bv = *src_bv;
+  ymuint64* dst = dst_bv + dst_pos * nb;
+  const ymuint64* src = src_bv + src_pos * nb;
+  for (ymuint i = 0; i < n; ++ i, ++ dst, ++ src) {
+    *dst = *src;
   }
 }
 
@@ -692,6 +769,15 @@ BfoMgr::print(ostream& s,
       }
     }
   }
+}
+
+// @brief mTmpBuff を初期化する．
+void
+BfoMgr::init_buff()
+{
+  // とりあえず 128 を初期値とする．
+  mTmpBuffSize = 128;
+  mTmpBuff = new_body(mTmpBuffSize);
 }
 
 // @brief mTmpBuff に必要な領域を確保する．
