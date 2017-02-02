@@ -56,12 +56,20 @@ TEST_F(CoverTest, nullcover)
 
 TEST_F(CoverTest, constructor1)
 {
-  // キューブのリスト(リテラルのリストのリスト)からのコンストラクタのテスト
-  vector<vector<BfoLiteral> > cube_list(2);
-  cube_list[0].push_back(BfoLiteral(0, false));
-  cube_list[0].push_back(BfoLiteral(1, false));
-  cube_list[1].push_back(BfoLiteral(0, true));
-  cube_list[1].push_back(BfoLiteral(2, false));
+  // キューブのリストからのコンストラクタのテスト
+  vector<BfoCube> cube_list;
+  {
+    vector<BfoLiteral> tmp_list;
+    tmp_list.push_back(BfoLiteral(0, false));
+    tmp_list.push_back(BfoLiteral(1, false));
+    cube_list.push_back(BfoCube(mgr(), tmp_list));
+  }
+  {
+    vector<BfoLiteral> tmp_list;
+    tmp_list.push_back(BfoLiteral(0, true));
+    tmp_list.push_back(BfoLiteral(2, false));
+    cube_list.push_back(BfoCube(mgr(), tmp_list));
+  }
 
   BfoCover cover(mgr(), cube_list);
 
@@ -86,12 +94,19 @@ TEST_F(CoverTest, constructor1)
 TEST_F(CoverTest, constructor2)
 {
   // コピーコンストラクタのテスト
-  vector<vector<BfoLiteral> > cube_list(2);
-  cube_list[0].push_back(BfoLiteral(0, false));
-  cube_list[0].push_back(BfoLiteral(1, false));
-  cube_list[1].push_back(BfoLiteral(0, true));
-  cube_list[1].push_back(BfoLiteral(2, false));
-
+  vector<BfoCube> cube_list;
+  {
+    vector<BfoLiteral> tmp_list;
+    tmp_list.push_back(BfoLiteral(0, false));
+    tmp_list.push_back(BfoLiteral(1, false));
+    cube_list.push_back(BfoCube(mgr(), tmp_list));
+  }
+  {
+    vector<BfoLiteral> tmp_list;
+    tmp_list.push_back(BfoLiteral(0, true));
+    tmp_list.push_back(BfoLiteral(2, false));
+    cube_list.push_back(BfoCube(mgr(), tmp_list));
+  }
   BfoCover src_cover(mgr(), cube_list);
 
   BfoCover cover(src_cover);
@@ -147,11 +162,19 @@ TEST_F(CoverTest, print1)
 
 TEST_F(CoverTest, print2)
 {
-  vector<vector<BfoLiteral> > cube_list(2);
-  cube_list[0].push_back(BfoLiteral(0, false));
-  cube_list[0].push_back(BfoLiteral(1, true));
-  cube_list[1].push_back(BfoLiteral(0, true));
-  cube_list[1].push_back(BfoLiteral(2, false));
+  vector<BfoCube> cube_list;
+  {
+    vector<BfoLiteral> tmp_list;
+    tmp_list.push_back(BfoLiteral(0, false));
+    tmp_list.push_back(BfoLiteral(1, true));
+    cube_list.push_back(BfoCube(mgr(), tmp_list));
+  }
+  {
+    vector<BfoLiteral> tmp_list;
+    tmp_list.push_back(BfoLiteral(0, true));
+    tmp_list.push_back(BfoLiteral(2, false));
+    cube_list.push_back(BfoCube(mgr(), tmp_list));
+  }
 
   BfoCover cover(mgr(), cube_list);
 
@@ -163,11 +186,19 @@ TEST_F(CoverTest, print2)
 
 TEST_F(CoverTest, print3)
 {
-  vector<vector<BfoLiteral> > cube_list(2);
-  cube_list[0].push_back(BfoLiteral(26, false));
-  cube_list[0].push_back(BfoLiteral(27, true));
-  cube_list[1].push_back(BfoLiteral(26, true));
-  cube_list[1].push_back(BfoLiteral(28, false));
+  vector<BfoCube> cube_list;
+  {
+    vector<BfoLiteral> tmp_list;
+    tmp_list.push_back(BfoLiteral(0, false));
+    tmp_list.push_back(BfoLiteral(1, true));
+    cube_list.push_back(BfoCube(mgr(), tmp_list));
+  }
+  {
+    vector<BfoLiteral> tmp_list;
+    tmp_list.push_back(BfoLiteral(0, true));
+    tmp_list.push_back(BfoLiteral(2, false));
+    cube_list.push_back(BfoCube(mgr(), tmp_list));
+  }
 
   BfoCover cover(mgr(), cube_list);
 
@@ -188,11 +219,19 @@ TEST_F(CoverTest, print4)
   }
   BfoMgr mgr(varname_list);
 
-  vector<vector<BfoLiteral> > cube_list(2);
-  cube_list[0].push_back(BfoLiteral(0, false));
-  cube_list[0].push_back(BfoLiteral(1, true));
-  cube_list[1].push_back(BfoLiteral(0, true));
-  cube_list[1].push_back(BfoLiteral(2, false));
+  vector<BfoCube> cube_list;
+  {
+    vector<BfoLiteral> tmp_list;
+    tmp_list.push_back(BfoLiteral(0, false));
+    tmp_list.push_back(BfoLiteral(1, true));
+    cube_list.push_back(BfoCube(mgr, tmp_list));
+  }
+  {
+    vector<BfoLiteral> tmp_list;
+    tmp_list.push_back(BfoLiteral(0, true));
+    tmp_list.push_back(BfoLiteral(2, false));
+    cube_list.push_back(BfoCube(mgr, tmp_list));
+  }
 
   BfoCover cover(mgr, cube_list);
 

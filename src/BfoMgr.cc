@@ -152,118 +152,84 @@ BfoMgr::delete_body(ymuint64* p,
 }
 
 // @brief 2つのカバーの論理和を計算する．
+// @param[in] dst_bv 結果を格納するビットベクタ
 // @param[in] nc1 1つめのカバーのキューブ数
 // @param[in] bv1 1つめのカバーを表すビットベクタ
 // @param[in] nc2 2つめのカバーのキューブ数
 // @param[in] bv2 2つめのカバーを表すビットベクタ
-// @return 結果のカバーを表すビットベクタを返す．
-BfoCover
-BfoMgr::make_sum(ymuint nc1,
+// @return 結果のキューブ数を返す．
+//
+// dst_bv には十分な容量があると仮定する．<br>
+// dst_bv == bv1 の場合もあり得る．<br>
+ymuint
+BfoMgr::make_sum(ymuint64* dst_bv,
+		 ymuint nc1,
 		 const ymuint64* bv1,
 		 ymuint nc2,
 		 const ymuint64* bv2)
 {
-  // 最初は結果のキューブ数を数えるだけ．
-  ymuint nans = 0;
-  ymuint nb = cube_size();
+  // dst_bv == bv1 の時は bv1 のコピーを作る．
+  resize_buff(nc1);
+  cover_copy(mTmpBuff, nc1, bv1);
+  bv1 = mTmpBuff;
+
   ymuint rpos1 = 0;
   ymuint rpos2 = 0;
-  while ( rpos1 < nc1 && rpos2 < nc2 ) {
-    int res = compare(bv1, rpos1, bv2, rpos2);
-    if ( res < 0 ) {
-      ++ rpos1;
-    }
-    else if ( res > 0 ) {
-      ++ rpos2;
-    }
-    else {
-      ++ rpos1;
-      ++ rpos2;
-    }
-    ++ nans;
-  }
-  nans += (nc1 - rpos1);
-  nans += (nc2 - rpos2);
-
-  // 2回めは内容を設定してゆく．
-  ymuint64* cbody = new_body(nans);
-  rpos1 = 0;
-  rpos2 = 0;
   ymuint wpos = 0;
   while ( rpos1 < nc1 && rpos2 < nc2 ) {
     int res = compare(bv1, rpos1, bv2, rpos2);
     if ( res < 0 ) {
-      copy(cbody, wpos, bv1, rpos1);
+      cube_copy(dst_bv, wpos, bv1, rpos1);
       ++ rpos1;
     }
     else if ( res > 0 ) {
-      copy(cbody, wpos, bv2, rpos2);
+      cube_copy(dst_bv, wpos, bv2, rpos2);
       ++ rpos2;
     }
     else {
-      copy(cbody, wpos, bv1, rpos1);
+      cube_copy(dst_bv, wpos, bv1, rpos1);
       ++ rpos1;
       ++ rpos2;
     }
     ++ wpos;
   }
   while ( rpos1 < nc1 ) {
-    copy(cbody, wpos, bv1, rpos1);
+    cube_copy(dst_bv, wpos, bv1, rpos1);
     ++ rpos1;
     ++ wpos;
   }
   while ( rpos2 < nc2 ) {
-    copy(cbody, wpos, bv2, rpos2);
+    cube_copy(dst_bv, wpos, bv2, rpos2);
     ++ rpos2;
     ++ wpos;
   }
 
-  return BfoCover(*this, nans, cbody);
+  return wpos;
 }
 
 // @brief 2つのカバーの差分を計算する．
+// @param[in] dst_bv 結果を格納するビットベクタ
 // @param[in] nc1 1つめのカバーのキューブ数
 // @param[in] bv1 1つめのカバーを表すビットベクタ
 // @param[in] nc2 2つめのカバーのキューブ数
 // @param[in] bv2 2つめのカバーを表すビットベクタ
-// @return 結果のカバーを返す．
-BfoCover
-BfoMgr::make_diff(ymuint nc1,
+// @return 結果のキューブ数を返す．
+ymuint
+BfoMgr::make_diff(ymuint64* dst_bv,
+		  ymuint nc1,
 		  const ymuint64* bv1,
 		  ymuint nc2,
 		  const ymuint64* bv2)
 {
-  // 最初は結果のキューブ数を数えるだけ．
-  ymuint nans = 0;
-  ymuint nb = cube_size();
   ymuint rpos1 = 0;
   ymuint rpos2 = 0;
-  while ( rpos1 < nc1 && rpos2 < nc2 ) {
-    int res = compare(bv1, rpos1, bv2, rpos2);
-    if ( res < 0 ) {
-      ++ rpos1;
-      ++ nans;
-    }
-    else if ( res > 0 ) {
-      ++ rpos2;
-    }
-    else {
-      ++ rpos1;
-      ++ rpos2;
-    }
-  }
-  nans += (nc1 - rpos1);
-
-  // 2回めは内容を設定してゆく．
-  ymuint64* cbody = new_body(nans);
-  rpos1 = 0;
-  rpos2 = 0;
   ymuint wpos = 0;
   while ( rpos1 < nc1 && rpos2 < nc2 ) {
     int res = compare(bv1, rpos1, bv2, rpos2);
     if ( res < 0 ) {
-      copy(cbody, wpos, bv1, rpos1);
+      cube_copy(dst_bv, wpos, bv1, rpos1);
       ++ rpos1;
+      ++ wpos;
     }
     else if ( res > 0 ) {
       ++ rpos2;
@@ -272,78 +238,67 @@ BfoMgr::make_diff(ymuint nc1,
       ++ rpos1;
       ++ rpos2;
     }
-    ++ wpos;
   }
   while ( rpos1 < nc1 ) {
-    copy(cbody, wpos, bv1, rpos1);
+    cube_copy(dst_bv, wpos, bv1, rpos1);
     ++ rpos1;
     ++ wpos;
   }
-  ASSERT_COND( wpos == nans );
 
-  return BfoCover(*this, nans, cbody);
+  return wpos;
 }
 
 // @brief 2つのカバーの論理積を計算する．
+// @param[in] dst_bv 結果を格納するビットベクタ
 // @param[in] nc1 1つめのカバーのキューブ数
 // @param[in] bv1 1つめのカバーを表すビットベクタ
 // @param[in] nc2 2つめのカバーのキューブ数
 // @param[in] bv2 2つめのカバーを表すビットベクタ
-// @return 結果のカバーを返す．
-BfoCover
-BfoMgr::make_product(ymuint nc1,
+// @return 結果のキューブ数を返す．
+ymuint
+BfoMgr::make_product(ymuint64* dst_bv,
+		     ymuint nc1,
 		     const ymuint64* bv1,
 		     ymuint nc2,
 		     const ymuint64* bv2)
 {
+  // dst_bv == bv1 の時は bv1 のコピーを作る．
+  resize_buff(nc1);
+  cover_copy(mTmpBuff, nc1, bv1);
+  bv1 = mTmpBuff;
+
   // 単純には答の積項数は2つの積項数の積だが
   // 相反するリテラルを含む積は数えない．
-  ymuint nans = 0;
-  ymuint nb = cube_size();
-  for (ymuint rpos1 = 0; rpos1 < nc1; ++ rpos1) {
-    for (ymuint rpos2 = 0; rpos2 < nc2; ++ rpos2) {
-      if ( check_product(bv1, rpos1, bv2, rpos2) ) {
-	++ nans;
-      }
-    }
-  }
-
-  ymuint64* cbody = new_body(nans);
   ymuint wpos = 0;
   for (ymuint rpos1 = 0; rpos1 < nc1; ++ rpos1) {
     for (ymuint rpos2 = 0; rpos2 < nc2; ++ rpos2) {
-      if ( make_product(cbody, wpos, bv1, rpos1, bv2, rpos2) ) {
+      if ( cube_product(dst_bv, wpos, bv1, rpos1, bv2, rpos2) ) {
 	++ wpos;
       }
-      if ( wpos == nans ) {
-	break;
-      }
-    }
-    if ( wpos == nans ) {
-      break;
     }
   }
-  ASSERT_COND( wpos == nans );
 
-  return BfoCover(*this, nans, cbody);
+  return wpos;
 }
 
 // @brief カバーの代数的除算を行う．
+// @param[in] dst_bv 結果を格納するビットベクタ
 // @param[in] nc1 1つめのカバーのキューブ数
 // @param[in] bv1 1つめのカバーを表すビットベクタ
 // @param[in] nc2 2つめのカバー(除数)のキューブ数
 // @param[in] bv2 2つめのカバー(除数)を表すビットベクタ
-// @return 結果のカバーを返す．
-BfoCover
-BfoMgr::make_division(ymuint nc1,
+// @return 結果のキューブ数を返す．
+ymuint
+BfoMgr::make_division(ymuint64* dst_bv,
+		      ymuint nc1,
 		      const ymuint64* bv1,
 		      ymuint nc2,
 		      const ymuint64* bv2)
 {
   // 作業領域のビットベクタを確保する．
   // 大きさは nc1
-  ymuint64* tmp = new_body(nc1);
-  ymuint nb = cube_size();
+  resize_buff(nc1);
+
   // bv1 の各キューブは高々1つのキューブでしか割ることはできない．
   // ただし，除数も被除数も algebraic expression の場合
   // ので bv1 の各キューブについて bv2 の各キューブで割ってみて
@@ -351,163 +306,110 @@ BfoMgr::make_division(ymuint nc1,
   for (ymuint i = 0; i < nc1; ++ i) {
     bool found = false;
     for (ymuint j = 0; j < nc2; ++ j) {
-      if ( make_cofactor(tmp, i, bv1, i, bv2, j) ) {
+      if ( cube_cofactor(mTmpBuff, i, bv1, i, bv2, j) ) {
 	found = true;
 	break;
       }
     }
     if ( !found ) {
       // このキューブは割れない．
-      for (ymuint j = 0; j < nb; ++ j) {
-	tmp[i * nb + j] = 0ULL;
-      }
+      cube_clear(mTmpBuff, i);
     }
   }
 
   // 商のキューブは tmp 中に nc2 回現れているはず．
   vector<ymuint> pos_list;
   pos_list.reserve(nc1);
+  vector<bool> mark(nc1, false);
   for (ymuint i = 0; i < nc1; ++ i) {
-    bool valid = false;
-    for (ymuint j = 0; j < nb; ++ j) {
-      if ( tmp[i * nb + j] != 0ULL ) {
-	valid = true;
-	break;
-      }
-    }
-    if ( !valid ) {
+    if ( mark[i] ) {
+      // すでに調べている．
       continue;
     }
     ymuint c = 1;
+    vector<ymuint> tmp_list;
     for (ymuint i2 = i + 1; i2 < nc1; ++ i2) {
-      if ( compare(tmp, i, tmp, i2) == 0 ) {
+      if ( compare(mTmpBuff, i, mTmpBuff, i2) == 0 ) {
 	++ c;
+	// i 番目のキューブと等しかったキューブ位置を記録する．
+	tmp_list.push_back(i2);
       }
     }
     if ( c == nc2 ) {
       // 見つけた
       pos_list.push_back(i);
+      // tmp_list に含まれるキューブはもう調べなくて良い．
+      for (ymuint j = 0; j < tmp_list.size(); ++ j) {
+	ymuint pos = tmp_list[j];
+	mark[pos] = true;
+      }
     }
   }
 
-  ymuint nans = pos_list.size();
-  ymuint64* cbody = nullptr;
-  if ( nans > 0 ) {
-    cbody = new_body(nans);
-    for (ymuint i = 0; i < nans; ++ i) {
-      ymuint pos = pos_list[i];
-      copy(cbody, i, tmp, pos);
-    }
-  }
-  // 作業領域のビットベクタを解放する．
-  delete_body(tmp, nc1);
-
-  return BfoCover(*this, nans, cbody);
-}
-
-// @brief カバーをキューブで割る．
-// @param[in] nc1 カバーのキューブ数
-// @param[in] bv1 カバーを表すビットベクタ
-// @param[in] bv2 キューブを表すビットベクタ
-// @return 結果のカバーを返す．
-BfoCover
-BfoMgr::make_division(ymuint nc1,
-		      const ymuint64* bv1,
-		      const ymuint64* bv2)
-{
-  // 結果のキューブ数を数える．
-  ymuint nans = 0;
-  ymuint nb = cube_size();
-  for (ymuint i = 0; i < nc1; ++ i) {
-    if ( check_containment(bv1, i, bv2, 0) ) {
-      ++ nans;
-    }
+  ymuint nc = pos_list.size();
+  for (ymuint i = 0; i < nc; ++ i) {
+    ymuint pos = pos_list[i];
+    cube_copy(dst_bv, i, mTmpBuff, pos);
   }
 
-  ymuint64* cbody = new_body(nans);
-  ymuint wpos = 0;
-  for (ymuint i = 0; i < nc1; ++ i) {
-    if ( make_cofactor(cbody, wpos, bv1, i, bv2, 0) ) {
-      ++ wpos;
-    }
-    if ( wpos == nans ) {
-      break;
-    }
-  }
-  ASSERT_COND( wpos == nans );
-
-  return BfoCover(*this, nans, cbody);
+  return nc;
 }
 
 // @brief カバーをリテラルで割る(コファクター演算)．
+// @param[in] dst_bv 結果を格納するビットベクタ
 // @param[in] nc1 カバーのキューブ数
 // @param[in] bv1 カバーを表すビットベクタ
 // @param[in] lit 対象のリテラル
-BfoCover
-BfoMgr::make_division(ymuint nc1,
+// @return 結果のキューブ数を返す．
+ymuint
+BfoMgr::make_division(ymuint64* dst_bv,
+		      ymuint nc1,
 		      const ymuint64* bv1,
 		      BfoLiteral lit)
 {
-  // 結果のキューブ数を数える．
-  ymuint nans = 0;
   ymuint var_id = lit.varid();
   ymuint blk = block_pos(var_id);
   ymuint sft = shift_num(var_id);
   BfoPol pat = lit.is_positive() ? kBfoPolP : kBfoPolN;
-  ymuint64 mask = 3UL << sft;
   ymuint64 pat1 = pat << sft;
-  ymuint nb = cube_size();
-  for (ymuint i = 0; i < nc1; ++ i) {
-    if ( (bv1[i * nb + blk] & mask) == pat1 ) {
-      ++ nans;
-    }
-  }
-
-  ymuint64* cbody = new_body(nans);
+  ymuint64 mask = 3UL << sft;
   ymuint64 nmask = ~mask;
+  ymuint nb = cube_size();
   ymuint wpos = 0;
   for (ymuint i = 0; i < nc1; ++ i) {
     if ( (bv1[i * nb + blk] & mask) == pat1 ) {
-      copy(cbody, wpos, bv1, i);
-      *(cbody + wpos * nb + blk) &= nmask;
+      cube_copy(dst_bv, wpos, bv1, i);
+      *(dst_bv + wpos * nb + blk) &= nmask;
       ++ wpos;
-      if ( wpos == nans ) {
-	break;
-      }
     }
   }
-  ASSERT_COND( wpos == nans );
 
-  return BfoCover(*this, nans, cbody);
+  return wpos;
 }
 
 // @brief カバー中のすべてのキューブの共通部分を求める．
+// @param[in] dst_bv 結果を格納するビットベクタ
 // @param[in] nc1 カバーのキューブ数
 // @param[in] bv1 カバーを表すビットベクタ
-// @return 結果のキューブを返す．
 //
-// 共通部分がないときは空のキューブを返す．
-BfoCube
-BfoMgr::common_cube(ymuint nc1,
+// 共通部分がないときは空のキューブとなる．
+void
+BfoMgr::common_cube(ymuint64* dst_bv,
+		    ymuint nc1,
 		    const ymuint64* bv1)
 {
   ymuint nb = cube_size();
 
-  // 結果を格納する領域
-  ymuint64* cbody = new_body();
-
   // 最初のキューブをコピーする．
-  for (ymuint i = 0; i < nb; ++ i) {
-    cbody[i] = bv1[i];
-  }
+  cube_copy(dst_bv, 0, bv1, 0);
 
   // 2番目以降のキューブとの共通部分を求める．
   ymuint offset = nb;
   for (ymuint cube_pos = 1; cube_pos < nc1; ++ cube_pos) {
     ymuint64 tmp = 0ULL;
     for (ymuint i = 0; i < nb; ++ i) {
-      cbody[i] &= bv1[offset + i];
-      tmp |= cbody[i];
+      dst_bv[i] &= bv1[offset + i];
+      tmp |= dst_bv[i];
     }
     if ( tmp == 0ULL ) {
       // 空になった．
@@ -515,8 +417,6 @@ BfoMgr::common_cube(ymuint nc1,
     }
     offset += nb;
   }
-
-  return BfoCube(*this, cbody);
 }
 
 // @brief キューブ(を表すビットベクタ)の比較を行う．
@@ -599,6 +499,29 @@ BfoMgr::check_containment(const ymuint64* bv1,
   return true;
 }
 
+// @brief ２つのキューブに共通なリテラルがあれば true を返す．
+// @param[in] bv1 1つめのカバーを表すビットベクタ
+// @param[in] pos1 1つめのキューブ番号
+// @param[in] bv2 2つめのカバーを表すビットベクタ
+// @param[in] pos2 2つめのキューブ番号
+// @return ２つのキューブに共通なリテラルがあれば true を返す．
+bool
+BfoMgr::check_intersect(const ymuint64* bv1,
+			ymuint pos1,
+			const ymuint64* bv2,
+			ymuint pos2)
+{
+  ymuint nb = cube_size();
+  const ymuint64* _bv1 = bv1 + pos1 * nb;
+  const ymuint64* _bv2 = bv2 + pos2 * nb;
+  for (ymuint i = 0; i < nb; ++ i, ++ _bv1, ++ _bv2) {
+    if ( (*_bv1 & *_bv2) != 0ULL ) {
+      return true;
+    }
+  }
+  return false;
+}
+
 // @brief リテラルの集合からキューブを表すビットベクタにセットする．
 // @param[in] dst_bv コピー先のビットベクタ
 // @param[in] dst_pos コピー先のキューブ番号
@@ -626,22 +549,52 @@ BfoMgr::set_cube(ymuint64* dst_bv,
   }
 }
 
+// @brief カバー(を表すビットベクタ)のコピーを行う．
+// @param[in] dst_bv コピー先のビットベクタ
+// @param[in] cube_num キューブ数
+// @param[in] src_bv ソースのビットベクタ
+void
+BfoMgr::cover_copy(ymuint64* dst_bv,
+		   ymuint cube_num,
+		   const ymuint64* src_bv)
+{
+  ymuint nb = cube_size();
+  ymuint n = nb * cube_num;
+  for (ymuint i = 0; i < n; ++ i, ++ dst_bv, ++ src_bv) {
+    *dst_bv = *src_bv;
+  }
+}
+
 // @brief キューブ(を表すビットベクタ)のコピーを行う．
 // @param[in] dst_bv コピー先のビットベクタ
 // @param[in] dst_pos コピー先のキューブ番号
 // @param[in] src_bv ソースのビットベクタ
 // @param[in] src_pos ソースのキューブ番号
 void
-BfoMgr::copy(ymuint64* dst_bv,
-	     ymuint dst_pos,
-	     const ymuint64* src_bv,
-	     ymuint src_pos)
+BfoMgr::cube_copy(ymuint64* dst_bv,
+		  ymuint dst_pos,
+		  const ymuint64* src_bv,
+		  ymuint src_pos)
 {
   ymuint nb = cube_size();
   ymuint64* dst = dst_bv + dst_pos * nb;
   const ymuint64* src = src_bv + src_pos * nb;
   for (ymuint i = 0; i < nb; ++ i, ++ dst, ++ src) {
     *dst = *src;
+  }
+}
+
+// @brief キューブ(を表すビットベクタ)をクリアする．
+// @param[in] dst_bv 対象のビットベクタ
+// @param[in] dst_pos 対象のキューブ番号
+void
+BfoMgr::cube_clear(ymuint64* dst_bv,
+		   ymuint dst_pos)
+{
+  ymuint nb = cube_size();
+  ymuint64* dst = dst_bv + dst_pos * nb;
+  for (ymuint i = 0; i < nb; ++ i, ++ dst) {
+    *dst = 0ULL;
   }
 }
 
@@ -655,7 +608,7 @@ BfoMgr::copy(ymuint64* dst_bv,
 // @retval true 積が空でなかった．
 // @retval false 積が空だった．
 bool
-BfoMgr::make_product(ymuint64* dst_bv,
+BfoMgr::cube_product(ymuint64* dst_bv,
 		     ymuint dst_pos,
 		     const ymuint64* bv1,
 		     ymuint pos1,
@@ -690,7 +643,7 @@ BfoMgr::make_product(ymuint64* dst_bv,
 // @param[in] pos2 2つめのキューブ番号
 // @return 正しく割ることができたら true を返す．
 bool
-BfoMgr::make_cofactor(ymuint64* dst_bv,
+BfoMgr::cube_cofactor(ymuint64* dst_bv,
 		      ymuint dst_pos,
 		      const ymuint64* bv1,
 		      ymuint pos1,
@@ -739,6 +692,22 @@ BfoMgr::print(ostream& s,
       }
     }
   }
+}
+
+// @brief mTmpBuff に必要な領域を確保する．
+// @param[in] req_size 要求するキューブ数
+void
+BfoMgr::resize_buff(ymuint req_size)
+{
+  ymuint old_size = mTmpBuffSize;
+  while ( mTmpBuffSize < req_size ) {
+    mTmpBuffSize <<= 1;
+  }
+
+  if ( old_size < mTmpBuffSize ) {
+    delete_body(mTmpBuff, old_size);
+  }
+  mTmpBuff = new_body(mTmpBuffSize);
 }
 
 END_NAMESPACE_YM_BFO

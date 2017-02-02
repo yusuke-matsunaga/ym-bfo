@@ -19,6 +19,10 @@ BEGIN_NAMESPACE_YM_BFO
 /// @ingroup BfoGroup
 /// @class BfoLiteral BfoLiteral.h "ym/BfoLiteral.h"
 /// @brief リテラル(変数番号＋極性)を表すクラス
+///
+/// ただの int だが整数型の変数と暗黙の型変換ができないようにクラスとして
+/// 定義している．
+/// だから ymuint を引数に持つコンストラクタの explicit 宣言は重要
 //////////////////////////////////////////////////////////////////////
 class BfoLiteral
 {

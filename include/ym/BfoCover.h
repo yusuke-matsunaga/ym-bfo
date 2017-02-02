@@ -31,11 +31,11 @@ class BfoCover
 public:
 
   /// @brief コンストラクタ
-  /// @param[in] mgr ネージャ
-  /// @param[in] cube_list キューブを表すリテラルのリストのリスト
+  /// @param[in] mgr マネージャ
+  /// @param[in] cube_list キューブのリスト
   explicit
   BfoCover(BfoMgr& mgr,
-	   const vector<vector<BfoLiteral> >& cube_list = vector<vector<BfoLiteral> >());
+	   const vector<BfoCube>& cube_list = vector<BfoCube>());
 
   /// @brief コピーコンストラクタ
   /// @param[in] src コピー元のオブジェクト
@@ -53,16 +53,6 @@ public:
   /// 指定されたキューブのみのカバーとなる．
   explicit
   BfoCover(const BfoCube& cube);
-
-  /// @brief 内容をしていたコンストラクタ
-  /// @param[in] mgr マネージャ
-  /// @param[in] cube_num キューブ数
-  /// @param[in] body 内容のパタンを表す本体
-  ///
-  /// この関数は危険ならの普通は使わないこと
-  BfoCover(BfoMgr& mgr,
-	   ymuint cube_num,
-	   ymuint64* body);
 
   /// @brief デストラクタ
   ///
@@ -112,6 +102,8 @@ public:
   /// @brief 差分を計算する．
   /// @param[in] right オペランド
   /// @return 計算結果を返す．
+  ///
+  /// right のみに含まれる要素があっても無視される．
   BfoCover
   operator-(const BfoCover& right) const;
 
@@ -192,9 +184,29 @@ private:
   // 内部で用いられる関数
   //////////////////////////////////////////////////////////////////////
 
-  /// @brief cube をソートする．
+  /// @brief 内容を指定したコンストラクタ
+  /// @param[in] mgr マネージャ
+  /// @param[in] cube_num キューブ数
+  /// @param[in] cube_cap キューブ容量
+  /// @param[in] body 内容のパタンを表す本体
+  ///
+  /// この関数は危険なので普通は使わないこと
+  BfoCover(BfoMgr& mgr,
+	   ymuint cube_num,
+	   ymuint cube_cap,
+	   ymuint64* body);
+
+  /// @brief キューブ容量を変更する．
+  /// @param[in] req_cap 要求するキューブ容量
+  ///
+  /// 現在のキューブ容量が大きかれば変更しない．
   void
-  _sort_cubes();
+  resize(ymuint req_cap);
+
+  /// @brief キューブ容量を計算する．
+  static
+  ymuint
+  get_capacity(ymuint cube_num);
 
 
 private:
@@ -207,6 +219,9 @@ private:
 
   // キューブ数
   ymuint mCubeNum;
+
+  // mBody の実際に確保されているキューブ容量
+  ymuint mCubeCap;
 
   // 内容を表すビットベクタ
   ymuint64* mBody;
@@ -228,18 +243,107 @@ operator<<(ostream& s,
 // インライン関数の定義
 //////////////////////////////////////////////////////////////////////
 
-// @brief 内容をしていたコンストラクタ
+#if 0
+// @brief コンストラクタ
+// @param[in] mgr キューブマネージャ
+// @param[in] cube_list キューブを表すリテラルのリストのリスト
+BfoCover::BfoCover(BfoMgr& mgr,
+		   const vector<vector<BfoLiteral> >& cube_list) :
+  mMgr(mgr),
+  mCubeNum(cube_list.size())
+{
+  mBody = mMgr.new_body(mCubeNum);
+  for (ymuint i = 0; i < mCubeNum; ++ i) {
+    mMgr.set_cube(mBody, i, cube_list[i]);
+  }
+}
+#endif
+
+// @brief コンストラクタ
+// @param[in] mgr マネージャ
+// @param[in] cube_list キューブのリスト
+inline
+BfoCover::BfoCover(BfoMgr& mgr,
+		   const vector<BfoCube>& cube_list) :
+  mMgr(mgr),
+  mCubeNum(cube_list.size())
+{
+  resize(mCubeNum);
+  for (ymuint i = 0; i < mCubeNum; ++ i) {
+    const BfoCube& cube = cube_list[i];
+    mMgr.cube_copy(mBody, i, cube.mBody, 0);
+  }
+}
+
+// @brief コピーコンストラクタ
+// @param[in] src コピー元のオブジェクト
+inline
+BfoCover::BfoCover(const BfoCover& src) :
+  mMgr(src.mMgr),
+  mCubeNum(src.mCubeNum)
+{
+  resize(mCubeNum);
+  mMgr.cover_copy(mBody, mCubeNum, src.mBody);
+}
+
+// @brief 代入演算子
+// @param[in] src コピー元のオブジェクト
+// @return 代入後の自身の参照を返す．
+inline
+const BfoCover&
+BfoCover::operator=(const BfoCover& src)
+{
+  if ( &src != this ) {
+    ymuint old_cap = mCubeCap;
+    ymuint64* old_body = mBody;
+    mCubeNum = src.mCubeNum;
+    resize(mCubeNum);
+    if ( old_body != mBody ) {
+      mgr().delete_body(mBody, old_cap);
+    }
+    mMgr.cover_copy(mBody, mCubeNum, src.mBody);
+  }
+
+  return *this;
+}
+
+// @brief キューブからの変換コンストラクタ
+// @param[in] cube 対象のキューブ
+//
+// 指定されたキューブのみのカバーとなる．
+inline
+BfoCover::BfoCover(const BfoCube& cube) :
+  mMgr(cube.mgr()),
+  mCubeNum(1)
+{
+  resize(mCubeNum);
+  mMgr.cube_copy(mBody, 0, cube.mBody, 0);
+}
+
+// @brief デストラクタ
+//
+// ここに属しているすべてのキューブは削除される．
+inline
+BfoCover::~BfoCover()
+{
+  mMgr.delete_body(mBody, mCubeCap);
+}
+
+// @brief 内容を指定したコンストラクタ
 // @param[in] mgr マネージャ
 // @param[in] cube_num キューブ数
+// @param[in] cube_cap キューブ容量
 // @param[in] body 内容のパタンを表す本体
 //
-// この関数は危険ならの普通は使わないこと
+// この関数は危険なので普通は使わないこと
 inline
 BfoCover::BfoCover(BfoMgr& mgr,
 		   ymuint cube_num,
+		   ymuint cube_cap,
 		   ymuint64* body) :
   mMgr(mgr),
   mCubeNum(cube_num),
+  mCubeCap(cube_cap),
   mBody(body)
 {
 }
@@ -296,57 +400,15 @@ inline
 BfoCover
 BfoCover::operator+(const BfoCover& right) const
 {
-  return mgr().make_sum(cube_num(), mBody, right.cube_num(), right.mBody);
-}
+  ASSERT_COND( variable_num() == right.variable_num() );
 
-// @brief 差分を計算する．
-// @param[in] right オペランド
-// @return 計算結果を返す．
-inline
-BfoCover
-BfoCover::operator-(const BfoCover& right) const
-{
-  return mgr().make_diff(cube_num(), mBody, right.cube_num(), right.mBody);
-}
+  ymuint nc1 = cube_num();
+  ymuint nc2 = right.cube_num();
+  ymuint cap = get_capacity(nc1 + nc2);
+  ymuint64* body = mgr().new_body(cap);
+  ymuint nc = mgr().make_sum(body, nc1, mBody, nc2, right.mBody);
 
-// @brief 論理積を計算する．
-// @param[in] right オペランド
-// @return 計算結果を返す．
-inline
-BfoCover
-BfoCover::operator*(const BfoCover& right) const
-{
-  return mgr().make_product(cube_num(), mBody, right.cube_num(), right.mBody);
-}
-
-// @brief algebraic division を計算する．
-// @param[in] right オペランド
-// @return 計算結果を返す．
-inline
-BfoCover
-BfoCover::operator/(const BfoCover& right) const
-{
-  return mgr().make_division(cube_num(), mBody, right.cube_num(), right.mBody);
-}
-
-// @brief キューブのコファクターを計算する．
-// @param[in] cube 対象のキューブ
-// @return 計算結果を返す．
-inline
-BfoCover
-BfoCover::operator/(const BfoCube& cube) const
-{
-  return mgr().make_division(cube_num(), mBody, cube.mBody);
-}
-
-// @brief リテラルのコファクターを計算する．
-// @param[in] lit 対象のリテラル
-// @return 計算結果を返す．
-inline
-BfoCover
-BfoCover::operator/(BfoLiteral lit) const
-{
-  return mgr().make_division(cube_num(), mBody, lit);
+  return BfoCover(mgr(), nc, cap, body);
 }
 
 // @brief 論理和を計算して代入する．
@@ -356,7 +418,37 @@ inline
 const BfoCover&
 BfoCover::operator+=(const BfoCover& right)
 {
+  ASSERT_COND( variable_num() == right.variable_num() );
+
+  ymuint nc1 = cube_num();
+  ymuint nc2 = right.cube_num();
+  ymuint old_cap = mCubeCap;
+  ymuint64* old_body = mBody;
+  resize(nc1 + nc2);
+  mCubeNum = mgr().make_sum(mBody, nc1, old_body, nc2, right.mBody);
+  if ( old_body != mBody ) {
+    mgr().delete_body(old_body, old_cap);
+  }
+
   return *this;
+}
+
+// @brief 差分を計算する．
+// @param[in] right オペランド
+// @return 計算結果を返す．
+inline
+BfoCover
+BfoCover::operator-(const BfoCover& right) const
+{
+  ASSERT_COND( variable_num() == right.variable_num() );
+
+  ymuint nc1 = cube_num();
+  ymuint nc2 = right.cube_num();
+  ymuint cap = get_capacity(nc1);
+  ymuint64* body = mgr().new_body(cap);
+  ymuint nc = mgr().make_diff(body, nc1, mBody, nc2, right.mBody);
+
+  return BfoCover(mgr(), nc, cap, body);
 }
 
 // @brief 差分を計算して代入する．
@@ -366,7 +458,32 @@ inline
 const BfoCover&
 BfoCover::operator-=(const BfoCover& right)
 {
+  ASSERT_COND( variable_num() == right.variable_num() );
+
+  ymuint nc1 = cube_num();
+  ymuint nc2 = right.cube_num();
+  // 結果のキューブ数は減るだけなのでキューブ容量の変更はしない．
+  mCubeNum = mgr().make_diff(mBody, nc1, mBody, nc2, right.mBody);
+
   return *this;
+}
+
+// @brief 論理積を計算する．
+// @param[in] right オペランド
+// @return 計算結果を返す．
+inline
+BfoCover
+BfoCover::operator*(const BfoCover& right) const
+{
+  ASSERT_COND( variable_num() == right.variable_num() );
+
+  ymuint nc1 = cube_num();
+  ymuint nc2 = right.cube_num();
+  ymuint cap = get_capacity(nc1 * nc2);
+  ymuint64* body = mgr().new_body(cap);
+  ymuint nc = mgr().make_product(body, nc1, mBody, nc2, right.mBody);
+
+  return BfoCover(mgr(), nc, cap, body);
 }
 
 // @brief 論理積を計算して代入する．
@@ -376,7 +493,37 @@ inline
 const BfoCover&
 BfoCover::operator*=(const BfoCover& right)
 {
+  ASSERT_COND( variable_num() == right.variable_num() );
+
+  ymuint nc1 = cube_num();
+  ymuint nc2 = right.cube_num();
+  ymuint old_cap = mCubeCap;
+  ymuint64* old_body = mBody;
+  resize(nc1 * nc2);
+  mCubeNum = mgr().make_product(mBody, nc1, old_body, nc2, right.mBody);
+  if ( old_body != mBody ) {
+    mgr().delete_body(old_body, old_cap);
+  }
+
   return *this;
+}
+
+// @brief algebraic division を計算する．
+// @param[in] right オペランド
+// @return 計算結果を返す．
+inline
+BfoCover
+BfoCover::operator/(const BfoCover& right) const
+{
+  ASSERT_COND( variable_num() == right.variable_num() );
+
+  ymuint nc1 = cube_num();
+  ymuint nc2 = right.cube_num();
+  ymuint cap = get_capacity(nc1 / nc2);
+  ymuint64* body = mgr().new_body(cap);
+  ymuint nc = mgr().make_division(body, nc1, mBody, nc2, right.mBody);
+
+  return BfoCover(mgr(), nc, cap, body);
 }
 
 // @brief algebraic division を行って代入する．
@@ -386,7 +533,31 @@ inline
 const BfoCover&
 BfoCover::operator/=(const BfoCover& right)
 {
+  ASSERT_COND( variable_num() == right.variable_num() );
+
+  ymuint nc1 = cube_num();
+  ymuint nc2 = right.cube_num();
+  // 結果のキューブ数は減るだけなのでキューブ容量は変更しない．
+  mCubeNum = mgr().make_division(mBody, nc1, mBody, nc2, right.mBody);
+
   return *this;
+}
+
+// @brief キューブのコファクターを計算する．
+// @param[in] cube 対象のキューブ
+// @return 計算結果を返す．
+inline
+BfoCover
+BfoCover::operator/(const BfoCube& cube) const
+{
+  ASSERT_COND( variable_num() == cube.variable_num() );
+
+  ymuint nc1 = cube_num();
+  ymuint cap = get_capacity(nc1);
+  ymuint64* body = mgr().new_body(cap);
+  ymuint nc = mgr().make_division(body, nc1, mBody, 1, cube.mBody);
+
+  return BfoCover(mgr(), nc, cap, body);
 }
 
 // @brief キューブのコファクターを計算して代入する．
@@ -396,7 +567,28 @@ inline
 BfoCover
 BfoCover::operator/=(const BfoCube& cube)
 {
+  ASSERT_COND( variable_num() == cube.variable_num() );
+
+  ymuint nc1 = cube_num();
+  // 結果のキューブ数は減るだけなのでキューブ容量は変更しない．
+  mCubeNum = mgr().make_division(mBody, nc1, mBody, 1, cube.mBody);
+
   return *this;
+}
+
+// @brief リテラルのコファクターを計算する．
+// @param[in] lit 対象のリテラル
+// @return 計算結果を返す．
+inline
+BfoCover
+BfoCover::operator/(BfoLiteral lit) const
+{
+  ymuint nc1 = cube_num();
+  ymuint cap = get_capacity(nc1);
+  ymuint64* body = mgr().new_body(cap);
+  ymuint nc = mgr().make_division(body, nc1, mBody, lit);
+
+  return BfoCover(mgr(), nc, cap, body);
 }
 
 // @brief リテラルのコファクターを計算して代入する．
@@ -406,6 +598,10 @@ inline
 const BfoCover&
 BfoCover::operator/=(BfoLiteral lit)
 {
+  ymuint nc1 = cube_num();
+  // 結果のキューブ数は減るだけなのでキューブ容量は変更しない．
+  mCubeNum = mgr().make_division(mBody, nc1, mBody, lit);
+
   return *this;
 }
 
@@ -416,7 +612,19 @@ inline
 BfoCube
 BfoCover::common_cube() const
 {
-  return mgr().common_cube(cube_num(), mBody);
+  ymuint64* body = mgr().new_body();
+  mgr().common_cube(body, cube_num(), mBody);
+
+  return BfoCube(mgr(), body);
+}
+
+// @brief 内容をわかりやすい形で出力する．
+// @param[in] s 出力先のストリーム
+inline
+void
+BfoCover::print(ostream& s) const
+{
+  mgr().print(s, cube_num(), mBody);
 }
 
 // @brief BfoCover の内容を出力する．
@@ -431,6 +639,35 @@ operator<<(ostream& s,
 {
   cover.print(s);
   return s;
+}
+
+// @brief キューブ容量を変更する．
+// @param[in] req_cap 要求するキューブ容量
+//
+// 現在のキューブ容量が大きかれば変更しない．
+inline
+void
+BfoCover::resize(ymuint req_cap)
+{
+  ymuint new_cap = get_capacity(req_cap);
+  if ( new_cap > mCubeCap ) {
+    mCubeCap = new_cap;
+    mBody = mgr().new_body(mCubeCap);
+  }
+}
+
+// @brief キューブ容量を計算する．
+inline
+ymuint
+BfoCover::get_capacity(ymuint cube_num)
+{
+  // 初期値を16としてcube_numを下回らない
+  // ２のべき乗の数を求める．
+  ymuint ans = 16;
+  while ( ans < cube_num ) {
+    ans *= 2;
+  }
+  return ans;
 }
 
 END_NAMESPACE_YM_BFO

@@ -94,53 +94,65 @@ public:
 	      ymuint cube_num = 1);
 
   /// @brief 2つのカバーの論理和を計算する．
+  /// @param[in] dst_bv 結果を格納するビットベクタ
   /// @param[in] nc1 1つめのカバーのキューブ数
   /// @param[in] bv1 1つめのカバーを表すビットベクタ
   /// @param[in] nc2 2つめのカバーのキューブ数
   /// @param[in] bv2 2つめのカバーを表すビットベクタ
-  /// @return 結果のカバーを返す．
-  BfoCover
-  make_sum(ymuint nc1,
+  /// @return 結果のキューブ数を返す．
+  ///
+  /// dst_bv には十分な容量があると仮定する．<br>
+  /// dst_bv == bv1 の場合もあり得る．<br>
+  ymuint
+  make_sum(ymuint64* dst_bv,
+	   ymuint nc1,
 	   const ymuint64* bv1,
 	   ymuint nc2,
 	   const ymuint64* bv2);
 
   /// @brief 2つのカバーの差分を計算する．
+  /// @param[in] dst_bv 結果を格納するビットベクタ
   /// @param[in] nc1 1つめのカバーのキューブ数
   /// @param[in] bv1 1つめのカバーを表すビットベクタ
   /// @param[in] nc2 2つめのカバーのキューブ数
   /// @param[in] bv2 2つめのカバーを表すビットベクタ
-  /// @return 結果のカバーを返す．
-  BfoCover
-  make_diff(ymuint nc1,
+  /// @return 結果のキューブ数を返す．
+  ymuint
+  make_diff(ymuint64* dst_bv,
+	    ymuint nc1,
 	    const ymuint64* bv1,
 	    ymuint nc2,
 	    const ymuint64* bv2);
 
   /// @brief 2つのカバーの論理積を計算する．
+  /// @param[in] dst_bv 結果を格納するビットベクタ
   /// @param[in] nc1 1つめのカバーのキューブ数
   /// @param[in] bv1 1つめのカバーを表すビットベクタ
   /// @param[in] nc2 2つめのカバーのキューブ数
   /// @param[in] bv2 2つめのカバーを表すビットベクタ
-  /// @return 結果のカバーを返す．
-  BfoCover
-  make_product(ymuint nc1,
+  /// @return 結果のキューブ数を返す．
+  ymuint
+  make_product(ymuint64* dst_bv,
+	       ymuint nc1,
 	       const ymuint64* bv1,
 	       ymuint nc2,
 	       const ymuint64* bv2);
 
   /// @brief カバーの代数的除算を行う．
+  /// @param[in] dst_bv 結果を格納するビットベクタ
   /// @param[in] nc1 1つめのカバーのキューブ数
   /// @param[in] bv1 1つめのカバーを表すビットベクタ
   /// @param[in] nc2 2つめのカバー(除数)のキューブ数
   /// @param[in] bv2 2つめのカバー(除数)を表すビットベクタ
-  /// @return 結果のカバーを返す．
-  BfoCover
-  make_division(ymuint nc1,
+  /// @return 結果のキューブ数を返す．
+  ymuint
+  make_division(ymuint64* dst_bv,
+		ymuint nc1,
 		const ymuint64* bv1,
 		ymuint nc2,
 		const ymuint64* bv2);
 
+#if 0
   /// @brief カバーをキューブで割る(コファクター演算)．
   /// @param[in] nc1 カバーのキューブ数
   /// @param[in] bv1 カバーを表すビットベクタ
@@ -150,25 +162,39 @@ public:
   make_division(ymuint nc1,
 		const ymuint64* bv1,
 		const ymuint64* bv2);
+#endif
 
   /// @brief カバーをリテラルで割る(コファクター演算)．
+  /// @param[in] dst_bv 結果を格納するビットベクタ
   /// @param[in] nc1 カバーのキューブ数
   /// @param[in] bv1 カバーを表すビットベクタ
   /// @param[in] lit 対象のリテラル
-  BfoCover
-  make_division(ymuint nc1,
+  /// @return 結果のキューブ数を返す．
+  ymuint
+  make_division(ymuint64* dst_bv,
+		ymuint nc1,
 		const ymuint64* bv1,
 		BfoLiteral lit);
 
   /// @brief カバー中のすべてのキューブの共通部分を求める．
+  /// @param[in] dst_bv 結果を格納するビットベクタ
   /// @param[in] nc1 カバーのキューブ数
   /// @param[in] bv1 カバーを表すビットベクタ
-  /// @return 結果のキューブを返す．
   ///
-  /// 共通部分がないときは空のキューブを返す．
-  BfoCube
-  common_cube(ymuint nc1,
+  /// 共通部分がないときは空のキューブとなる．
+  void
+  common_cube(ymuint64* dst_bv,
+	      ymuint nc1,
 	      const ymuint64* bv1);
+
+  /// @brief カバー(を表すビットベクタ)のコピーを行う．
+  /// @param[in] dst_bv コピー先のビットベクタ
+  /// @param[in] cube_num キューブ数
+  /// @param[in] src_bv ソースのビットベクタ
+  void
+  cover_copy(ymuint64* dst_bv,
+	     ymuint cube_num,
+	     const ymuint64* src_bv);
 
   /// @brief キューブ(を表すビットベクタ)の比較を行う．
   /// @param[in] bv1 1つめのカバーを表すビットベクタ
@@ -207,6 +233,18 @@ public:
 		    const ymuint64* bv2,
 		    ymuint pos2);
 
+  /// @brief ２つのキューブに共通なリテラルがあれば true を返す．
+  /// @param[in] bv1 1つめのカバーを表すビットベクタ
+  /// @param[in] pos1 1つめのキューブ番号
+  /// @param[in] bv2 2つめのカバーを表すビットベクタ
+  /// @param[in] pos2 2つめのキューブ番号
+  /// @return ２つのキューブに共通なリテラルがあれば true を返す．
+  bool
+  check_intersect(const ymuint64* bv1,
+		  ymuint pos1,
+		  const ymuint64* bv2,
+		  ymuint pos2);
+
   /// @brief リテラルの集合からキューブを表すビットベクタにセットする．
   /// @param[in] dst_bv コピー先のビットベクタ
   /// @param[in] dst_pos コピー先のキューブ番号
@@ -222,10 +260,17 @@ public:
   /// @param[in] src_bv ソースのビットベクタ
   /// @param[in] src_pos ソースのキューブ番号
   void
-  copy(ymuint64* dst_bv,
-       ymuint dst_pos,
-       const ymuint64* src_bv,
-       ymuint src_pos);
+  cube_copy(ymuint64* dst_bv,
+	    ymuint dst_pos,
+	    const ymuint64* src_bv,
+	    ymuint src_pos);
+
+  /// @brief キューブ(を表すビットベクタ)をクリアする．
+  /// @param[in] dst_bv 対象のビットベクタ
+  /// @param[in] dst_pos 対象のキューブ番号
+  void
+  cube_clear(ymuint64* dst_bv,
+	     ymuint dst_pos);
 
   /// @brief 2つのキューブの積を計算する．
   /// @param[in] dst_bv コピー先のビットベクタ
@@ -237,7 +282,7 @@ public:
   /// @retval true 積が空でなかった．
   /// @retval false 積が空だった．
   bool
-  make_product(ymuint64* dst_bv,
+  cube_product(ymuint64* dst_bv,
 	       ymuint dst_pos,
 	       const ymuint64* bv1,
 	       ymuint pos1,
@@ -253,7 +298,7 @@ public:
   /// @param[in] pos2 2つめのキューブ番号
   /// @return 正しく割ることができたら true を返す．
   bool
-  make_cofactor(ymuint64* dst_bv,
+  cube_cofactor(ymuint64* dst_bv,
 		ymuint dst_pos,
 		const ymuint64* bv1,
 		ymuint pos1,
@@ -293,6 +338,11 @@ private:
   ymuint
   cube_size() const;
 
+  /// @brief mTmpBuff に必要な領域を確保する．
+  /// @param[in] req_size 要求するキューブ数
+  void
+  resize_buff(ymuint req_size);
+
 
 private:
   //////////////////////////////////////////////////////////////////////
@@ -304,6 +354,12 @@ private:
 
   // 変数名のリスト
   vector<string> mVarNameList;
+
+  // 作業用に用いられるビットベクタ
+  ymuint64* mTmpBuff;
+
+  // mTmpBuff のキューブ数
+  ymuint mTmpBuffSize;
 
 };
 

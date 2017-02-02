@@ -31,6 +31,8 @@ public:
   /// @brief コンストラクタ
   /// @param[in] mgr マネージャ
   /// @param[in] lit_list キューブを表すリテラルのリスト
+  ///
+  /// lit_list が省略された時には空のキューブを作る．
   explicit
   BfoCube(BfoMgr& mgr,
 	  const vector<BfoLiteral>& lit_list = vector<BfoLiteral>());
@@ -39,13 +41,11 @@ public:
   /// @param[in] src コピー元のオブジェクト
   BfoCube(const BfoCube& src);
 
-  /// @brief 内容を指定するコンストラクタ
-  /// @param[in] mgr マネージャ
-  /// @param[in] body キューブのパタンを表す本体
-  ///
-  /// 危険なので普通は使わないように
-  BfoCube(BfoMgr& mgr,
-	  ymuint64* body);
+  /// @brief 代入演算子
+  /// @param[in] src コピー元のオブジェクト
+  /// @return 代入後の自身への参照を返す．
+  const BfoCube&
+  operator=(const BfoCube& src);
 
   /// @brief デストラクタ
   ~BfoCube();
@@ -84,28 +84,25 @@ public:
   /// @brief 2つのキューブに共通なリテラルがあれば true を返す．
   /// @param[in] right オペランドのキューブ
   bool
-  operator&&(const BfoCube& right) const;
+  check_intersect(const BfoCube& right) const;
 
   /// @brief 論理積を計算し自身に代入する．
   /// @param[in] right オペランドのキューブ
   /// @return 演算後の自身の参照を返す．
   ///
-  /// 相反するリテラルとの積があったら答はからのキューブとなる．
+  /// リテラル集合とみなすとユニオンを計算することになる<br>
+  /// ただし，相反するリテラルとの積があったら答は空のキューブとなる．
   const BfoCube&
   operator&=(const BfoCube& right);
 
-#if 0
-  /// @brief 共通部分を計算し自身に代入する．
+  /// @brief コファクターを計算し自身に代入する．
   /// @param[in] right オペランドのキューブ
-  /// @return 結果が NULL Cube になったら false を返す．
-  bool
-  make_intersect(const BfoCube* src);
-
-  /// @brief オペランドに含まれているリテラルを取り除く
-  /// @param[in] src オペランドのキューブ
-  void
-  make_diff(const BfoCube* src);
-#endif
+  /// @return 演算後の自身の参照を返す．
+  ///
+  /// リテラル集合として考えると集合差を計算することになる<br>
+  /// ただし，right のみに含まれるリテラルがあったら結果は空となる．
+  const BfoCube&
+  operator/=(const BfoCube& right);
 
   /// @brief 内容をわかりやすい形で出力する．
   /// @param[in] s 出力先のストリーム
@@ -117,6 +114,14 @@ private:
   //////////////////////////////////////////////////////////////////////
   // 内部で用いられる関数
   //////////////////////////////////////////////////////////////////////
+
+  /// @brief 内容を指定するコンストラクタ
+  /// @param[in] mgr マネージャ
+  /// @param[in] body キューブのパタンを表す本体
+  ///
+  /// 危険なので普通は使わないように
+  BfoCube(BfoMgr& mgr,
+	  ymuint64* body);
 
   // friend 関数の宣言
   friend
@@ -139,16 +144,6 @@ private:
 };
 
 /// @relates BfoCube
-/// @brief BfoCube の内容を出力する．
-/// @param[in] s 出力先のストリーム
-/// @param[in] cube 対象のキューブ(のポインタ)
-///
-/// cube->print(s) と等価
-ostream&
-operator<<(ostream& s,
-	   const BfoCube& cube);
-
-/// @relates BfoCube
 /// @brief BfoCube の論理積を計算する
 /// @param[in] left, right オペランド
 ///
@@ -156,6 +151,13 @@ operator<<(ostream& s,
 /// ただし，相反するリテラルが含まれていたら空キューブとなる．
 BfoCube
 operator&(const BfoCube& left,
+	  const BfoCube& right);
+
+/// @relates BfoCube
+/// @brief コファクターを計算する
+/// @param[in] left, right オペランド
+BfoCube
+operator/(const BfoCube& left,
 	  const BfoCube& right);
 
 /// @relates BfoCube
@@ -222,10 +224,85 @@ bool
 operator>=(const BfoCube& left,
 	   const BfoCube& right);
 
+/// @relates BfoCube
+/// @brief BfoCube の内容を出力する．
+/// @param[in] s 出力先のストリーム
+/// @param[in] cube 対象のキューブ(のポインタ)
+///
+/// cube->print(s) と等価
+ostream&
+operator<<(ostream& s,
+	   const BfoCube& cube);
+
 
 //////////////////////////////////////////////////////////////////////
 // インライン関数の定義
 //////////////////////////////////////////////////////////////////////
+
+// @brief コンストラクタ
+// @param[in] mgr ネージャ
+// @param[in] lit_list キューブを表すリテラルのリスト
+inline
+BfoCube::BfoCube(BfoMgr& mgr,
+		 const vector<BfoLiteral>& lit_list) :
+  mMgr(mgr),
+  mBody(mMgr.new_body())
+{
+  mMgr.set_cube(mBody, 0, lit_list);
+}
+
+// @brief コピーコンストラクタ
+// @param[in] src コピー元のオブジェクト
+inline
+BfoCube::BfoCube(const BfoCube& src) :
+  mMgr(src.mMgr)
+{
+  mBody = mMgr.new_body();
+  mMgr.cube_copy(mBody, 0, src.mBody, 0);
+}
+
+// @brief 内容を指定するコンストラクタ
+// @param[in] mgr マネージャ
+// @param[in] body キューブのパタンを表す本体
+//
+// 危険なので普通は使わないように
+inline
+BfoCube::BfoCube(BfoMgr& mgr,
+		 ymuint64* body) :
+  mMgr(mgr),
+  mBody(body)
+{
+}
+
+// @brief 代入演算子
+// @param[in] src コピー元のオブジェクト
+// @return 代入後の自身への参照を返す．
+inline
+const BfoCube&
+BfoCube::operator=(const BfoCube& src)
+{
+  if ( &src != this ) {
+    if ( &mMgr != &src.mMgr ) {
+      // マネージャが異なっていたら mBody を作り直す．
+      mMgr.delete_body(mBody);
+      mMgr = src.mMgr;
+      mBody = mMgr.new_body();
+    }
+    else {
+      // マネージャが同じなら mBody は使いまわす．
+    }
+    mMgr.cube_copy(mBody, 0, src.mBody, 0);
+  }
+
+  return *this;
+}
+
+// @brief デストラクタ
+inline
+BfoCube::~BfoCube()
+{
+  mMgr.delete_body(mBody);
+}
 
 // @brief マネージャを返す．
 inline
@@ -270,7 +347,35 @@ bool
 BfoCube::check_containment(const BfoCube& right) const
 {
   ASSERT_COND( variable_num() == right.variable_num() );
+
   return mgr().check_containment(mBody, 0, right.mBody, 0);
+}
+
+// @brief 2つのキューブに共通なリテラルがあれば true を返す．
+// @param[in] right オペランドのキューブ
+inline
+bool
+BfoCube::check_intersect(const BfoCube& right) const
+{
+  ASSERT_COND( variable_num() == right.variable_num() );
+
+  return mgr().check_intersect(mBody, 0, right.mBody, 0);
+}
+
+// @brief 論理積を計算し自身に代入する．
+// @param[in] right オペランドのキューブ
+// @return 演算後の自身の参照を返す．
+//
+// 相反するリテラルとの積があったら答は空のキューブとなる．
+inline
+const BfoCube&
+BfoCube::operator&=(const BfoCube& right)
+{
+  ASSERT_COND( variable_num() == right.variable_num() );
+
+  mgr().cube_product(mBody, 0, mBody, 0, right.mBody, 0);
+
+  return *this;
 }
 
 // @brief BfoCube の論理積を計算する
@@ -286,7 +391,30 @@ operator&(const BfoCube& left,
   return BfoCube(left).operator&=(right);
 }
 
-// @relates BfoCube
+// @brief コファクターを計算し自身に代入する．
+// @param[in] right オペランドのキューブ
+// @return 演算後の自身の参照を返す．
+inline
+const BfoCube&
+BfoCube::operator/=(const BfoCube& right)
+{
+  ASSERT_COND( variable_num() == right.variable_num() );
+
+  mgr().cube_cofactor(mBody, 0, mBody, 0, right.mBody, 0);
+
+  return *this;
+}
+
+// @brief コファクターを計算する
+// @param[in] left, right オペランド
+inline
+BfoCube
+operator/(const BfoCube& left,
+	  const BfoCube& right)
+{
+  return BfoCube(left).operator/=(right);
+}
+
 // @brief BfoCubeの比較演算子
 // @param[in] left, right オペランド
 // @retval -1 left < right
@@ -374,6 +502,15 @@ operator>=(const BfoCube& left,
 	   const BfoCube& right)
 {
   return compare(left, right) >= 0;
+}
+
+// @brief 内容をわかりやすい形で出力する．
+// @param[in] s 出力先のストリーム
+inline
+void
+BfoCube::print(ostream& s) const
+{
+  mgr().print(s, 1, mBody);
 }
 
 // @brief BfoCube の内容を出力する．
