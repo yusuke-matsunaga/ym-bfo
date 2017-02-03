@@ -38,7 +38,7 @@ target_link_libraries ( CubeTest
   ${GTEST_BOTH_LIBRARIES}
   )
 
-add_test ( BfoTest
+add_test ( BfoCubeTest
   CubeTest
   )
 
@@ -59,7 +59,7 @@ target_link_libraries ( CoverTest
   ${GTEST_BOTH_LIBRARIES}
   )
 
-add_test ( BfoTest
+add_test ( BfoCoverTest
   CoverTest
   )
 
@@ -80,6 +80,6 @@ target_link_libraries ( MgrTest
   ${GTEST_BOTH_LIBRARIES}
   )
 
-add_test ( BfoTest
+add_test ( BfoMgrTest
   MgrTest
   )

@@ -78,6 +78,15 @@ public:
   literal_num(ymuint nc,
 	      const ymuint64* bv);
 
+  /// @brief ビットベクタ上の特定のリテラルの出現頻度を数える．
+  /// @param[in] nc キューブ数
+  /// @param[in] bv カバーを表すビットベクタ
+  /// @param[in] lit 対象のリテラル
+  ymuint
+  literal_num(ymuint nc,
+	      const ymuint64* bv,
+	      AlgLiteral lit);
+
   /// @brief キューブ/カバー用の領域を確保する．
   /// @param[in] cube_num キューブ数
   ///

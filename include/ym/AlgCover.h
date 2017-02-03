@@ -36,9 +36,20 @@ public:
   /// @brief コンストラクタ
   /// @param[in] mgr マネージャ
   /// @param[in] cube_list キューブのリスト
+  ///
+  /// cube_list が空の時は空のカバーとなる．
   explicit
   AlgCover(AlgMgr& mgr,
 	   const vector<AlgCube>& cube_list = vector<AlgCube>());
+
+  /// @brief 特殊なコンストラクタ
+  /// @param[in] mgr マネージャ
+  /// @param[in] dummy ダミーの引数
+  ///
+  /// 空のキューブを1つ持つカバーとなる．
+  /// dummy の値は無視される．
+  AlgCover(AlgMgr& mgr,
+	   int dummy);
 
   /// @brief コンストラクタ
   /// @param[in] mgr マネージャ
@@ -392,6 +403,23 @@ AlgCover::AlgCover(AlgMgr& mgr,
   mMgr->sort(mCubeNum, mBody);
 }
 
+// @brief 特殊なコンストラクタ
+// @param[in] mgr マネージャ
+// @param[in] dummy ダミーの引数
+//
+// 空のキューブを1つ持つカバーとなる．
+// dummy の値は無視される．
+inline
+AlgCover::AlgCover(AlgMgr& mgr,
+		   int dummy) :
+  mMgr(&mgr),
+  mCubeNum(1),
+  mCubeCap(0)
+{
+  resize(mCubeNum);
+  mMgr->cube_clear(mBody, 0);
+}
+
 // @brief コンストラクタ
 // @param[in] mgr マネージャ
 // @param[in] lit_list カバーを表すリテラルのリスト
@@ -558,6 +586,15 @@ ymuint
 AlgCover::literal_num() const
 {
   return mgr().literal_num(cube_num(), mBody);
+}
+
+// @brief 指定されたリテラルの出現回数を返す．
+// @param[in] lit 対象のリテラル
+inline
+ymuint
+AlgCover::literal_num(AlgLiteral lit) const
+{
+  return mgr().literal_num(cube_num(), mBody, lit);
 }
 
 // @brief 内容を返す．

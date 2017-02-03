@@ -453,6 +453,520 @@ TEST_F(CoverTest, sort5_2)
   EXPECT_EQ( AlgCover(mgr(), "a + b + c + d + e"), cover );
 }
 
+TEST_F(CoverTest, literal_num1)
+{
+  AlgCover cover(mgr(), "a b + a c + a' d + b c'");
+
+  AlgLiteral a_lit(0, false);
+  AlgLiteral an_lit(0, true);
+
+  EXPECT_EQ( 8, cover.literal_num() );
+  EXPECT_EQ( 2, cover.literal_num(a_lit) );
+  EXPECT_EQ( 1, cover.literal_num(an_lit) );
+}
+
+TEST_F(CoverTest, int_sum1)
+{
+  AlgCover cover1(mgr(), "a");
+  AlgCover cover2(mgr(), "b");
+
+  cover1 += cover2;
+
+  EXPECT_EQ( AlgCover(mgr(), "a + b"), cover1 );
+}
+
+TEST_F(CoverTest, bin_sum1)
+{
+  AlgCover cover1(mgr(), "a");
+  AlgCover cover2(mgr(), "b");
+
+  AlgCover cover3 = cover1 + cover2;
+
+  EXPECT_EQ( AlgCover(mgr(), "a + b"), cover3 );
+}
+
+TEST_F(CoverTest, int_sum2)
+{
+  AlgCover cover1(mgr(), "a d");
+  AlgCover cover2(mgr(), "a b");
+
+  cover1 += cover2;
+
+  EXPECT_EQ( AlgCover(mgr(), "a b + a d"), cover1 );
+}
+
+TEST_F(CoverTest, bin_sum2)
+{
+  AlgCover cover1(mgr(), "a d");
+  AlgCover cover2(mgr(), "a b");
+
+  AlgCover cover3 = cover1 + cover2;
+
+  EXPECT_EQ( AlgCover(mgr(), "a b + a d"), cover3 );
+}
+
+TEST_F(CoverTest, int_sum3)
+{
+  AlgCover cover1(mgr(), "a d + b c");
+  AlgCover cover2(mgr(), "a b + b d");
+
+  cover1 += cover2;
+
+  EXPECT_EQ( AlgCover(mgr(), "a b + a d + b c + b d"), cover1 );
+}
+
+TEST_F(CoverTest, bin_sum3)
+{
+  AlgCover cover1(mgr(), "a d + b c");
+  AlgCover cover2(mgr(), "a b + b d");
+
+  AlgCover cover3 = cover1 + cover2;
+
+  EXPECT_EQ( AlgCover(mgr(), "a b + a d + b c + b d"), cover3 );
+}
+
+TEST_F(CoverTest, int_sum_c1)
+{
+  AlgCover cover1(mgr(), "a");
+  AlgCube cube2(mgr(), "b");
+
+  cover1 += cube2;
+
+  EXPECT_EQ( AlgCover(mgr(), "a + b"), cover1 );
+}
+
+TEST_F(CoverTest, bin_sum_c1)
+{
+  AlgCover cover1(mgr(), "a");
+  AlgCube cube2(mgr(), "b");
+
+  AlgCover cover3 = cover1 + cube2;
+
+  EXPECT_EQ( AlgCover(mgr(), "a + b"), cover3 );
+}
+
+TEST_F(CoverTest, int_sum_c2)
+{
+  AlgCover cover1(mgr(), "a d");
+  AlgCube cube2(mgr(), "a b");
+
+  cover1 += cube2;
+
+  EXPECT_EQ( AlgCover(mgr(), "a b + a d"), cover1 );
+}
+
+TEST_F(CoverTest, bin_sum_c2)
+{
+  AlgCover cover1(mgr(), "a d");
+  AlgCube cube2(mgr(), "a b");
+
+  AlgCover cover3 = cover1 + cube2;
+
+  EXPECT_EQ( AlgCover(mgr(), "a b + a d"), cover3 );
+}
+
+TEST_F(CoverTest, int_diff1)
+{
+  AlgCover cover1(mgr(), "a b + a c + b d");
+  AlgCover cover2(mgr(), "a c");
+
+  cover1 -= cover2;
+
+  EXPECT_EQ( AlgCover(mgr(), "a b + b d"), cover1 );
+}
+
+TEST_F(CoverTest, bin_diff1)
+{
+  AlgCover cover1(mgr(), "a b + a c + b d");
+  AlgCover cover2(mgr(), "a c");
+
+  AlgCover cover3 = cover1 - cover2;
+
+  EXPECT_EQ( AlgCover(mgr(), "a b + b d"), cover3 );
+}
+
+TEST_F(CoverTest, int_diff2)
+{
+  AlgCover cover1(mgr(), "a b + a c + b d");
+  AlgCover cover2(mgr(), "a' c");
+
+  cover1 -= cover2;
+
+  EXPECT_EQ( AlgCover(mgr(), "a b + a c + b d"), cover1 );
+}
+
+TEST_F(CoverTest, bin_diff2)
+{
+  AlgCover cover1(mgr(), "a b + a c + b d");
+  AlgCover cover2(mgr(), "a' c");
+
+  AlgCover cover3 = cover1 - cover2;
+
+  EXPECT_EQ( AlgCover(mgr(), "a b + a c + b d"), cover1 );
+}
+
+TEST_F(CoverTest, int_diff3)
+{
+  AlgCover cover1(mgr(), "a b + a c + b d");
+  AlgCover cover2(mgr(), "a c + a b");
+
+  cover1 -= cover2;
+
+  EXPECT_EQ( AlgCover(mgr(), "b d"), cover1 );
+}
+
+TEST_F(CoverTest, bin_diff3)
+{
+  AlgCover cover1(mgr(), "a b + a c + b d");
+  AlgCover cover2(mgr(), "a c + a b");
+
+  AlgCover cover3 = cover1 - cover2;
+
+  EXPECT_EQ( AlgCover(mgr(), "b d"), cover3 );
+}
+
+TEST_F(CoverTest, int_diff_c1)
+{
+  AlgCover cover1(mgr(), "a b + a c + b d");
+  AlgCube cube2(mgr(), "a c");
+
+  cover1 -= cube2;
+
+  EXPECT_EQ( AlgCover(mgr(), "a b + b d"), cover1 );
+}
+
+TEST_F(CoverTest, bin_diff_c1)
+{
+  AlgCover cover1(mgr(), "a b + a c + b d");
+  AlgCube cube2(mgr(), "a c");
+
+  AlgCover cover3 = cover1 - cube2;
+
+  EXPECT_EQ( AlgCover(mgr(), "a b + b d"), cover3 );
+}
+
+TEST_F(CoverTest, int_diff_c2)
+{
+  AlgCover cover1(mgr(), "a b + a c + b d");
+  AlgCube cube2(mgr(), "a' c");
+
+  cover1 -= cube2;
+
+  EXPECT_EQ( AlgCover(mgr(), "a b + a c + b d"), cover1 );
+}
+
+TEST_F(CoverTest, bin_diff_c2)
+{
+  AlgCover cover1(mgr(), "a b + a c + b d");
+  AlgCube cube2(mgr(), "a' c");
+
+  AlgCover cover3 = cover1 - cube2;
+
+  EXPECT_EQ( AlgCover(mgr(), "a b + a c + b d"), cover1 );
+}
+
+TEST_F(CoverTest, int_product1)
+{
+  AlgCover cover1(mgr(), "a + b");
+  AlgCover cover2(mgr(), "c");
+
+  cover1 *= cover2;
+
+  EXPECT_EQ( AlgCover(mgr(), "a c + b c"), cover1 );
+}
+
+TEST_F(CoverTest, bin_product1)
+{
+  AlgCover cover1(mgr(), "a + b");
+  AlgCover cover2(mgr(), "c");
+
+  AlgCover cover3 = cover1 * cover2;
+
+  EXPECT_EQ( AlgCover(mgr(), "a c + b c"), cover3 );
+}
+
+TEST_F(CoverTest, int_product2)
+{
+  AlgCover cover1(mgr(), "a + b");
+  AlgCover cover2(mgr(), "a'");
+
+  cover1 *= cover2;
+
+  EXPECT_EQ( AlgCover(mgr(), "a' b"), cover1 );
+}
+
+TEST_F(CoverTest, bin_product2)
+{
+  AlgCover cover1(mgr(), "a + b");
+  AlgCover cover2(mgr(), "a'");
+
+  AlgCover cover3 = cover1 * cover2;
+
+  EXPECT_EQ( AlgCover(mgr(), "a' b"), cover3 );
+}
+
+TEST_F(CoverTest, int_product3)
+{
+  AlgCover cover1(mgr(), "a + d");
+  AlgCover cover2(mgr(), "b + c");
+
+  cover1 *= cover2;
+
+  EXPECT_EQ( AlgCover(mgr(), "a b + a c + b d + c d"), cover1 );
+}
+
+TEST_F(CoverTest, bin_product3)
+{
+  AlgCover cover1(mgr(), "a + d");
+  AlgCover cover2(mgr(), "b + c");
+
+  AlgCover cover3 = cover1 * cover2;
+
+  EXPECT_EQ( AlgCover(mgr(), "a b + a c + b d + c d"), cover3 );
+}
+
+TEST_F(CoverTest, int_product4)
+{
+  AlgCover cover1(mgr(), "a + d");
+  AlgCover cover2(mgr(), "a' + c");
+
+  cover1 *= cover2;
+
+  EXPECT_EQ( AlgCover(mgr(), "a c + a' d + c d"), cover1 );
+}
+
+TEST_F(CoverTest, bin_product4)
+{
+  AlgCover cover1(mgr(), "a + d");
+  AlgCover cover2(mgr(), "a' + c");
+
+  AlgCover cover3 = cover1 * cover2;
+
+  EXPECT_EQ( AlgCover(mgr(), "a c + a' d + c d"), cover3 );
+}
+
+TEST_F(CoverTest, int_product_c1)
+{
+  AlgCover cover1(mgr(), "a + b");
+  AlgCube cube2(mgr(), "c");
+
+  cover1 *= cube2;
+
+  EXPECT_EQ( AlgCover(mgr(), "a c + b c"), cover1 );
+}
+
+TEST_F(CoverTest, bin_product_c1)
+{
+  AlgCover cover1(mgr(), "a + b");
+  AlgCube cube2(mgr(), "c");
+
+  AlgCover cover3 = cover1 * cube2;
+
+  EXPECT_EQ( AlgCover(mgr(), "a c + b c"), cover3 );
+}
+
+TEST_F(CoverTest, int_product_c2)
+{
+  AlgCover cover1(mgr(), "a + b");
+  AlgCube cube2(mgr(), "a'");
+
+  cover1 *= cube2;
+
+  EXPECT_EQ( AlgCover(mgr(), "a' b"), cover1 );
+}
+
+TEST_F(CoverTest, bin_product_c2)
+{
+  AlgCover cover1(mgr(), "a + b");
+  AlgCube cube2(mgr(), "a'");
+
+  AlgCover cover3 = cover1 * cube2;
+
+  EXPECT_EQ( AlgCover(mgr(), "a' b"), cover3 );
+}
+
+TEST_F(CoverTest, int_division1)
+{
+  AlgCover cover1(mgr(), "a b + a c + b c");
+  AlgCover cover2(mgr(), "b + c");
+
+  cover1 /= cover2;
+
+  EXPECT_EQ( AlgCover(mgr(), "a"), cover1 );
+}
+
+TEST_F(CoverTest, bin_division1)
+{
+  AlgCover cover1(mgr(), "a b + a c + b c");
+  AlgCover cover2(mgr(), "b + c");
+
+  AlgCover cover3 = cover1 / cover2;
+
+  EXPECT_EQ( AlgCover(mgr(), "a"), cover3 );
+}
+
+TEST_F(CoverTest, int_division2)
+{
+  AlgCover cover1(mgr(), "a b + a c + b c");
+  AlgCover cover2(mgr(), "b + c'");
+
+  cover1 /= cover2;
+
+  EXPECT_EQ( AlgCover(mgr(), ""), cover1 );
+}
+
+TEST_F(CoverTest, bin_division2)
+{
+  AlgCover cover1(mgr(), "a b + a c + b c");
+  AlgCover cover2(mgr(), "b + c'");
+
+  AlgCover cover3 = cover1 / cover2;
+
+  EXPECT_EQ( AlgCover(mgr(), ""), cover3 );
+}
+
+TEST_F(CoverTest, int_division3)
+{
+  AlgCover cover1(mgr(), "a b + a c + b c");
+  AlgCover cover2(mgr(), "a b + b c");
+
+  cover1 /= cover2;
+
+  EXPECT_EQ( AlgCover(mgr(), 1), cover1);
+}
+
+TEST_F(CoverTest, bin_division3)
+{
+  AlgCover cover1(mgr(), "a b + a c + b c");
+  AlgCover cover2(mgr(), "a b + b c");
+
+  AlgCover cover3 = cover1 / cover2;
+
+  EXPECT_EQ( AlgCover(mgr(), 1), cover3);
+
+  AlgCover cover4 = cover3 * cover2;
+  AlgCover cover5 = cover1 - cover4;
+  EXPECT_EQ( AlgCover(mgr(), "a c"), cover5);
+}
+
+TEST_F(CoverTest, int_division_c1)
+{
+  AlgCover cover1(mgr(), "a b + a c + b c");
+  AlgCube cube2(mgr(), "a");
+
+  cover1 /= cube2;
+
+  EXPECT_EQ( AlgCover(mgr(), "b + c"), cover1 );
+}
+
+TEST_F(CoverTest, bin_division_c1)
+{
+  AlgCover cover1(mgr(), "a b + a c + b c");
+  AlgCube cube2(mgr(), "a");
+
+  AlgCover cover3 = cover1 / cube2;
+
+  EXPECT_EQ( AlgCover(mgr(), "b + c"), cover3 );
+}
+
+TEST_F(CoverTest, int_division_c2)
+{
+  AlgCover cover1(mgr(), "a b + a c + b c");
+  AlgCube cube2(mgr(), "a'");
+
+  cover1 /= cube2;
+
+  EXPECT_EQ( AlgCover(mgr(), ""), cover1 );
+}
+
+TEST_F(CoverTest, bin_division_c2)
+{
+  AlgCover cover1(mgr(), "a b + a c + b c");
+  AlgCube cube2(mgr(), "a'");
+
+  AlgCover cover3 = cover1 / cube2;
+
+  EXPECT_EQ( AlgCover(mgr(), ""), cover3 );
+}
+
+TEST_F(CoverTest, int_division_c3)
+{
+  AlgCover cover1(mgr(), "a b + a c + b c");
+  AlgCube cube2(mgr(), "a c");
+
+  cover1 /= cube2;
+
+  EXPECT_EQ( AlgCover(mgr(), 1), cover1);
+}
+
+TEST_F(CoverTest, bin_division_c3)
+{
+  AlgCover cover1(mgr(), "a b + a c + b c");
+  AlgCube cube2(mgr(), "a c");
+
+  AlgCover cover3 = cover1 / cube2;
+
+  EXPECT_EQ( AlgCover(mgr(), 1), cover3);
+}
+
+TEST_F(CoverTest, int_division_l1)
+{
+  AlgCover cover1(mgr(), "a b + a c + b c");
+  AlgLiteral a(0, false);
+
+  cover1 /= a;
+
+  EXPECT_EQ( AlgCover(mgr(), "b + c"), cover1 );
+}
+
+TEST_F(CoverTest, bin_division_l1)
+{
+  AlgCover cover1(mgr(), "a b + a c + b c");
+  AlgLiteral a(0, false);
+
+  AlgCover cover3 = cover1 / a;
+
+  EXPECT_EQ( AlgCover(mgr(), "b + c"), cover3 );
+}
+
+TEST_F(CoverTest, int_division_l2)
+{
+  AlgCover cover1(mgr(), "a b + a c + b c");
+  AlgLiteral a(0, true);
+
+  cover1 /= a;
+
+  EXPECT_EQ( AlgCover(mgr(), ""), cover1 );
+}
+
+TEST_F(CoverTest, bin_division_l2)
+{
+  AlgCover cover1(mgr(), "a b + a c + b c");
+  AlgLiteral a(0, true);
+
+  AlgCover cover3 = cover1 / a;
+
+  EXPECT_EQ( AlgCover(mgr(), ""), cover3 );
+}
+
+TEST_F(CoverTest, common_cube1)
+{
+  AlgCover cover1(mgr(), "a b + a c + a d");
+
+  AlgCube ccube = cover1.common_cube();
+
+  EXPECT_EQ( AlgCube(mgr(), "a"), ccube );
+}
+
+TEST_F(CoverTest, common_cube2)
+{
+  AlgCover cover1(mgr(), "a b + a c + b d");
+
+  AlgCube ccube = cover1.common_cube();
+
+  EXPECT_EQ( AlgCube(mgr(), ""), ccube );
+}
+
 TEST_F(CoverTest, print1)
 {
   AlgCover cover(mgr());

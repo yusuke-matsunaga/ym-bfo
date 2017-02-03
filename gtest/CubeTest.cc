@@ -286,106 +286,6 @@ TEST_F(CubeTest, check_intersect)
   EXPECT_FALSE( cube3.check_intersect(cube1) );
 }
 
-TEST_F(CubeTest, product1)
-{
-  AlgCube cube1(mgr(), AlgLiteral(0, false));
-  AlgCube cube2(mgr(), AlgLiteral(1, true));
-
-  cube1 &= cube2;
-
-  EXPECT_EQ( 2, cube1.literal_num() );
-  EXPECT_EQ( kAlgPolP, cube1.literal(0) );
-  EXPECT_EQ( kAlgPolN, cube1.literal(1) );
-  for (ymuint i = 2; i < mgr().variable_num(); ++ i) {
-    EXPECT_EQ( kAlgPolX, cube1.literal(i) );
-  }
-}
-
-TEST_F(CubeTest, product2)
-{
-  AlgCube cube1(mgr(), AlgLiteral(0, false));
-  AlgCube cube2(mgr(), AlgLiteral(1, true));
-
-  AlgCube cube3 = cube1 & cube2;
-
-  EXPECT_EQ( 2, cube3.literal_num() );
-  EXPECT_EQ( kAlgPolP, cube3.literal(0) );
-  EXPECT_EQ( kAlgPolN, cube3.literal(1) );
-  for (ymuint i = 2; i < mgr().variable_num(); ++ i) {
-    EXPECT_EQ( kAlgPolX, cube3.literal(i) );
-  }
-}
-
-TEST_F(CubeTest, product3)
-{
-  vector<AlgLiteral> lit_list1;
-  lit_list1.push_back(AlgLiteral(0, false));
-  lit_list1.push_back(AlgLiteral(1, false));
-  AlgCube cube1(mgr(), lit_list1);
-
-  AlgCube cube2(mgr(), AlgLiteral(1, true));
-
-  cube1 &= cube2;
-
-  EXPECT_EQ( 0, cube1.literal_num() );
-  for (ymuint i = 0; i < mgr().variable_num(); ++ i) {
-    EXPECT_EQ( kAlgPolX, cube1.literal(i) );
-  }
-}
-
-TEST_F(CubeTest, product4)
-{
-  vector<AlgLiteral> lit_list1;
-  lit_list1.push_back(AlgLiteral(0, false));
-  lit_list1.push_back(AlgLiteral(1, false));
-  AlgCube cube1(mgr(), lit_list1);
-
-  AlgCube cube2(mgr(), AlgLiteral(1, true));
-
-  AlgCube cube3 = cube1 & cube2;
-
-  EXPECT_EQ( 0, cube3.literal_num() );
-  for (ymuint i = 0; i < mgr().variable_num(); ++ i) {
-    EXPECT_EQ( kAlgPolX, cube3.literal(i) );
-  }
-}
-
-TEST_F(CubeTest, cofacter1)
-{
-  vector<AlgLiteral> lit_list1;
-  lit_list1.push_back(AlgLiteral(0, false));
-  lit_list1.push_back(AlgLiteral(1, false));
-  AlgCube cube1(mgr(), lit_list1);
-
-  AlgCube cube2(mgr(), AlgLiteral(1, false));
-
-  cube1 /= cube2;
-
-  EXPECT_EQ( 1, cube1.literal_num() );
-  EXPECT_EQ( kAlgPolP, cube1.literal(0) );
-  EXPECT_EQ( kAlgPolX, cube1.literal(1) );
-  for (ymuint i = 2; i < mgr().variable_num(); ++ i) {
-    EXPECT_EQ( kAlgPolX, cube1.literal(i) ) << " i = " << i;
-  }
-}
-
-TEST_F(CubeTest, cofacter2)
-{
-  vector<AlgLiteral> lit_list1;
-  lit_list1.push_back(AlgLiteral(0, false));
-  lit_list1.push_back(AlgLiteral(1, false));
-  AlgCube cube1(mgr(), lit_list1);
-
-  AlgCube cube2(mgr(), AlgLiteral(2, false));
-
-  cube1 /= cube2;
-
-  EXPECT_EQ( 0, cube1.literal_num() );
-  for (ymuint i = 0; i < mgr().variable_num(); ++ i) {
-    EXPECT_EQ( kAlgPolX, cube1.literal(i) ) << " i = " << i;
-  }
-}
-
 TEST_F(CubeTest, compare1)
 {
   AlgCube cube1(mgr(), "a");
@@ -473,11 +373,11 @@ TEST_F(CubeTest, check_intersect2)
 TEST_F(CubeTest, int_product1)
 {
   AlgCube cube1(mgr(), "a");
-  AlgCube cube2(mgr(), "b");
+  AlgCube cube2(mgr(), "b'");
 
   cube1 &= cube2;
 
-  EXPECT_EQ( AlgCube(mgr(), "a b"), cube1 );
+  EXPECT_EQ( AlgCube(mgr(), "a b'"), cube1 );
 }
 
 TEST_F(CubeTest, int_product2)
@@ -502,12 +402,12 @@ TEST_F(CubeTest, int_product3)
 
 TEST_F(CubeTest, bin_product1)
 {
-  AlgCube cube1(mgr(), "a");
-  AlgCube cube2(mgr(), "b");
+  AlgCube cube1(mgr(), "b'");
+  AlgCube cube2(mgr(), "a");
 
   AlgCube cube3 = cube1 & cube2;
 
-  EXPECT_EQ( AlgCube(mgr(), "a b"), cube3 );
+  EXPECT_EQ( AlgCube(mgr(), "a b'"), cube3 );
 }
 
 TEST_F(CubeTest, bin_product2)
@@ -530,6 +430,65 @@ TEST_F(CubeTest, bin_product3)
   EXPECT_EQ( AlgCube(mgr()), cube3 );
 }
 
+TEST_F(CubeTest, int_cofactor1)
+{
+  AlgCube cube1(mgr(), "a b");
+  AlgCube cube2(mgr(), "b");
+
+  cube1 /= cube2;
+
+  EXPECT_EQ( AlgCube(mgr(), "a"), cube1 );
+}
+
+TEST_F(CubeTest, bin_cofactor1)
+{
+  AlgCube cube1(mgr(), "a b");
+  AlgCube cube2(mgr(), "b");
+
+  AlgCube cube3 = cube1 / cube2;
+
+  EXPECT_EQ( AlgCube(mgr(), "a"), cube3 );
+}
+
+TEST_F(CubeTest, int_cofactor2)
+{
+  AlgCube cube1(mgr(), "a b");
+  AlgCube cube2(mgr(), "b'");
+
+  cube1 /= cube2;
+
+  EXPECT_EQ( AlgCube(mgr(), ""), cube1 );
+}
+
+TEST_F(CubeTest, bin_cofactor2)
+{
+  AlgCube cube1(mgr(), "a b");
+  AlgCube cube2(mgr(), "b'");
+
+  AlgCube cube3 = cube1 / cube2;
+
+  EXPECT_EQ( AlgCube(mgr(), ""), cube3 );
+}
+
+TEST_F(CubeTest, int_cofactor3)
+{
+  AlgCube cube1(mgr(), "a b");
+  AlgCube cube2(mgr(), "a b");
+
+  cube1 /= cube2;
+
+  EXPECT_EQ( AlgCube(mgr(), ""), cube1 );
+}
+
+TEST_F(CubeTest, bin_cofactor3)
+{
+  AlgCube cube1(mgr(), "a b");
+  AlgCube cube2(mgr(), "a b");
+
+  AlgCube cube3 = cube1 / cube2;
+
+  EXPECT_EQ( AlgCube(mgr(), ""), cube3 );
+}
 
 TEST_F(CubeTest, print1)
 {

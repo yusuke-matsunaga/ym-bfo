@@ -143,6 +143,29 @@ AlgMgr::literal_num(ymuint nc,
   return ans;
 }
 
+// @brief ビットベクタ上の特定のリテラルの出現頻度を数える．
+// @param[in] nc キューブ数
+// @param[in] bv カバーを表すビットベクタ
+// @param[in] lit 対象のリテラル
+ymuint
+AlgMgr::literal_num(ymuint nc,
+		    const ymuint64* bv,
+		    AlgLiteral lit)
+{
+  ymuint var_id = lit.varid();
+  ymuint blk = _block_pos(var_id);
+  ymuint sft = _shift_num(var_id);
+  ymuint64 pat = lit.is_positive() ? kAlgPolP : kAlgPolN;
+  ymuint64 mask = pat << sft;
+  ymuint n = 0;
+  for (ymuint i = 0; i < nc; ++ i, blk += _cube_size()) {
+    if ( (bv[blk] & mask) == mask ) {
+      ++ n;
+    }
+  }
+  return n;
+}
+
 // @brief キューブ/カバー用の領域を確保する．
 // @param[in] cube_num キューブ数
 //
@@ -344,11 +367,11 @@ AlgMgr::sum(ymuint64* dst_bv,
   ymuint wpos = 0;
   while ( rpos1 < nc1 && rpos2 < nc2 ) {
     int res = cube_compare(bv1, rpos1, bv2, rpos2);
-    if ( res < 0 ) {
+    if ( res > 0 ) {
       cube_copy(dst_bv, wpos, bv1, rpos1);
       ++ rpos1;
     }
-    else if ( res > 0 ) {
+    else if ( res < 0 ) {
       cube_copy(dst_bv, wpos, bv2, rpos2);
       ++ rpos2;
     }
@@ -392,12 +415,12 @@ AlgMgr::diff(ymuint64* dst_bv,
   ymuint wpos = 0;
   while ( rpos1 < nc1 && rpos2 < nc2 ) {
     int res = cube_compare(bv1, rpos1, bv2, rpos2);
-    if ( res < 0 ) {
+    if ( res > 0 ) {
       cube_copy(dst_bv, wpos, bv1, rpos1);
       ++ rpos1;
       ++ wpos;
     }
-    else if ( res > 0 ) {
+    else if ( res < 0 ) {
       ++ rpos2;
     }
     else {
@@ -469,33 +492,29 @@ AlgMgr::division(ymuint64* dst_bv,
   // ただし，除数も被除数も algebraic expression の場合
   // ので bv1 の各キューブについて bv2 の各キューブで割ってみて
   // 成功した場合，その商を記録する．
+  vector<bool> mark(nc1, false);
   for (ymuint i = 0; i < nc1; ++ i) {
-    bool found = false;
     for (ymuint j = 0; j < nc2; ++ j) {
       if ( cube_cofactor(mTmpBuff, i, bv1, i, bv2, j) ) {
-	found = true;
+	mark[i] = true;
 	break;
       }
-    }
-    if ( !found ) {
-      // このキューブは割れない．
-      cube_clear(mTmpBuff, i);
     }
   }
 
   // 商のキューブは tmp 中に nc2 回現れているはず．
   vector<ymuint> pos_list;
   pos_list.reserve(nc1);
-  vector<bool> mark(nc1, false);
   for (ymuint i = 0; i < nc1; ++ i) {
-    if ( mark[i] ) {
-      // すでに調べている．
+    if ( !mark[i] ) {
+      // 対象ではない．
       continue;
     }
+
     ymuint c = 1;
     vector<ymuint> tmp_list;
     for (ymuint i2 = i + 1; i2 < nc1; ++ i2) {
-      if ( cube_compare(mTmpBuff, i, mTmpBuff, i2) == 0 ) {
+      if ( mark[i2] && cube_compare(mTmpBuff, i, mTmpBuff, i2) == 0 ) {
 	++ c;
 	// i 番目のキューブと等しかったキューブ位置を記録する．
 	tmp_list.push_back(i2);
@@ -507,7 +526,7 @@ AlgMgr::division(ymuint64* dst_bv,
       // tmp_list に含まれるキューブはもう調べなくて良い．
       for (ymuint j = 0; j < tmp_list.size(); ++ j) {
 	ymuint pos = tmp_list[j];
-	mark[pos] = true;
+	mark[pos] = false;
       }
     }
   }
@@ -536,17 +555,18 @@ AlgMgr::division(ymuint64* dst_bv,
   ymuint var_id = lit.varid();
   ymuint blk = _block_pos(var_id);
   ymuint sft = _shift_num(var_id);
-  AlgPol pat = lit.is_positive() ? kAlgPolP : kAlgPolN;
+  ymuint64 pat = lit.is_positive() ? kAlgPolP : kAlgPolN;
   ymuint64 pat1 = pat << sft;
   ymuint64 mask = 3UL << sft;
   ymuint64 nmask = ~mask;
   ymuint nb = _cube_size();
   ymuint wpos = 0;
-  for (ymuint i = 0; i < nc1; ++ i) {
-    if ( (bv1[i * nb + blk] & mask) == pat1 ) {
-      cube_copy(dst_bv, wpos, bv1, i);
-      *(dst_bv + wpos * nb + blk) &= nmask;
+  for (ymuint i = 0; i < nc1; ++ i, bv1 += nb) {
+    if ( (bv1[blk] & mask) == pat1 ) {
+      cube_copy(dst_bv, 0, bv1, 0);
+      dst_bv[blk] &= nmask;
       ++ wpos;
+      dst_bv += nb;
     }
   }
 
