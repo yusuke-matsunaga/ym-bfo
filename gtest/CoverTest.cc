@@ -252,6 +252,191 @@ TEST_F(CoverTest, from_bad_cstr)
   EXPECT_EQ( 0, cover.literal_num() );
 }
 
+TEST_F(CoverTest, from_string1)
+{
+  // string からの変換コンストラクタのテスト
+  string str("a b c");
+  AlgCover cover(mgr(), str);
+
+  EXPECT_EQ( 1, cover.cube_num() );
+  EXPECT_EQ( 3, cover.literal_num() );
+  ymuint n = cover.variable_num();
+  EXPECT_EQ( kAlgPolP, cover.literal(0, 0) );
+  EXPECT_EQ( kAlgPolP, cover.literal(0, 1) );
+  EXPECT_EQ( kAlgPolP, cover.literal(0, 2) );
+  for (ymuint i = 3; i < n; ++ i) {
+    EXPECT_EQ( kAlgPolX, cover.literal(0, i) );
+  }
+}
+
+TEST_F(CoverTest, from_string2)
+{
+  // string からの変換コンストラクタのテスト
+  string str("c b a");
+  AlgCover cover(mgr(), str);
+
+  EXPECT_EQ( 1, cover.cube_num() );
+  EXPECT_EQ( 3, cover.literal_num() );
+  ymuint n = cover.variable_num();
+  EXPECT_EQ( kAlgPolP, cover.literal(0, 0) );
+  EXPECT_EQ( kAlgPolP, cover.literal(0, 1) );
+  EXPECT_EQ( kAlgPolP, cover.literal(0, 2) );
+  for (ymuint i = 3; i < n; ++ i) {
+    EXPECT_EQ( kAlgPolX, cover.literal(0, i) );
+  }
+}
+
+TEST_F(CoverTest, from_string3)
+{
+  // string からの変換コンストラクタのテスト
+  string str("c+ b  + a");
+  AlgCover cover(mgr(), str);
+
+  EXPECT_EQ( 3, cover.cube_num() );
+  EXPECT_EQ( 3, cover.literal_num() );
+  ymuint n = cover.variable_num();
+  EXPECT_EQ( kAlgPolP, cover.literal(0, 0) );
+  EXPECT_EQ( kAlgPolP, cover.literal(1, 1) );
+  EXPECT_EQ( kAlgPolP, cover.literal(2, 2) );
+  for (ymuint j = 0; j < cover.cube_num(); ++ j) {
+    for (ymuint i = 0; i < n; ++ i) {
+      if ( i != j ) {
+	EXPECT_EQ( kAlgPolX, cover.literal(j, i) );
+      }
+    }
+  }
+}
+
+TEST_F(CoverTest, from_bad_string)
+{
+  // 文字列からの変換コンストラクタのテスト
+  string str("c_a_b");
+  AlgCover cover(mgr(), str);
+
+  EXPECT_EQ( 0, cover.cube_num() );
+  EXPECT_EQ( 0, cover.literal_num() );
+}
+
+TEST_F(CoverTest, sort2_1)
+{
+  const char* str = "a + b";
+  AlgCover cover(mgr(), str);
+
+  EXPECT_EQ( AlgCover(mgr(), "a + b"), cover );
+}
+
+TEST_F(CoverTest, sort2_2)
+{
+  const char* str = "b + a";
+  AlgCover cover(mgr(), str);
+
+  EXPECT_EQ( AlgCover(mgr(), "a + b"), cover );
+}
+
+TEST_F(CoverTest, sort3_1)
+{
+  const char* str = "a + b + c";
+  AlgCover cover(mgr(), str);
+
+  EXPECT_EQ( AlgCover(mgr(), "a + b + c"), cover );
+}
+
+TEST_F(CoverTest, sort3_2)
+{
+  const char* str = "a + c + b";
+  AlgCover cover(mgr(), str);
+
+  EXPECT_EQ( AlgCover(mgr(), "a + b + c"), cover );
+}
+
+TEST_F(CoverTest, sort3_3)
+{
+  const char* str = "b + a + c";
+  AlgCover cover(mgr(), str);
+
+  EXPECT_EQ( AlgCover(mgr(), "a + b + c"), cover );
+}
+
+TEST_F(CoverTest, sort3_4)
+{
+  const char* str = "b + c + a";
+  AlgCover cover(mgr(), str);
+
+  EXPECT_EQ( AlgCover(mgr(), "a + b + c"), cover );
+}
+
+TEST_F(CoverTest, sort3_5)
+{
+  const char* str = "c + a + b";
+  AlgCover cover(mgr(), str);
+
+  EXPECT_EQ( AlgCover(mgr(), "a + b + c"), cover );
+}
+
+TEST_F(CoverTest, sort3_6)
+{
+  const char* str = "c + b + a";
+  AlgCover cover(mgr(), str);
+
+  EXPECT_EQ( AlgCover(mgr(), "a + b + c"), cover );
+}
+
+TEST_F(CoverTest, sort4_1)
+{
+  const char* str = "a + b + c + d";
+  AlgCover cover(mgr(), str);
+
+  EXPECT_EQ( AlgCover(mgr(), "a + b + c + d"), cover );
+}
+
+TEST_F(CoverTest, sort4_2)
+{
+  const char* str = "b + a  + d + c";
+  AlgCover cover(mgr(), str);
+
+  EXPECT_EQ( AlgCover(mgr(), "a + b + c + d"), cover );
+}
+
+TEST_F(CoverTest, sort4_3)
+{
+  const char* str = "a + c  + b + d";
+  AlgCover cover(mgr(), str);
+
+  EXPECT_EQ( AlgCover(mgr(), "a + b + c + d"), cover );
+}
+
+TEST_F(CoverTest, sort4_4)
+{
+  const char* str = "c + d  + b + a";
+  AlgCover cover(mgr(), str);
+
+  EXPECT_EQ( AlgCover(mgr(), "a + b + c + d"), cover );
+}
+
+TEST_F(CoverTest, sort4_5)
+{
+  const char* str = "b + d  + a + c";
+  AlgCover cover(mgr(), str);
+
+  EXPECT_EQ( AlgCover(mgr(), "a + b + c + d"), cover );
+}
+
+TEST_F(CoverTest, sort4_6)
+{
+  const char* str = "b + c  + a + d";
+  AlgCover cover(mgr(), str);
+
+  EXPECT_EQ( AlgCover(mgr(), "a + b + c + d"), cover );
+}
+
+TEST_F(CoverTest, sort4_7)
+{
+  const char* str = "a + d  + b + c";
+  AlgCover cover(mgr(), str);
+
+  EXPECT_EQ( AlgCover(mgr(), "a + b + c + d"), cover );
+}
+
 TEST_F(CoverTest, print1)
 {
   AlgCover cover(mgr());

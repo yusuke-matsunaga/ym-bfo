@@ -235,6 +235,7 @@ public:
   AlgCube
   common_cube() const;
 
+  /// @param[in]
   /// @brief 内容をわかりやすい形で出力する．
   /// @param[in] s 出力先のストリーム
   void
@@ -270,6 +271,16 @@ private:
   ymuint
   get_capacity(ymuint cube_num);
 
+  /// @brief 比較演算子(rich compare)
+  /// @param[in] right オペランド
+  /// @return 比較結果を返す．
+  ///
+  /// 比較方法はキューブごとの辞書式順序
+  friend
+  int
+  compare(const AlgCover& left,
+	  const AlgCover& right);
+
 
 private:
   //////////////////////////////////////////////////////////////////////
@@ -289,6 +300,64 @@ private:
   ymuint64* mBody;
 
 };
+
+/// @relates AlgCover
+/// @brief 比較演算子(rich compare)
+/// @param[in] left, right オペランド
+/// @return 比較結果を返す．
+///
+/// 比較方法はキューブごとの辞書式順序
+int
+compare(const AlgCover& left,
+	const AlgCover& right);
+
+/// @relates AlgCover
+/// @brief 比較演算子 (EQ)
+/// @param[in] left, right オペランド
+/// @return 等しい時に true を返す．
+bool
+operator==(const AlgCover& left,
+	   const AlgCover& right);
+
+/// @relates AlgCover
+/// @brief 比較演算子 (NE)
+/// @param[in] left, right オペランド
+/// @return 等しくない時に true を返す．
+bool
+operator!=(const AlgCover& left,
+	   const AlgCover& right);
+
+/// @relates AlgCover
+/// @brief 比較演算子 (LT)
+/// @param[in] left, right オペランド
+/// @return left が right より小さい時に true を返す．
+bool
+operator<(const AlgCover& left,
+	  const AlgCover& right);
+
+/// @relates AlgCover
+/// @brief 比較演算子 (GT)
+/// @param[in] left, right オペランド
+/// @return left が right より大きい時に true を返す．
+bool
+operator>(const AlgCover& left,
+	  const AlgCover& right);
+
+/// @relates AlgCover
+/// @brief 比較演算子 (LE)
+/// @param[in] left, right オペランド
+/// @return left が right と等しいか小さい時に true を返す．
+bool
+operator<=(const AlgCover& left,
+	   const AlgCover& right);
+
+/// @relates AlgCover
+/// @brief 比較演算子 (GE)
+/// @param[in] left, right オペランド
+/// @return left が right と等しいか大きい時に true を返す．
+bool
+operator>=(const AlgCover& left,
+	   const AlgCover& right);
 
 /// @relates AlgCover
 /// @brief AlgCover の内容を出力する．
@@ -851,6 +920,95 @@ void
 AlgCover::print(ostream& s) const
 {
   mgr().print(s, cube_num(), mBody);
+}
+
+// @relates AlgCover
+// @brief 比較演算子(rich compare)
+// @param[in] left, right オペランド
+// @return 比較結果を返す．
+//
+// 比較方法はキューブごとの辞書式順序
+inline
+int
+compare(const AlgCover& left,
+	const AlgCover& right)
+{
+  ASSERT_COND( &left.mgr() == &right.mgr() );
+
+  return left.mgr().compare(left.cube_num(), left.mBody,
+			    right.cube_num(), right.mBody);
+}
+
+// @relates AlgCover
+// @brief 比較演算子 (EQ)
+// @param[in] left, right オペランド
+// @return 等しい時に true を返す．
+inline
+bool
+operator==(const AlgCover& left,
+	   const AlgCover& right)
+{
+  return compare(left, right) == 0;
+}
+
+// @relates AlgCover
+// @brief 比較演算子 (NE)
+// @param[in] left, right オペランド
+// @return 等しくない時に true を返す．
+inline
+bool
+operator!=(const AlgCover& left,
+	   const AlgCover& right)
+{
+  return compare(left, right) != 0;
+}
+
+// @relates AlgCover
+// @brief 比較演算子 (LT)
+// @param[in] left, right オペランド
+// @return left が right より小さい時に true を返す．
+inline
+bool
+operator<(const AlgCover& left,
+	  const AlgCover& right)
+{
+  return compare(left, right) < 0;
+}
+
+// @relates AlgCover
+// @brief 比較演算子 (GT)
+// @param[in] left, right オペランド
+// @return left が right より大きい時に true を返す．
+inline
+bool
+operator>(const AlgCover& left,
+	  const AlgCover& right)
+{
+  return compare(left, right) > 0;
+}
+
+// @relates AlgCover
+// @brief 比較演算子 (LE)
+// @param[in] left, right オペランド
+// @return left が right と等しいか小さい時に true を返す．
+inline
+bool
+operator<=(const AlgCover& left,
+	   const AlgCover& right)
+{
+  return compare(left, right) <= 0;
+}
+
+// @relates AlgCover
+// @brief 比較演算子 (GE)
+// @param[in] left, right オペランド
+// @return left が right と等しいか大きい時に true を返す．
+inline
+bool
+operator>=(const AlgCover& left,
+	   const AlgCover& right)
+{
+  return compare(left, right) >= 0;
 }
 
 // @brief AlgCover の内容を出力する．

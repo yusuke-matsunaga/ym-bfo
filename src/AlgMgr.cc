@@ -627,9 +627,7 @@ AlgMgr::_sort(ymuint64* bv,
     if ( cube_compare(bv, 0, bv, 1) < 0 ) {
       // (1, 0) だったので交換する．
       _resize_buff(1);
-      cube_copy(mTmpBuff, 0, bv, 0);
-      cube_copy(bv, 0, bv, 1);
-      cube_copy(bv, 1, mTmpBuff, 0);
+      cube_swap(bv, 0, bv, 1);
     }
     return;
   }
@@ -644,27 +642,20 @@ AlgMgr::_sort(ymuint64* bv,
 	  // (2, 1, 0)
 	  // 0 と 2 を交換
 	  _resize_buff(1);
-	  cube_copy(mTmpBuff, 0, bv, 0);
-	  cube_copy(bv, 0, bv, 2);
-	  cube_copy(bv, 2, mTmpBuff, 0);
+	  cube_swap(bv, 0, bv, 2);
 	}
 	else {
 	  // (1, 2, 0)
 	  // 0 <- 1, 1 <- 2, 2 <- 0
 	  _resize_buff(1);
-	  cube_copy(mTmpBuff, 0, bv, 0);
-	  cube_copy(bv, 0, bv, 1);
-	  cube_copy(bv, 1, bv, 2);
-	  cube_copy(bv, 2, mTmpBuff, 0);
+	  cube_rotate3(bv, 0, bv, 1, bv, 2);
 	}
       }
       else {
 	// (1, 0, 2)
 	// 0 <-> 1
 	_resize_buff(0);
-	cube_copy(mTmpBuff, 0, bv, 0);
-	cube_copy(bv, 0, bv, 1);
-	cube_copy(bv, 1, mTmpBuff, 0);
+	cube_swap(bv, 0, bv, 1);
       }
     }
     else {
@@ -673,10 +664,7 @@ AlgMgr::_sort(ymuint64* bv,
 	// (2, 0, 1)
 	// 0 <- 2, 2 <- 1, 1 <- 0
 	_resize_buff(1);
-	cube_copy(mTmpBuff, 0, bv, 0);
-	cube_copy(bv, 0, bv, 2);
-	cube_copy(bv, 2, bv, 1);
-	cube_copy(bv, 1, mTmpBuff, 0);
+	cube_rotate3(bv, 0, bv, 2, bv, 1);
       }
       else {
 	// (0, 1, 2), (0, 2, 1)
@@ -684,9 +672,7 @@ AlgMgr::_sort(ymuint64* bv,
 	  // (0, 2, 1)
 	  // 1 <-> 2
 	  _resize_buff(1);
-	  cube_copy(mTmpBuff, 0, bv, 1);
-	  cube_copy(bv, 1, bv, 2);
-	  cube_copy(bv, 2, mTmpBuff, 0);
+	  cube_swap(bv, 1, bv, 2);
 	}
 	else {
 	  // (0, 1, 2)
@@ -700,56 +686,36 @@ AlgMgr::_sort(ymuint64* bv,
     _resize_buff(1);
     // 0 と 1 を整列
     if ( cube_compare(bv, 0, bv, 1) < 0 ) {
-      cube_copy(mTmpBuff, 0, bv, 0);
-      cube_copy(bv, 0, bv, 1);
-      cube_copy(bv, 1, mTmpBuff, 0);
+      cube_swap(bv, 0, bv, 1);
     }
     // 2 と 3 を整列
     if ( cube_compare(bv, 2, bv, 3) < 0 ) {
-      cube_copy(mTmpBuff, 0, bv, 2);
-      cube_copy(bv, 2, bv, 3);
-      cube_copy(bv, 3, mTmpBuff, 0);
+      cube_swap(bv, 2, bv, 3);
     }
     // 0 と 2 を比較
     if ( cube_compare(bv, 0, bv, 2) < 0 ) {
       if ( cube_compare(bv, 0, bv, 3) < 0 ) {
 	// (0, 1) と (2, 3) を交換
-	cube_copy(mTmpBuff, 0, bv, 0);
-	cube_copy(bv, 0, bv, 2);
-	cube_copy(bv, 2, mTmpBuff, 0);
-	cube_copy(mTmpBuff, 0, bv, 1);
-	cube_copy(bv, 1, bv, 3);
-	cube_copy(bv, 3, mTmpBuff, 0);
+	cube_swap(bv, 0, bv, 2);
+	cube_swap(bv, 1, bv, 3);
       }
       else if ( cube_compare(bv, 1, bv, 3) < 0 ) {
 	// 0 <- 2, 2 <- 3, 3 <- 1, 1 <- 0
-	cube_copy(mTmpBuff, 0, bv, 0);
-	cube_copy(bv, 0, bv, 2);
-	cube_copy(bv, 2, bv, 3);
-	cube_copy(bv, 3, bv, 1);
-	cube_copy(bv, 1, mTmpBuff, 0);
+	cube_rotate4(bv, 0, bv, 2, bv, 3, bv, 1);
       }
       else {
 	// 0 <- 2, 2 <- 1, 1 <- 0
-	cube_copy(mTmpBuff, 0, bv, 0);
-	cube_copy(bv, 0, bv, 2);
-	cube_copy(bv, 2, bv, 1);
-	cube_copy(bv, 1, mTmpBuff, 0);
+	cube_rotate3(bv, 0, bv, 2, bv, 1);
       }
     }
     else if ( cube_compare(bv, 1, bv, 2) < 0 ) {
       if ( cube_compare(bv, 1, bv, 3) < 0 ) {
 	// 1 <- 2, 2 <- 3, 3 <- 1
-	cube_copy(mTmpBuff, 0, bv, 1);
-	cube_copy(bv, 1, bv, 2);
-	cube_copy(bv, 2, bv, 3);
-	cube_copy(bv, 3, mTmpBuff, 0);
+	cube_rotate3(bv, 1, bv, 2, bv, 3);
       }
       else {
 	// 1 <- 2, 2 <- 1
-	cube_copy(mTmpBuff, 0, bv, 1);
-	cube_copy(bv, 1, bv, 2);
-	cube_copy(bv, 2, bv, 1);
+	cube_swap(bv, 1, bv, 2);
       }
     }
     else {
@@ -803,6 +769,42 @@ AlgMgr::_sort(ymuint64* bv,
   }
   // 後半部分が残っている時はそのままでいいはず．
   ASSERT_COND( rpos2 == wpos );
+}
+
+// @brief カバー(を表すビットベクタ)の比較を行う．
+// @param[in] nc1 1つめのカバーのキューブ数
+// @param[in] bv1 1つめのカバーを表すビットベクタ
+// @param[in] nc2 2つめカバーのキューブ数
+// @param[in] bv2 2つめのカバーを表すビットベクタ
+// @retval -1 bv1 <  bv2
+// @retval  0 bv1 == bv2
+// @retval  1 bv1 >  bv2
+//
+// 比較はキューブごとの辞書式順序で行う．
+int
+AlgMgr::compare(ymuint nc1,
+		const ymuint64* bv1,
+		ymuint nc2,
+		const ymuint64* bv2)
+{
+  ymuint rpos1 = 0;
+  ymuint rpos2 = 0;
+  for ( ; rpos1 < nc1 && rpos2 < nc2; ++ rpos1, ++ rpos2 ) {
+    int res = cube_compare(bv1, rpos1, bv2, rpos2);
+    if ( res != 0 ) {
+      return res;
+    }
+  }
+  if ( rpos1 < nc1 ) {
+    // rpos2 == nc2 なので bv1 が大きい
+    return 1;
+  }
+  if ( rpos2 < nc2 ) {
+    // rpos1 == nc1 なので bv2 が大きい
+    return -1;
+  }
+  // 等しい
+  return 0;
 }
 
 // @brief キューブ(を表すビットベクタ)の比較を行う．

@@ -228,6 +228,22 @@ public:
   sort(ymuint cube_num,
        ymuint64* bv);
 
+  /// @brief カバー(を表すビットベクタ)の比較を行う．
+  /// @param[in] nc1 1つめのカバーのキューブ数
+  /// @param[in] bv1 1つめのカバーを表すビットベクタ
+  /// @param[in] nc2 2つめカバーのキューブ数
+  /// @param[in] bv2 2つめのカバーを表すビットベクタ
+  /// @retval -1 bv1 <  bv2
+  /// @retval  0 bv1 == bv2
+  /// @retval  1 bv1 >  bv2
+  ///
+  /// 比較はキューブごとの辞書式順序で行う．
+  int
+  compare(ymuint nc1,
+	  const ymuint64* bv1,
+	  ymuint nc2,
+	  const ymuint64* bv2);
+
 
 public:
   //////////////////////////////////////////////////////////////////////
@@ -336,6 +352,55 @@ public:
 		const ymuint64* bv2,
 		ymuint pos2);
 
+  /// @brief 2つのキューブ(を表すビットベクタ)を入れ替える．
+  /// @param[in] bv1 1つめのカバーを表すビットベクタ
+  /// @param[in] pos1 1つめのキューブ番号
+  /// @param[in] bv2 2つめのカバーを表すビットベクタ
+  /// @param[in] pos2 2つめのキューブ番号
+  void
+  cube_swap(ymuint64* bv1,
+	    ymuint pos1,
+	    ymuint64* bv2,
+	    ymuint pos2);
+
+  /// @brief 3つのキューブ(を表すビットベクタ)を入れ替える．
+  /// @param[in] bv1 1つめのカバーを表すビットベクタ
+  /// @param[in] pos1 1つめのキューブ番号
+  /// @param[in] bv2 2つめのカバーを表すビットベクタ
+  /// @param[in] pos2 2つめのキューブ番号
+  /// @param[in] bv3 3つめのカバーを表すビットベクタ
+  /// @param[in] pos3 3つめのキューブ番号
+  ///
+  /// bv1 <- bv2, bv2 <- bv3, bv3 <- bv1 となる．
+  void
+  cube_rotate3(ymuint64* bv1,
+	       ymuint pos1,
+	       ymuint64* bv2,
+	       ymuint pos2,
+	       ymuint64* bv3,
+	       ymuint pos3);
+
+  /// @brief 4つのキューブ(を表すビットベクタ)を入れ替える．
+  /// @param[in] bv1 1つめのカバーを表すビットベクタ
+  /// @param[in] pos1 1つめのキューブ番号
+  /// @param[in] bv2 2つめのカバーを表すビットベクタ
+  /// @param[in] pos2 2つめのキューブ番号
+  /// @param[in] bv3 3つめのカバーを表すビットベクタ
+  /// @param[in] pos3 3つめのキューブ番号
+  /// @param[in] bv4 4つめのカバーを表すビットベクタ
+  /// @param[in] pos4 4つめのキューブ番号
+  ///
+  /// bv1 <- bv2, bv2 <- bv3, bv3 <- bv4, bv4 <- bv1 となる．
+  void
+  cube_rotate4(ymuint64* bv1,
+	       ymuint pos1,
+	       ymuint64* bv2,
+	       ymuint pos2,
+	       ymuint64* bv3,
+	       ymuint pos3,
+	       ymuint64* bv4,
+	       ymuint pos4);
+
   /// @brief カバー/キューブの内容を出力する．
   /// @param[in] s 出力先のストリーム
   /// @param[in] nc キューブ数
@@ -364,6 +429,29 @@ private:
 	ymuint start,
 	ymuint end);
 
+  /// @brief mTmpBuff を初期化する．
+  void
+  _init_buff();
+
+  /// @brief mTmpBuff に必要な領域を確保する．
+  /// @param[in] req_size 要求するキューブ数
+  void
+  _resize_buff(ymuint req_size);
+
+  /// @brief キューブ(を表すビットベクタ)をバッファにコピーする．
+  /// @param[in] src_bv ソースのビットベクタ
+  /// @param[in] src_pos ソースのキューブ番号
+  void
+  _cube_save(const ymuint64* src_bv,
+	     ymuint src_pos);
+
+  /// @brief キューブ(を表すビットベクタ)をバッファからコピーする．
+  /// @param[in] dst_bv コピー先のビットベクタ
+  /// @param[in] dst_pos コピー先のキューブ番号
+  void
+  _cube_restore(ymuint64* dst_bv,
+	       ymuint dst_pos);
+
   /// @brief ブロック位置を計算する．
   /// @param[in] var_id 変数番号
   static
@@ -379,15 +467,6 @@ private:
   /// @brief キューブ1つ分のブロックサイズを計算する．
   ymuint
   _cube_size() const;
-
-  /// @brief mTmpBuff を初期化する．
-  void
-  _init_buff();
-
-  /// @brief mTmpBuff に必要な領域を確保する．
-  /// @param[in] req_size 要求するキューブ数
-  void
-  _resize_buff(ymuint req_size);
 
 
 private:
@@ -478,6 +557,98 @@ AlgMgr::cube_copy(ymuint64* dst_bv,
 {
   // キューブ数が1の場合のコピー
   copy(1, dst_bv, dst_pos, src_bv, src_pos);
+}
+
+// @brief 2つのキューブ(を表すビットベクタ)を入れ替える．
+// @param[in] bv1 1つめのカバーを表すビットベクタ
+// @param[in] pos1 1つめのキューブ番号
+// @param[in] bv2 2つめのカバーを表すビットベクタ
+// @param[in] pos2 2つめのキューブ番号
+inline
+void
+AlgMgr::cube_swap(ymuint64* bv1,
+		  ymuint pos1,
+		  ymuint64* bv2,
+		  ymuint pos2)
+{
+  _cube_save(bv1, pos1);
+  cube_copy(bv1, pos1, bv2, pos2);
+  _cube_restore(bv2, pos2);
+}
+
+// @brief 3つのキューブ(を表すビットベクタ)を入れ替える．
+// @param[in] bv1 1つめのカバーを表すビットベクタ
+// @param[in] pos1 1つめのキューブ番号
+// @param[in] bv2 2つめのカバーを表すビットベクタ
+// @param[in] pos2 2つめのキューブ番号
+// @param[in] bv3 3つめのカバーを表すビットベクタ
+// @param[in] pos3 3つめのキューブ番号
+//
+// bv1 <- bv2, bv2 <- bv3, bv3 <- bv1 となる．
+inline
+void
+AlgMgr::cube_rotate3(ymuint64* bv1,
+		     ymuint pos1,
+		     ymuint64* bv2,
+		     ymuint pos2,
+		     ymuint64* bv3,
+		     ymuint pos3)
+{
+  _cube_save(bv1, pos1);
+  cube_copy(bv1, pos1, bv2, pos2);
+  cube_copy(bv2, pos2, bv3, pos3);
+  _cube_restore(bv3, pos3);
+}
+
+// @brief 4つのキューブ(を表すビットベクタ)を入れ替える．
+// @param[in] bv1 1つめのカバーを表すビットベクタ
+// @param[in] pos1 1つめのキューブ番号
+// @param[in] bv2 2つめのカバーを表すビットベクタ
+// @param[in] pos2 2つめのキューブ番号
+// @param[in] bv3 3つめのカバーを表すビットベクタ
+// @param[in] pos3 3つめのキューブ番号
+// @param[in] bv4 4つめのカバーを表すビットベクタ
+// @param[in] pos4 4つめのキューブ番号
+//
+// bv1 <- bv2, bv2 <- bv3, bv3 <- bv4, bv4 <- bv1 となる．
+inline
+void
+AlgMgr::cube_rotate4(ymuint64* bv1,
+		     ymuint pos1,
+		     ymuint64* bv2,
+		     ymuint pos2,
+		     ymuint64* bv3,
+		     ymuint pos3,
+		     ymuint64* bv4,
+		     ymuint pos4)
+{
+  _cube_save(bv1, pos1);
+  cube_copy(bv1, pos1, bv2, pos2);
+  cube_copy(bv2, pos2, bv3, pos3);
+  cube_copy(bv3, pos3, bv4, pos4);
+  _cube_restore(bv4, pos4);
+}
+
+// @brief キューブ(を表すビットベクタ)をバッファにコピーする．
+// @param[in] src_bv ソースのビットベクタ
+// @param[in] src_pos ソースのキューブ番号
+inline
+void
+AlgMgr::_cube_save(const ymuint64* src_bv,
+		   ymuint src_pos)
+{
+  cube_copy(mTmpBuff, 0, src_bv, src_pos);
+}
+
+// @brief キューブ(を表すビットベクタ)をバッファからコピーする．
+// @param[in] dst_bv コピー先のビットベクタ
+// @param[in] dst_pos コピー先のキューブ番号
+inline
+void
+AlgMgr::_cube_restore(ymuint64* dst_bv,
+		      ymuint dst_pos)
+{
+  cube_copy(dst_bv, dst_pos, mTmpBuff, 0);
 }
 
 // @brief ブロック位置を計算する．
