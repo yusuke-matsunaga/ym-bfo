@@ -1,8 +1,8 @@
-#ifndef BFOCUBE_H
-#define BFOCUBE_H
+#ifndef YM_ALGCUBE_H
+#define YM_ALGCUBE_H
 
-/// @file BfoCube.h
-/// @brief BfoCube のヘッダファイル
+/// @file AlgCube.h
+/// @brief AlgCube のヘッダファイル
 /// @author Yusuke Matsunaga (松永 裕介)
 ///
 /// Copyright (C) 2017 Yusuke Matsunaga
@@ -10,24 +10,32 @@
 
 
 #include "ym/bfo_nsdef.h"
-#include "ym/BfoLiteral.h"
-#include "ym/BfoMgr.h"
+#include "ym/AlgLiteral.h"
+#include "ym/AlgMgr.h"
 
 
 BEGIN_NAMESPACE_YM_BFO
 
 //////////////////////////////////////////////////////////////////////
-/// @class BfoCube BfoCube.h "BfoCube.h"
+/// @class AlgCube AlgCube.h "ym/AlgCube.h"
 /// @brief キューブ(積項)を表すクラス
 ///
 /// 常に固定サイズのビット配列として実装する．<br>
 /// 1つの変数につき2ビットを使用する．<br>
 //////////////////////////////////////////////////////////////////////
-class BfoCube
+class AlgCube
 {
-  friend class BfoCover;
+  friend class AlgCover;
 
 public:
+
+  /// @brief コンストラクタ
+  /// @param[in] mgr マネージャ
+  /// @param[in] lit リテラル
+  ///
+  /// 単一のリテラルからなるキューブを作る．
+  AlgCube(AlgMgr& mgr,
+	  AlgLiteral lit);
 
   /// @brief コンストラクタ
   /// @param[in] mgr マネージャ
@@ -35,29 +43,41 @@ public:
   ///
   /// lit_list が省略された時には空のキューブを作る．
   explicit
-  BfoCube(BfoMgr& mgr,
-	  const vector<BfoLiteral>& lit_list = vector<BfoLiteral>());
+  AlgCube(AlgMgr& mgr,
+	  const vector<AlgLiteral>& lit_list = vector<AlgLiteral>());
 
   /// @brief コンストラクタ
   /// @param[in] mgr マネージャ
-  /// @param[in] lit リテラル
+  /// @param[in] str 内容を表す文字列
   ///
-  /// 単一のリテラルからなるキューブを作る．
-  BfoCube(BfoMgr& mgr,
-	  BfoLiteral lit);
+  /// 文字列は mgr の varname() を空白で区切ったもの<br>
+  /// 否定の場合は ' を変数名の直後につける．空白は認めない<br>
+  /// 文字列が不正だった場合には空のキューブとなる．
+  AlgCube(AlgMgr& mgr,
+	  const char* str);
+
+  /// @brief コンストラクタ
+  /// @param[in] mgr マネージャ
+  /// @param[in] str 内容を表す文字列
+  ///
+  /// 文字列は mgr の varname() を空白で区切ったもの<br>
+  /// 否定の場合は ' を変数名の直後につける．空白は認めない<br>
+  /// 文字列が不正だった場合には空のキューブとなる．
+  AlgCube(AlgMgr& mgr,
+	  const string& str);
 
   /// @brief コピーコンストラクタ
   /// @param[in] src コピー元のオブジェクト
-  BfoCube(const BfoCube& src);
+  AlgCube(const AlgCube& src);
 
   /// @brief 代入演算子
   /// @param[in] src コピー元のオブジェクト
   /// @return 代入後の自身への参照を返す．
-  const BfoCube&
-  operator=(const BfoCube& src);
+  const AlgCube&
+  operator=(const AlgCube& src);
 
   /// @brief デストラクタ
-  ~BfoCube();
+  ~AlgCube();
 
 
 public:
@@ -66,7 +86,7 @@ public:
   //////////////////////////////////////////////////////////////////////
 
   /// @brief マネージャを返す．
-  BfoMgr&
+  AlgMgr&
   mgr() const;
 
   /// @brief 変数の数を返す．
@@ -79,7 +99,7 @@ public:
 
   /// @brief 内容を読み出す．
   /// @param[in] pos 位置番号 ( 0 <= pos < variable_num() )
-  BfoPol
+  AlgPol
   literal(ymuint pos) const;
 
   /// @brief オペランドのキューブに含まれていたら true を返す．
@@ -88,12 +108,12 @@ public:
   /// ここではキューブの表す論理関数の含意を考える<br>
   /// だからリテラル集合としてはオペランドのキューブを含むことになる．
   bool
-  check_containment(const BfoCube& right) const;
+  check_containment(const AlgCube& right) const;
 
   /// @brief 2つのキューブに共通なリテラルがあれば true を返す．
   /// @param[in] right オペランドのキューブ
   bool
-  check_intersect(const BfoCube& right) const;
+  check_intersect(const AlgCube& right) const;
 
   /// @brief 論理積を計算し自身に代入する．
   /// @param[in] right オペランドのキューブ
@@ -101,8 +121,8 @@ public:
   ///
   /// リテラル集合とみなすとユニオンを計算することになる<br>
   /// ただし，相反するリテラルとの積があったら答は空のキューブとなる．
-  const BfoCube&
-  operator&=(const BfoCube& right);
+  const AlgCube&
+  operator&=(const AlgCube& right);
 
   /// @brief コファクターを計算し自身に代入する．
   /// @param[in] right オペランドのキューブ
@@ -110,8 +130,8 @@ public:
   ///
   /// リテラル集合として考えると集合差を計算することになる<br>
   /// ただし，right のみに含まれるリテラルがあったら結果は空となる．
-  const BfoCube&
-  operator/=(const BfoCube& right);
+  const AlgCube&
+  operator/=(const AlgCube& right);
 
   /// @brief 内容をわかりやすい形で出力する．
   /// @param[in] s 出力先のストリーム
@@ -129,14 +149,14 @@ private:
   /// @param[in] body キューブのパタンを表す本体
   ///
   /// 危険なので普通は使わないように
-  BfoCube(BfoMgr& mgr,
+  AlgCube(AlgMgr& mgr,
 	  ymuint64* body);
 
   // friend 関数の宣言
   friend
   int
-  compare(const BfoCube& left,
-	  const BfoCube& right);
+  compare(const AlgCube& left,
+	  const AlgCube& right);
 
 
 private:
@@ -145,103 +165,103 @@ private:
   //////////////////////////////////////////////////////////////////////
 
   // マネージャ
-  BfoMgr* mMgr;
+  AlgMgr* mMgr;
 
   // 内容を表すビットベクタ
   ymuint64* mBody;
 
 };
 
-/// @relates BfoCube
-/// @brief BfoCube の論理積を計算する
+/// @relates AlgCube
+/// @brief AlgCube の論理積を計算する
 /// @param[in] left, right オペランド
 ///
 /// リテラル集合としてみると和集合となる<br>
 /// ただし，相反するリテラルが含まれていたら空キューブとなる．
-BfoCube
-operator&(const BfoCube& left,
-	  const BfoCube& right);
+AlgCube
+operator&(const AlgCube& left,
+	  const AlgCube& right);
 
-/// @relates BfoCube
+/// @relates AlgCube
 /// @brief コファクターを計算する
 /// @param[in] left, right オペランド
-BfoCube
-operator/(const BfoCube& left,
-	  const BfoCube& right);
+AlgCube
+operator/(const AlgCube& left,
+	  const AlgCube& right);
 
-/// @relates BfoCube
-/// @brief BfoCubeの比較演算子
+/// @relates AlgCube
+/// @brief AlgCubeの比較演算子
 /// @param[in] left, right オペランド
 /// @retval -1 left < right
 /// @retval  0 left = right
 /// @retval  1 left > right
 int
-compare(const BfoCube& left,
-	const BfoCube& right);
+compare(const AlgCube& left,
+	const AlgCube& right);
 
-/// @relates BfoCube
-/// @brief BfoCubeの比較演算子(EQ)
+/// @relates AlgCube
+/// @brief AlgCubeの比較演算子(EQ)
 /// @param[in] left, right オペランド
 /// @retval true  left == right
 /// @retval false left != right
 bool
-operator==(const BfoCube& left,
-	   const BfoCube& right);
+operator==(const AlgCube& left,
+	   const AlgCube& right);
 
-/// @relates BfoCube
-/// @brief BfoCubeの比較演算子(NE)
+/// @relates AlgCube
+/// @brief AlgCubeの比較演算子(NE)
 /// @param[in] left, right オペランド
 /// @retval true  left != right
 /// @retval false left == right
 bool
-operator!=(const BfoCube& left,
-	   const BfoCube& right);
+operator!=(const AlgCube& left,
+	   const AlgCube& right);
 
-/// @relates BfoCube
-/// @brief BfoCubeの比較演算子(LT)
+/// @relates AlgCube
+/// @brief AlgCubeの比較演算子(LT)
 /// @param[in] left, right オペランド
 /// @retval true  left < right
 /// @retval false left >= right
 bool
-operator<(const BfoCube& left,
-	  const BfoCube& right);
+operator<(const AlgCube& left,
+	  const AlgCube& right);
 
-/// @relates BfoCube
-/// @brief BfoCubeの比較演算子(GT)
+/// @relates AlgCube
+/// @brief AlgCubeの比較演算子(GT)
 /// @param[in] left, right オペランド
 /// @retval true  left > right
 /// @retval false left <= right
 bool
-operator>(const BfoCube& left,
-	  const BfoCube& right);
+operator>(const AlgCube& left,
+	  const AlgCube& right);
 
-/// @relates BfoCube
-/// @brief BfoCubeの比較演算子(LE)
+/// @relates AlgCube
+/// @brief AlgCubeの比較演算子(LE)
 /// @param[in] left, right オペランド
 /// @retval true  left < right
 /// @retval false left >= right
 bool
-operator<=(const BfoCube& left,
-	   const BfoCube& right);
+operator<=(const AlgCube& left,
+	   const AlgCube& right);
 
-/// @relates BfoCube
-/// @brief BfoCubeの比較演算子(GE)
+/// @relates AlgCube
+/// @brief AlgCubeの比較演算子(GE)
 /// @param[in] left, right オペランド
 /// @retval true  left < right
 /// @retval false left >= right
 bool
-operator>=(const BfoCube& left,
-	   const BfoCube& right);
+operator>=(const AlgCube& left,
+	   const AlgCube& right);
 
-/// @relates BfoCube
-/// @brief BfoCube の内容を出力する．
+/// @relates AlgCube
+/// @brief AlgCube の内容を出力する．
 /// @param[in] s 出力先のストリーム
 /// @param[in] cube 対象のキューブ(のポインタ)
 ///
 /// cube->print(s) と等価
 ostream&
 operator<<(ostream& s,
-	   const BfoCube& cube);
+	   const AlgCube& cube);
 
 
 //////////////////////////////////////////////////////////////////////
@@ -250,37 +270,77 @@ operator<<(ostream& s,
 
 // @brief コンストラクタ
 // @param[in] mgr マネージャ
-// @param[in] lit_list キューブを表すリテラルのリスト
-inline
-BfoCube::BfoCube(BfoMgr& mgr,
-		 const vector<BfoLiteral>& lit_list) :
-  mMgr(&mgr),
-  mBody(mMgr->new_body())
-{
-  mMgr->cube_set(mBody, 0, lit_list);
-}
-
-// @brief コンストラクタ
-// @param[in] mgr マネージャ
 // @param[in] lit リテラル
 //
 // 単一のリテラルからなるキューブを作る．
 inline
-BfoCube::BfoCube(BfoMgr& mgr,
-		 BfoLiteral lit) :
+AlgCube::AlgCube(AlgMgr& mgr,
+		 AlgLiteral lit) :
   mMgr(&mgr),
   mBody(mMgr->new_body())
 {
-  // わざわざ vector<BfoLiteral> を作っているので
-  // あまり効率はよくなけど，BfoMgr に別の関数を
+  // わざわざ vector<AlgLiteral> を作っているので
+  // あまり効率はよくなけど，AlgMgr に別の関数を
   // 作るほどのことではないと判断した．
-  mMgr->cube_set(mBody, 0, vector<BfoLiteral>(1, lit));
+  mMgr->set_literal(mBody, 0, vector<AlgLiteral>(1, lit));
+}
+
+// @brief コンストラクタ
+// @param[in] mgr マネージャ
+// @param[in] lit_list キューブを表すリテラルのリスト
+inline
+AlgCube::AlgCube(AlgMgr& mgr,
+		 const vector<AlgLiteral>& lit_list) :
+  mMgr(&mgr),
+  mBody(mMgr->new_body())
+{
+  mMgr->set_literal(mBody, 0, lit_list);
+}
+
+// @brief コンストラクタ
+// @param[in] mgr マネージャ
+// @param[in] str 内容を表す文字列
+//
+// 文字列は mgr の varname() を空白で区切ったもの<br>
+// 否定の場合は ' を変数名の直後につける．空白は認めない<br>
+// 文字列が不正だった場合には空のキューブとなる．
+inline
+AlgCube::AlgCube(AlgMgr& mgr,
+		 const char* str) :
+  mMgr(&mgr),
+  mBody(mMgr->new_body())
+{
+  vector<AlgLiteral> lit_list;
+  ymuint n = mMgr->parse(str, lit_list);
+  if ( n == 1 ) {
+    mMgr->set_literal(mBody, 0, lit_list);
+  }
+}
+
+// @brief コンストラクタ
+// @param[in] mgr マネージャ
+// @param[in] str 内容を表す文字列
+//
+// 文字列は mgr の varname() を空白で区切ったもの<br>
+// 否定の場合は ' を変数名の直後につける．空白は認めない<br>
+// 文字列が不正だった場合には空のキューブとなる．
+inline
+AlgCube::AlgCube(AlgMgr& mgr,
+		 const string& str) :
+  mMgr(&mgr),
+  mBody(mMgr->new_body())
+{
+  vector<AlgLiteral> lit_list;
+  ymuint n = mMgr->parse(str.c_str(), lit_list);
+  if ( n == 1 ) {
+    mMgr->set_literal(mBody, 0, lit_list);
+  }
 }
 
 // @brief コピーコンストラクタ
 // @param[in] src コピー元のオブジェクト
 inline
-BfoCube::BfoCube(const BfoCube& src) :
+AlgCube::AlgCube(const AlgCube& src) :
   mMgr(src.mMgr)
 {
   mBody = mMgr->new_body();
@@ -293,7 +353,7 @@ BfoCube::BfoCube(const BfoCube& src) :
 //
 // 危険なので普通は使わないように
 inline
-BfoCube::BfoCube(BfoMgr& mgr,
+AlgCube::AlgCube(AlgMgr& mgr,
 		 ymuint64* body) :
   mMgr(&mgr),
   mBody(body)
@@ -304,8 +364,8 @@ BfoCube::BfoCube(BfoMgr& mgr,
 // @param[in] src コピー元のオブジェクト
 // @return 代入後の自身への参照を返す．
 inline
-const BfoCube&
-BfoCube::operator=(const BfoCube& src)
+const AlgCube&
+AlgCube::operator=(const AlgCube& src)
 {
   if ( &src != this ) {
     if ( &mMgr != &src.mMgr ) {
@@ -325,15 +385,15 @@ BfoCube::operator=(const BfoCube& src)
 
 // @brief デストラクタ
 inline
-BfoCube::~BfoCube()
+AlgCube::~AlgCube()
 {
   mMgr->delete_body(mBody);
 }
 
 // @brief マネージャを返す．
 inline
-BfoMgr&
-BfoCube::mgr() const
+AlgMgr&
+AlgCube::mgr() const
 {
   return *mMgr;
 }
@@ -341,7 +401,7 @@ BfoCube::mgr() const
 // @brief 変数の数を返す．
 inline
 ymuint
-BfoCube::variable_num() const
+AlgCube::variable_num() const
 {
   return mgr().variable_num();
 }
@@ -349,8 +409,8 @@ BfoCube::variable_num() const
 // @brief 内容を読み出す．
 // @param[in] pos 位置番号 ( 0 <= pos < variable_num() )
 inline
-BfoPol
-BfoCube::literal(ymuint pos) const
+AlgPol
+AlgCube::literal(ymuint pos) const
 {
   return mgr().literal(mBody, 0, pos);
 }
@@ -358,7 +418,7 @@ BfoCube::literal(ymuint pos) const
 // @brief リテラル数を返す．
 inline
 ymuint
-BfoCube::literal_num() const
+AlgCube::literal_num() const
 {
   return mgr().literal_num(1, mBody);
 }
@@ -370,7 +430,7 @@ BfoCube::literal_num() const
 // だからリテラル集合としては真逆になる．
 inline
 bool
-BfoCube::check_containment(const BfoCube& right) const
+AlgCube::check_containment(const AlgCube& right) const
 {
   ASSERT_COND( variable_num() == right.variable_num() );
 
@@ -381,7 +441,7 @@ BfoCube::check_containment(const BfoCube& right) const
 // @param[in] right オペランドのキューブ
 inline
 bool
-BfoCube::check_intersect(const BfoCube& right) const
+AlgCube::check_intersect(const AlgCube& right) const
 {
   ASSERT_COND( variable_num() == right.variable_num() );
 
@@ -394,8 +454,8 @@ BfoCube::check_intersect(const BfoCube& right) const
 //
 // 相反するリテラルとの積があったら答は空のキューブとなる．
 inline
-const BfoCube&
-BfoCube::operator&=(const BfoCube& right)
+const AlgCube&
+AlgCube::operator&=(const AlgCube& right)
 {
   ASSERT_COND( variable_num() == right.variable_num() );
 
@@ -407,25 +467,25 @@ BfoCube::operator&=(const BfoCube& right)
   return *this;
 }
 
-// @brief BfoCube の論理積を計算する
+// @brief AlgCube の論理積を計算する
 // @param[in] left, right オペランド
 //
 // リテラル集合としてみると和集合となる<br>
 // ただし，相反するリテラルが含まれていたら空キューブとなる．
 inline
-BfoCube
-operator&(const BfoCube& left,
-	  const BfoCube& right)
+AlgCube
+operator&(const AlgCube& left,
+	  const AlgCube& right)
 {
-  return BfoCube(left).operator&=(right);
+  return AlgCube(left).operator&=(right);
 }
 
 // @brief コファクターを計算し自身に代入する．
 // @param[in] right オペランドのキューブ
 // @return 演算後の自身の参照を返す．
 inline
-const BfoCube&
-BfoCube::operator/=(const BfoCube& right)
+const AlgCube&
+AlgCube::operator/=(const AlgCube& right)
 {
   ASSERT_COND( variable_num() == right.variable_num() );
 
@@ -440,98 +500,98 @@ BfoCube::operator/=(const BfoCube& right)
 // @brief コファクターを計算する
 // @param[in] left, right オペランド
 inline
-BfoCube
-operator/(const BfoCube& left,
-	  const BfoCube& right)
+AlgCube
+operator/(const AlgCube& left,
+	  const AlgCube& right)
 {
-  return BfoCube(left).operator/=(right);
+  return AlgCube(left).operator/=(right);
 }
 
-// @brief BfoCubeの比較演算子
+// @brief AlgCubeの比較演算子
 // @param[in] left, right オペランド
 // @retval -1 left < right
 // @retval  0 left = right
 // @retval  1 left > right
 inline
 int
-compare(const BfoCube& left,
-	const BfoCube& right)
+compare(const AlgCube& left,
+	const AlgCube& right)
 {
   ASSERT_COND( left.variable_num() == right.variable_num() );
 
   return left.mgr().cube_compare(left.mBody, 0, right.mBody, 0);
 }
 
-// @relates BfoCube
-// @brief BfoCubeの比較演算子(EQ)
+// @relates AlgCube
+// @brief AlgCubeの比較演算子(EQ)
 // @param[in] left, right オペランド
 // @retval true  left == right
 // @retval false left != right
 inline
 bool
-operator==(const BfoCube& left,
-	   const BfoCube& right)
+operator==(const AlgCube& left,
+	   const AlgCube& right)
 {
   return compare(left, right) == 0;
 }
 
-// @relates BfoCube
-// @brief BfoCubeの比較演算子(NE)
+// @relates AlgCube
+// @brief AlgCubeの比較演算子(NE)
 // @param[in] left, right オペランド
 // @retval true  left != right
 // @retval false left == right
 inline
 bool
-operator!=(const BfoCube& left,
-	   const BfoCube& right)
+operator!=(const AlgCube& left,
+	   const AlgCube& right)
 {
   return compare(left, right) != 0;
 }
 
-// @brief BfoCubeの比較演算子(LT)
+// @brief AlgCubeの比較演算子(LT)
 // @param[in] left, right オペランド
 // @retval true  left < right
 // @retval false left >= right
 inline
 bool
-operator<(const BfoCube& left,
-	  const BfoCube& right)
+operator<(const AlgCube& left,
+	  const AlgCube& right)
 {
   return compare(left, right) < 0;
 }
 
-// @brief BfoCubeの比較演算子(GT)
+// @brief AlgCubeの比較演算子(GT)
 // @param[in] left, right オペランド
 // @retval true  left > right
 // @retval false left <= right
 inline
 bool
-operator>(const BfoCube& left,
-	  const BfoCube& right)
+operator>(const AlgCube& left,
+	  const AlgCube& right)
 {
   return compare(left, right) > 0;
 }
 
-// @brief BfoCubeの比較演算子(LE)
+// @brief AlgCubeの比較演算子(LE)
 // @param[in] left, right オペランド
 // @retval true  left < right
 // @retval false left >= right
 inline
 bool
-operator<=(const BfoCube& left,
-	   const BfoCube& right)
+operator<=(const AlgCube& left,
+	   const AlgCube& right)
 {
   return compare(left, right) <= 0;
 }
 
-// @brief BfoCubeの比較演算子(GE)
+// @brief AlgCubeの比較演算子(GE)
 // @param[in] left, right オペランド
 // @retval true  left < right
 // @retval false left >= right
 inline
 bool
-operator>=(const BfoCube& left,
-	   const BfoCube& right)
+operator>=(const AlgCube& left,
+	   const AlgCube& right)
 {
   return compare(left, right) >= 0;
 }
@@ -540,12 +600,12 @@ operator>=(const BfoCube& left,
 // @param[in] s 出力先のストリーム
 inline
 void
-BfoCube::print(ostream& s) const
+AlgCube::print(ostream& s) const
 {
   mgr().print(s, 1, mBody);
 }
 
-// @brief BfoCube の内容を出力する．
+// @brief AlgCube の内容を出力する．
 // @param[in] s 出力先のストリーム
 // @param[in] cube 対象のキューブ
 //
@@ -553,7 +613,7 @@ BfoCube::print(ostream& s) const
 inline
 ostream&
 operator<<(ostream& s,
-	   const BfoCube& cube)
+	   const AlgCube& cube)
 {
   cube.print(s);
   return s;
@@ -561,4 +621,4 @@ operator<<(ostream& s,
 
 END_NAMESPACE_YM_BFO
 
-#endif // BFOCUBE_H
+#endif // YM_ALGCUBE_H

@@ -34,30 +34,30 @@ END_NAMESPACE_YM
 BEGIN_NAMESPACE_YM_BFO
 
 // クラスの前方宣言
-class BfoLiteral;
-class BfoCube;
-class BfoCover;
-class BfoMgr;
+class AlgLiteral;
+class AlgCube;
+class AlgCover;
+class AlgMgr;
 
 END_NAMESPACE_YM_BFO
 
 BEGIN_NAMESPACE_YM
 
 /// @brief リテラルの極性を表す列挙型
-enum BfoPol {
+enum AlgPol {
   /// @brief なし
-  kBfoPolX = 0,
+  kAlgPolX = 0,
   /// @brief 否定のリテラル
-  kBfoPolN = 1,
+  kAlgPolN = 1,
   /// @brief 肯定のリテラル
-  kBfoPolP = 2,
+  kAlgPolP = 2,
 };
 
 // 親の名前空間にインポートする．
-using nsBfo::BfoLiteral;
-using nsBfo::BfoCube;
-using nsBfo::BfoCover;
-using nsBfo::BfoMgr;
+using nsBfo::AlgLiteral;
+using nsBfo::AlgCube;
+using nsBfo::AlgCover;
+using nsBfo::AlgMgr;
 
 END_NAMESPACE_YM
 

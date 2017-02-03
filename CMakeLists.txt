@@ -25,7 +25,7 @@ add_subdirectory ( gtest )
 # ===================================================================
 
 set ( bfo_SOURCES
-  src/BfoMgr.cc
+  src/AlgMgr.cc
   )
 
 

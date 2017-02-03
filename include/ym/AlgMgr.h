@@ -1,8 +1,8 @@
-#ifndef BFOMGR_H
-#define BFOMGR_H
+#ifndef YM_ALGMGR_H
+#define YM_ALGMGR_H
 
-/// @file BfoMgr.h
-/// @brief BfoMgr のヘッダファイル
+/// @file AlgMgr.h
+/// @brief AlgMgr のヘッダファイル
 /// @author Yusuke Matsunaga (松永 裕介)
 ///
 /// Copyright (C) 2017 Yusuke Matsunaga
@@ -10,18 +10,19 @@
 
 
 #include "ym/bfo_nsdef.h"
+#include "ym/HashMap.h"
 
 
 BEGIN_NAMESPACE_YM_BFO
 
 //////////////////////////////////////////////////////////////////////
-/// @class BfoMgr BfoMgr.h "BfoMgr.h"
-/// @brief BfoCube, BfoCover を管理するクラス
+/// @class AlgMgr AlgMgr.h "ym/AlgMgr.h"
+/// @brief AlgCube, AlgCover を管理するクラス
 ///
 /// といっても実際の役割は入力数を覚えておくことと
 /// 変数名のリストを持っておくことだけ．
 //////////////////////////////////////////////////////////////////////
-class BfoMgr
+class AlgMgr
 {
 public:
 
@@ -29,16 +30,16 @@ public:
   /// @param[in] variable_num 変数の数
   ///
   /// 変数名はデフォルトのものが使用される．
-  BfoMgr(ymuint variable_num);
+  AlgMgr(ymuint variable_num);
 
   /// @brief コンストラクタ
   /// @param[in] varname_list 変数名のリスト
   ///
   /// varname_list のサイズが変数の数になる．
-  BfoMgr(const vector<string>& varname_list);
+  AlgMgr(const vector<string>& varname_list);
 
   /// @brief デストラクタ
-  ~BfoMgr();
+  ~AlgMgr();
 
 
 public:
@@ -58,14 +59,14 @@ public:
 
 public:
   //////////////////////////////////////////////////////////////////////
-  // BfoCube/BfoCover のための関数
+  // AlgCube/AlgCover のための関数
   //////////////////////////////////////////////////////////////////////
 
   /// @brief ビットベクタからリテラルを取り出す．
   /// @param[in] bv ビットベクタ
   /// @param[in] cube_id キューブ番号
   /// @param[in] var_id 変数番号 ( 0 <= var_id < variable_num() )
-  BfoPol
+  AlgPol
   literal(const ymuint64* bv,
 	  ymuint cube_id,
 	  ymuint var_id);
@@ -103,6 +104,27 @@ public:
   // オペランドのカバーはビットベクタとキューブ数の組で表す．
   // 結果のキューブ数を関数の戻り値として返す．
   //////////////////////////////////////////////////////////////////////
+
+  /// @brief カバー/キューブを表す文字列をパーズする．
+  /// @param[in] str 対象の文字列
+  /// @param[out] lit_list パーズ結果のリテラルのリスト
+  /// @return キューブ数を返す．
+  ///
+  /// lit_list 中の kAlgLiteralUndef はキューブの区切りとみなす．
+  ymuint
+  parse(const char* str,
+	vector<AlgLiteral>& lit_list);
+
+  /// @brief リテラルをセットする．
+  /// @param[in] dst_bv 対象のビットベクタ
+  /// @param[in] dst_pos 対象のキューブ位置
+  /// @param[in] lit_list リテラルのリスト
+  ///
+  /// lit_list 中の kAlgLiteralUndef はキューブの区切りとみなす．
+  void
+  set_literal(ymuint64* dst_bv,
+	      ymuint dst_pos,
+	      const vector<AlgLiteral>& lit_list);
 
   /// @brief 2つのカバーの論理和を計算する．
   /// @param[in] dst_bv 結果を格納するビットベクタ
@@ -173,7 +195,7 @@ public:
   division(ymuint64* dst_bv,
 	   ymuint nc1,
 	   const ymuint64* bv1,
-	   BfoLiteral lit);
+	   AlgLiteral lit);
 
   /// @brief カバー中のすべてのキューブの共通部分を求める．
   /// @param[in] dst_bv 結果を格納するビットベクタ
@@ -193,11 +215,11 @@ public:
   /// @param[in] src_bv ソースのビットベクタ
   /// @param[in] src_pos ソースのキューブ位置
   void
-  cover_copy(ymuint cube_num,
-	     ymuint64* dst_bv,
-	     ymuint dst_pos,
-	     const ymuint64* src_bv,
-	     ymuint src_pos);
+  copy(ymuint cube_num,
+       ymuint64* dst_bv,
+       ymuint dst_pos,
+       const ymuint64* src_bv,
+       ymuint src_pos);
 
   /// @brief カバー(を表すビットベクタ)を整列する．
   /// @param[in] cube_num キューブ数
@@ -262,15 +284,6 @@ public:
 		       ymuint pos1,
 		       const ymuint64* bv2,
 		       ymuint pos2);
-
-  /// @brief リテラルの集合からキューブを表すビットベクタにセットする．
-  /// @param[in] dst_bv コピー先のビットベクタ
-  /// @param[in] dst_pos コピー先のキューブ番号
-  /// @param[in] lit_list リテラルのリスト
-  void
-  cube_set(ymuint64* dst_bv,
-	   ymuint dst_pos,
-	   const vector<BfoLiteral>& lit_list);
 
   /// @brief キューブ(を表すビットベクタ)のコピーを行う．
   /// @param[in] dst_bv コピー先のビットベクタ
@@ -355,26 +368,26 @@ private:
   /// @param[in] var_id 変数番号
   static
   ymuint
-  block_pos(ymuint var_id);
+  _block_pos(ymuint var_id);
 
   /// @brief シフト量を計算する．
   /// @param[in] var_id 変数番号
   static
   ymuint
-  shift_num(ymuint var_id);
+  _shift_num(ymuint var_id);
 
   /// @brief キューブ1つ分のブロックサイズを計算する．
   ymuint
-  cube_size() const;
+  _cube_size() const;
 
   /// @brief mTmpBuff を初期化する．
   void
-  init_buff();
+  _init_buff();
 
   /// @brief mTmpBuff に必要な領域を確保する．
   /// @param[in] req_size 要求するキューブ数
   void
-  resize_buff(ymuint req_size);
+  _resize_buff(ymuint req_size);
 
 
 private:
@@ -387,6 +400,9 @@ private:
 
   // 変数名のリスト
   vector<string> mVarNameList;
+
+  // 変数名と変数番号のハッシュ表
+  HashMap<string, ymuint> mVarNameMap;
 
   // 作業用に用いられるビットベクタ
   ymuint64* mTmpBuff;
@@ -404,7 +420,7 @@ private:
 // @brief 変数の数を返す．
 inline
 ymuint
-BfoMgr::variable_num() const
+AlgMgr::variable_num() const
 {
   return mVarNum;
 }
@@ -413,7 +429,7 @@ BfoMgr::variable_num() const
 // @param[in] var_id 変数番号 ( 0 <= var_id < variable_num() )
 inline
 string
-BfoMgr::varname(ymuint var_id) const
+AlgMgr::varname(ymuint var_id) const
 {
   ASSERT_COND( var_id < variable_num() );
   return mVarNameList[var_id];
@@ -424,16 +440,16 @@ BfoMgr::varname(ymuint var_id) const
 // @param[in] cube_id キューブ番号
 // @param[in] var_id 変数番号 ( 0 <= var_id < variable_num() )
 inline
-BfoPol
-BfoMgr::literal(const ymuint64* bv,
+AlgPol
+AlgMgr::literal(const ymuint64* bv,
 		ymuint cube_id,
 		ymuint var_id)
 {
   ASSERT_COND( var_id < variable_num() );
 
-  ymuint blk = block_pos(var_id) + cube_size() * cube_id;
-  ymuint sft = shift_num(var_id);
-  return static_cast<BfoPol>((bv[blk] >> sft) & 3ULL);
+  ymuint blk = _block_pos(var_id) + _cube_size() * cube_id;
+  ymuint sft = _shift_num(var_id);
+  return static_cast<AlgPol>((bv[blk] >> sft) & 3ULL);
 }
 
 // @brief カバー(を表すビットベクタ)を整列する．
@@ -441,18 +457,34 @@ BfoMgr::literal(const ymuint64* bv,
 // @param[in] bv ビットベクタ
 inline
 void
-BfoMgr::sort(ymuint cube_num,
+AlgMgr::sort(ymuint cube_num,
 	     ymuint64* bv)
 {
   // 下請け関数を呼ぶだけ
   _sort(bv, 0, cube_num);
 }
 
+// @brief キューブ(を表すビットベクタ)のコピーを行う．
+// @param[in] dst_bv コピー先のビットベクタ
+// @param[in] dst_pos コピー先のキューブ番号
+// @param[in] src_bv ソースのビットベクタ
+// @param[in] src_pos ソースのキューブ番号
+inline
+void
+AlgMgr::cube_copy(ymuint64* dst_bv,
+		  ymuint dst_pos,
+		  const ymuint64* src_bv,
+		  ymuint src_pos)
+{
+  // キューブ数が1の場合のコピー
+  copy(1, dst_bv, dst_pos, src_bv, src_pos);
+}
+
 // @brief ブロック位置を計算する．
 // @param[in] var_id 変数番号
 inline
 ymuint
-BfoMgr::block_pos(ymuint var_id)
+AlgMgr::_block_pos(ymuint var_id)
 {
   return var_id / 32;
 }
@@ -461,7 +493,7 @@ BfoMgr::block_pos(ymuint var_id)
 // @param[in] var_id 変数番号
 inline
 ymuint
-BfoMgr::shift_num(ymuint var_id)
+AlgMgr::_shift_num(ymuint var_id)
 {
   // ソートしたときの見栄えの問題で左(MSB)から始める．
   return (31 - (var_id % 32)) * 2;
@@ -470,11 +502,11 @@ BfoMgr::shift_num(ymuint var_id)
 // @brief キューブ1つ分のブロックサイズを計算する．
 inline
 ymuint
-BfoMgr::cube_size() const
+AlgMgr::_cube_size() const
 {
   return (variable_num() + 31) / 32;
 }
 
 END_NAMESPACE_YM_BFO
 
-#endif // BFOCUBEMGR_H
+#endif // YM_ALGCUBEMGR_H

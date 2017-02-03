@@ -1,15 +1,15 @@
 
-/// @file BfoMgr.cc
-/// @brief BfoMgr の実装ファイル
+/// @file AlgMgr.cc
+/// @brief AlgMgr の実装ファイル
 /// @author Yusuke Matsunaga (松永 裕介)
 ///
 /// Copyright (C) 2017 Yusuke Matsunaga
 /// All rights reserved.
 
 
-#include "ym/BfoMgr.h"
-#include "ym/BfoCover.h"
-#include "ym/BfoCube.h"
+#include "ym/AlgMgr.h"
+#include "ym/AlgCover.h"
+#include "ym/AlgCube.h"
 
 
 BEGIN_NAMESPACE_YM_BFO
@@ -31,40 +31,50 @@ _varname(ymuint id)
 
 END_NONAMESPACE
 
+const
+AlgLiteral kAlgLiteralUndef;
+
 //////////////////////////////////////////////////////////////////////
-// クラス BfoMgr
+// クラス AlgMgr
 //////////////////////////////////////////////////////////////////////
 
 // @brief コンストラクタ
 // @param[in] variable_num 変数の数
 //
 // 変数名はデフォルトのものが使用される．
-BfoMgr::BfoMgr(ymuint variable_num) :
+AlgMgr::AlgMgr(ymuint variable_num) :
   mVarNum(variable_num),
   mVarNameList(mVarNum)
 {
   // 変数名を作る．
   // 変数番号を26進数で表して文字列にする．
   for (ymuint i = 0; i < mVarNum; ++ i) {
-    mVarNameList[i] = _varname(i);
+    string name = _varname(i);
+    mVarNameList[i] = name;
+    mVarNameMap.add(name, i);
   }
 
-  init_buff();
+  _init_buff();
 }
 
 // @brief コンストラクタ
 // @param[in] varname_list 変数名のリスト
 //
 // varname_list のサイズが変数の数になる．
-BfoMgr::BfoMgr(const vector<string>& varname_list) :
+AlgMgr::AlgMgr(const vector<string>& varname_list) :
   mVarNum(varname_list.size()),
   mVarNameList(varname_list)
 {
-  init_buff();
+  // 変数名を登録する．
+  for (ymuint i = 0; i < mVarNum; ++ i) {
+    mVarNameMap.add(mVarNameList[i], i);
+  }
+
+  _init_buff();
 }
 
 // @brief デストラクタ
-BfoMgr::~BfoMgr()
+AlgMgr::~AlgMgr()
 {
   delete_body(mTmpBuff, mTmpBuffSize);
 }
@@ -76,7 +86,7 @@ ymuint
 _count(ymuint64 pat)
 {
   ymuint table[] = {
-    // utils/gen_table.py で生成
+    // utils/gen_bitcount_tbl.py で生成
     0,  1,  1,  0,  1,  2,  2,  0,  1,  2,  2,  0,  0,  0,  0,  0,
     1,  2,  2,  0,  2,  3,  3,  0,  2,  3,  3,  0,  0,  0,  0,  0,
     1,  2,  2,  0,  2,  3,  3,  0,  2,  3,  3,  0,  0,  0,  0,  0,
@@ -105,10 +115,10 @@ END_NONAMESPACE
 // @param[in] nc キューブ数
 // @param[in] bv カバーを表すビットベクタ
 ymuint
-BfoMgr::literal_num(ymuint nc,
+AlgMgr::literal_num(ymuint nc,
 		    const ymuint64* bv)
 {
-  ymuint n = nc * cube_size();
+  ymuint n = nc * _cube_size();
   // 8 ビットごとに区切って表引きで計算する．
   ymuint ans = 0;
   for (ymuint i = 0; i < n; ++ i, ++ bv) {
@@ -138,9 +148,14 @@ BfoMgr::literal_num(ymuint nc,
 //
 // キューブの時は cube_num = 1 とする．
 ymuint64*
-BfoMgr::new_body(ymuint cube_num)
+AlgMgr::new_body(ymuint cube_num)
 {
-  return new ymuint64[cube_size() * cube_num];
+  ymuint size = _cube_size() * cube_num;
+  ymuint64* body = new ymuint64[size];
+  for (ymuint i = 0; i < size; ++ i) {
+    body[i] = 0ULL;
+  }
+  return body;
 }
 
 // @brief キューブ/カバー用の領域を削除する．
@@ -149,10 +164,157 @@ BfoMgr::new_body(ymuint cube_num)
 //
 // キューブの時は cube_num = 1 とする．
 void
-BfoMgr::delete_body(ymuint64* p,
+AlgMgr::delete_body(ymuint64* p,
 		    ymuint cube_num)
 {
   delete [] p;
+}
+
+
+BEGIN_NONAMESPACE
+
+// 変数名として適切な文字なら true を返す．
+inline
+bool
+is_validchar(char c)
+{
+  // utils/gen_validchar_tbl.py で生成
+  bool table[] = {
+   false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+   false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+   false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+   true , true , true , true , true , true , true , true , true , true , false, false, false, false, false, false,
+   false, true , true , true , true , true , true , true , true , true , true , true , true , true , true , true ,
+   true , true , true , true , true , true , true , true , true , true , true , false, false, false, false, true ,
+   false, true , true , true , true , true , true , true , true , true , true , true , true , true , true , true ,
+   true , true , true , true , true , true , true , true , true , true , true , false, false, false, false, false,
+   false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+   false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+   false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+   false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+   false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+   false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+   false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+   false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+  };
+  return table[c];
+}
+
+END_NONAMESPACE
+
+// @brief カバー/キューブを表す文字列をパーズする．
+// @param[in] str 対象の文字列
+// @param[out] lit_list パーズ結果のリテラルのリスト
+// @return キューブ数を返す．
+//
+// lit_list 中の kAlgLiteralUndef はキューブの区切りとみなす．
+ymuint
+AlgMgr::parse(const char* str,
+	      vector<AlgLiteral>& lit_list)
+{
+  lit_list.clear();
+
+  char c;
+  string name;
+  ymuint var;
+
+  // 有限状態機械で実装する．
+  // なんか書いててスッキリしないコード
+ state0:
+  c = *str;
+  // EOF なら終わる．
+  if ( c == '\0' ) {
+    goto state_end;
+  }
+  // 空白文字ならこの状態にとどまる．
+  if ( isspace(c) ) {
+    ++ str;
+    goto state0;
+  }
+  // [a-zA-Z0-9_] なら state1 に遷移する．
+  if ( is_validchar(c) ) {
+    name = string();
+    goto state1;
+  }
+  // '+' ならキューブの区切りマークを追加する．
+  if ( c == '+' ) {
+    ++ str;
+    lit_list.push_back(kAlgLiteralUndef);
+    goto state0;
+  }
+  // それ以外はエラー
+  goto state_error;
+
+ state1:
+  c = *str;
+  // [a-zA-Z0-9_]* ならこの状態にとどまる．
+  if ( is_validchar(c) ) {
+    name += c;
+    ++ str;
+    goto state1;
+  }
+  // ' なら inv をセットしたあとで name を処理する．
+  if ( c == '\'' ) {
+    ++ str;
+    if ( !mVarNameMap.find(name, var) ) {
+      goto state_error;
+    }
+    lit_list.push_back(AlgLiteral(var, true));
+    goto state0;
+  }
+  // それ以外なら一旦現在の name を登録する．
+  if ( !mVarNameMap.find(name, var) ) {
+    goto state_error;
+  }
+  lit_list.push_back(AlgLiteral(var, false));
+  goto state0;
+
+ state_error:
+  lit_list.clear();
+  return 0;
+
+ state_end:
+  ymuint cube_num = 0;
+  bool first = true;
+  for (ymuint i = 0; i < lit_list.size(); ++ i) {
+    if ( lit_list[i] == kAlgLiteralUndef ) {
+      first = true;
+    }
+    else if ( first ) {
+      first = false;
+      ++ cube_num;
+    }
+  }
+  return cube_num;
+}
+
+// @brief リテラルをセットする．
+// @param[in] dst_bv 対象のビットベクタ
+// @param[in] dst_pos 対象のキューブ位置
+// @param[in] lit_list リテラルのリスト
+//
+// lit_list 中の kAlgLiteralUndef はキューブの区切りとみなす．
+void
+AlgMgr::set_literal(ymuint64* dst_bv,
+		    ymuint dst_pos,
+		    const vector<AlgLiteral>& lit_list)
+{
+  ymuint nb = _cube_size();
+  ymuint64* _dst = dst_bv + dst_pos * nb;
+  ymuint n = lit_list.size();
+  for (ymuint i = 0; i < n; ++ i) {
+    AlgLiteral lit = lit_list[i];
+    if ( lit == kAlgLiteralUndef ) {
+      _dst += nb;
+    }
+    else {
+      ymuint var = lit.varid();
+      ymuint blk = _block_pos(var);
+      ymuint sft = _shift_num(var);
+      ymuint64 pat = lit.is_negative() ? kAlgPolN : kAlgPolP;
+      _dst[blk] |= (pat << sft);
+    }
+  }
 }
 
 // @brief 2つのカバーの論理和を計算する．
@@ -166,15 +328,15 @@ BfoMgr::delete_body(ymuint64* p,
 // dst_bv には十分な容量があると仮定する．<br>
 // dst_bv == bv1 の場合もあり得る．<br>
 ymuint
-BfoMgr::sum(ymuint64* dst_bv,
+AlgMgr::sum(ymuint64* dst_bv,
 	    ymuint nc1,
 	    const ymuint64* bv1,
 	    ymuint nc2,
 	    const ymuint64* bv2)
 {
-  /// dst_bv == bv1 の時は bv1 のコピーを作る．
-  resize_buff(nc1);
-  cover_copy(nc1, mTmpBuff, 0, bv1, 0);
+  // dst_bv == bv1 の時は bv1 のコピーを作る．
+  _resize_buff(nc1);
+  copy(nc1, mTmpBuff, 0, bv1, 0);
   bv1 = mTmpBuff;
 
   ymuint rpos1 = 0;
@@ -219,7 +381,7 @@ BfoMgr::sum(ymuint64* dst_bv,
 // @param[in] bv2 2つめのカバーを表すビットベクタ
 // @return 結果のキューブ数を返す．
 ymuint
-BfoMgr::diff(ymuint64* dst_bv,
+AlgMgr::diff(ymuint64* dst_bv,
 	     ymuint nc1,
 	     const ymuint64* bv1,
 	     ymuint nc2,
@@ -260,15 +422,15 @@ BfoMgr::diff(ymuint64* dst_bv,
 // @param[in] bv2 2つめのカバーを表すビットベクタ
 // @return 結果のキューブ数を返す．
 ymuint
-BfoMgr::product(ymuint64* dst_bv,
+AlgMgr::product(ymuint64* dst_bv,
 		ymuint nc1,
 		const ymuint64* bv1,
 		ymuint nc2,
 		const ymuint64* bv2)
 {
   // dst_bv == bv1 の時は bv1 のコピーを作る．
-  resize_buff(nc1);
-  cover_copy(nc1, mTmpBuff, 0, bv1, 0);
+  _resize_buff(nc1);
+  copy(nc1, mTmpBuff, 0, bv1, 0);
   bv1 = mTmpBuff;
 
   // 単純には答の積項数は2つの積項数の積だが
@@ -293,7 +455,7 @@ BfoMgr::product(ymuint64* dst_bv,
 // @param[in] bv2 2つめのカバー(除数)を表すビットベクタ
 // @return 結果のキューブ数を返す．
 ymuint
-BfoMgr::division(ymuint64* dst_bv,
+AlgMgr::division(ymuint64* dst_bv,
 		 ymuint nc1,
 		 const ymuint64* bv1,
 		 ymuint nc2,
@@ -301,7 +463,7 @@ BfoMgr::division(ymuint64* dst_bv,
 {
   // 作業領域のビットベクタを確保する．
   // 大きさは nc1
-  resize_buff(nc1);
+  _resize_buff(nc1);
 
   // bv1 の各キューブは高々1つのキューブでしか割ることはできない．
   // ただし，除数も被除数も algebraic expression の場合
@@ -366,19 +528,19 @@ BfoMgr::division(ymuint64* dst_bv,
 // @param[in] lit 対象のリテラル
 // @return 結果のキューブ数を返す．
 ymuint
-BfoMgr::division(ymuint64* dst_bv,
+AlgMgr::division(ymuint64* dst_bv,
 		 ymuint nc1,
 		 const ymuint64* bv1,
-		 BfoLiteral lit)
+		 AlgLiteral lit)
 {
   ymuint var_id = lit.varid();
-  ymuint blk = block_pos(var_id);
-  ymuint sft = shift_num(var_id);
-  BfoPol pat = lit.is_positive() ? kBfoPolP : kBfoPolN;
+  ymuint blk = _block_pos(var_id);
+  ymuint sft = _shift_num(var_id);
+  AlgPol pat = lit.is_positive() ? kAlgPolP : kAlgPolN;
   ymuint64 pat1 = pat << sft;
   ymuint64 mask = 3UL << sft;
   ymuint64 nmask = ~mask;
-  ymuint nb = cube_size();
+  ymuint nb = _cube_size();
   ymuint wpos = 0;
   for (ymuint i = 0; i < nc1; ++ i) {
     if ( (bv1[i * nb + blk] & mask) == pat1 ) {
@@ -398,11 +560,11 @@ BfoMgr::division(ymuint64* dst_bv,
 //
 // 共通部分がないときは空のキューブとなる．
 void
-BfoMgr::common_cube(ymuint64* dst_bv,
+AlgMgr::common_cube(ymuint64* dst_bv,
 		    ymuint nc1,
 		    const ymuint64* bv1)
 {
-  ymuint nb = cube_size();
+  ymuint nb = _cube_size();
 
   // 最初のキューブをコピーする．
   cube_copy(dst_bv, 0, bv1, 0);
@@ -423,6 +585,28 @@ BfoMgr::common_cube(ymuint64* dst_bv,
   }
 }
 
+// @brief カバー(を表すビットベクタ)のコピーを行う．
+// @param[in] cube_num キューブ数
+// @param[in] dst_bv コピー先のビットベクタ
+// @param[in] dst_pos コピー先のキューブ位置
+// @param[in] src_bv ソースのビットベクタ
+// @param[in] src_pos ソースのキューブ位置
+void
+AlgMgr::copy(ymuint cube_num,
+	     ymuint64* dst_bv,
+	     ymuint dst_pos,
+	     const ymuint64* src_bv,
+	     ymuint src_pos)
+{
+  ymuint nb = _cube_size();
+  ymuint n = nb * cube_num;
+  ymuint64* dst = dst_bv + dst_pos * nb;
+  const ymuint64* src = src_bv + src_pos * nb;
+  for (ymuint i = 0; i < n; ++ i, ++ dst, ++ src) {
+    *dst = *src;
+  }
+}
+
 // @brief マージソートを行う下請け関数
 // @param[in] bv 対象のビットベクタ
 // @param[in] start 開始位置
@@ -430,7 +614,7 @@ BfoMgr::common_cube(ymuint64* dst_bv,
 //
 // bv[start] - bv[end - 1] の領域をソートする．
 void
-BfoMgr::_sort(ymuint64* bv,
+AlgMgr::_sort(ymuint64* bv,
 	      ymuint start,
 	      ymuint end)
 {
@@ -439,12 +623,137 @@ BfoMgr::_sort(ymuint64* bv,
     return;
   }
   if ( n == 2 ) {
+    // (0, 1) と (1, 0) の2通りだけ
     if ( cube_compare(bv, 0, bv, 1) < 0 ) {
-      // 交換する．
-      resize_buff(1);
+      // (1, 0) だったので交換する．
+      _resize_buff(1);
       cube_copy(mTmpBuff, 0, bv, 0);
       cube_copy(bv, 0, bv, 1);
       cube_copy(bv, 1, mTmpBuff, 0);
+    }
+    return;
+  }
+  if ( n == 3 ) {
+    // (0, 1, 2), (0, 2, 1), (1, 0, 2), (1, 2, 0), (2, 0, 1), (2, 1, 0)
+    // の6通りなので虱潰し
+    if ( cube_compare(bv, 0, bv, 1) < 0 ) {
+      // (1, 0, 2), (1, 2, 0), (2, 1, 0)
+      if ( cube_compare(bv, 0, bv, 2) < 0 ) {
+	// (1, 2, 0), (2, 1, 0)
+	if ( cube_compare(bv, 1, bv, 2) < 0 ) {
+	  // (2, 1, 0)
+	  // 0 と 2 を交換
+	  _resize_buff(1);
+	  cube_copy(mTmpBuff, 0, bv, 0);
+	  cube_copy(bv, 0, bv, 2);
+	  cube_copy(bv, 2, mTmpBuff, 0);
+	}
+	else {
+	  // (1, 2, 0)
+	  // 0 <- 1, 1 <- 2, 2 <- 0
+	  _resize_buff(1);
+	  cube_copy(mTmpBuff, 0, bv, 0);
+	  cube_copy(bv, 0, bv, 1);
+	  cube_copy(bv, 1, bv, 2);
+	  cube_copy(bv, 2, mTmpBuff, 0);
+	}
+      }
+      else {
+	// (1, 0, 2)
+	// 0 <-> 1
+	_resize_buff(0);
+	cube_copy(mTmpBuff, 0, bv, 0);
+	cube_copy(bv, 0, bv, 1);
+	cube_copy(bv, 1, mTmpBuff, 0);
+      }
+    }
+    else {
+      // (0, 1, 2), (0, 2, 1), (2, 0, 1)
+      if ( cube_compare(bv, 0, bv, 2) < 0 ) {
+	// (2, 0, 1)
+	// 0 <- 2, 2 <- 1, 1 <- 0
+	_resize_buff(1);
+	cube_copy(mTmpBuff, 0, bv, 0);
+	cube_copy(bv, 0, bv, 2);
+	cube_copy(bv, 2, bv, 1);
+	cube_copy(bv, 1, mTmpBuff, 0);
+      }
+      else {
+	// (0, 1, 2), (0, 2, 1)
+	if ( cube_compare(bv, 1, bv, 2) < 0 ) {
+	  // (0, 2, 1)
+	  // 1 <-> 2
+	  _resize_buff(1);
+	  cube_copy(mTmpBuff, 0, bv, 1);
+	  cube_copy(bv, 1, bv, 2);
+	  cube_copy(bv, 2, mTmpBuff, 0);
+	}
+	else {
+	  // (0, 1, 2)
+	  // そのまま
+	}
+      }
+    }
+    return;
+  }
+  if ( n == 4 ) {
+    _resize_buff(1);
+    // 0 と 1 を整列
+    if ( cube_compare(bv, 0, bv, 1) < 0 ) {
+      cube_copy(mTmpBuff, 0, bv, 0);
+      cube_copy(bv, 0, bv, 1);
+      cube_copy(bv, 1, mTmpBuff, 0);
+    }
+    // 2 と 3 を整列
+    if ( cube_compare(bv, 2, bv, 3) < 0 ) {
+      cube_copy(mTmpBuff, 0, bv, 2);
+      cube_copy(bv, 2, bv, 3);
+      cube_copy(bv, 3, mTmpBuff, 0);
+    }
+    // 0 と 2 を比較
+    if ( cube_compare(bv, 0, bv, 2) < 0 ) {
+      if ( cube_compare(bv, 0, bv, 3) < 0 ) {
+	// (0, 1) と (2, 3) を交換
+	cube_copy(mTmpBuff, 0, bv, 0);
+	cube_copy(bv, 0, bv, 2);
+	cube_copy(bv, 2, mTmpBuff, 0);
+	cube_copy(mTmpBuff, 0, bv, 1);
+	cube_copy(bv, 1, bv, 3);
+	cube_copy(bv, 3, mTmpBuff, 0);
+      }
+      else if ( cube_compare(bv, 1, bv, 3) < 0 ) {
+	// 0 <- 2, 2 <- 3, 3 <- 1, 1 <- 0
+	cube_copy(mTmpBuff, 0, bv, 0);
+	cube_copy(bv, 0, bv, 2);
+	cube_copy(bv, 2, bv, 3);
+	cube_copy(bv, 3, bv, 1);
+	cube_copy(bv, 1, mTmpBuff, 0);
+      }
+      else {
+	// 0 <- 2, 2 <- 1, 1 <- 0
+	cube_copy(mTmpBuff, 0, bv, 0);
+	cube_copy(bv, 0, bv, 2);
+	cube_copy(bv, 2, bv, 1);
+	cube_copy(bv, 1, mTmpBuff, 0);
+      }
+    }
+    else if ( cube_compare(bv, 1, bv, 2) < 0 ) {
+      if ( cube_compare(bv, 1, bv, 3) < 0 ) {
+	// 1 <- 2, 2 <- 3, 3 <- 1
+	cube_copy(mTmpBuff, 0, bv, 1);
+	cube_copy(bv, 1, bv, 2);
+	cube_copy(bv, 2, bv, 3);
+	cube_copy(bv, 3, mTmpBuff, 0);
+      }
+      else {
+	// 1 <- 2, 2 <- 1
+	cube_copy(mTmpBuff, 0, bv, 1);
+	cube_copy(bv, 1, bv, 2);
+	cube_copy(bv, 2, bv, 1);
+      }
+    }
+    else {
+      // そのまま
     }
     return;
   }
@@ -458,10 +767,17 @@ BfoMgr::_sort(ymuint64* bv,
   _sort(bv, start1, end1);
   _sort(bv, start2, end2);
 
+  // trivial case
+  // 前半部分の末尾が後半部分の先頭より大きければ
+  // すでに整列している．
+  if ( cube_compare(bv, end1 - 1, bv, start2) > 0 ) {
+    return;
+  }
+
   // マージする．
   // 前半部分を一旦 mTmpBuff にコピーする．
-  resize_buff(hn);
-  cover_copy(hn, mTmpBuff, 0, bv, start1);
+  _resize_buff(hn);
+  copy(hn, mTmpBuff, 0, bv, start1);
   ymuint rpos1 = 0;
   ymuint rpos2 = start2;
   ymuint wpos = start1;
@@ -498,12 +814,12 @@ BfoMgr::_sort(ymuint64* bv,
 // @retval  0 bv1 == bv2
 // @retval  1 bv1 >  bv2
 int
-BfoMgr::cube_compare(const ymuint64* bv1,
+AlgMgr::cube_compare(const ymuint64* bv1,
 		     ymuint pos1,
 		     const ymuint64* bv2,
 		     ymuint pos2)
 {
-  ymuint nb = cube_size();
+  ymuint nb = _cube_size();
   const ymuint64* _bv1 = bv1 + pos1 * nb;
   const ymuint64* _bv2 = bv2 + pos2 * nb;
   for (ymuint i = 0; i < nb; ++ i, ++ _bv1, ++ _bv2) {
@@ -525,12 +841,12 @@ BfoMgr::cube_compare(const ymuint64* bv1,
 // @param[in] bv2 2つめのカバーを表すビットベクタ
 // @param[in] pos2 2つめのキューブ番号
 bool
-BfoMgr::cube_check_product(const ymuint64* bv1,
+AlgMgr::cube_check_product(const ymuint64* bv1,
 			   ymuint pos1,
 			   const ymuint64* bv2,
 			   ymuint pos2)
 {
-  ymuint nb = cube_size();
+  ymuint nb = _cube_size();
   const ymuint64* _bv1 = bv1 + pos1 * nb;
   const ymuint64* _bv2 = bv2 + pos2 * nb;
   for (ymuint i = 0; i < nb; ++ i, ++ _bv1, ++ _bv2) {
@@ -554,12 +870,12 @@ BfoMgr::cube_check_product(const ymuint64* bv1,
 // @param[in] pos2 2つめのキューブ番号
 // @return 1つめのキューブが2つめのキューブ に含まれていたら true を返す．
 bool
-BfoMgr::cube_check_containment(const ymuint64* bv1,
+AlgMgr::cube_check_containment(const ymuint64* bv1,
 			       ymuint pos1,
 			       const ymuint64* bv2,
 			       ymuint pos2)
 {
-  ymuint nb = cube_size();
+  ymuint nb = _cube_size();
   const ymuint64* _bv1 = bv1 + pos1 * nb;
   const ymuint64* _bv2 = bv2 + pos2 * nb;
   for (ymuint i = 0; i < nb; ++ i, ++ _bv1, ++ _bv2) {
@@ -577,12 +893,12 @@ BfoMgr::cube_check_containment(const ymuint64* bv1,
 // @param[in] pos2 2つめのキューブ番号
 // @return ２つのキューブに共通なリテラルがあれば true を返す．
 bool
-BfoMgr::cube_check_intersect(const ymuint64* bv1,
+AlgMgr::cube_check_intersect(const ymuint64* bv1,
 			     ymuint pos1,
 			     const ymuint64* bv2,
 			     ymuint pos2)
 {
-  ymuint nb = cube_size();
+  ymuint nb = _cube_size();
   const ymuint64* _bv1 = bv1 + pos1 * nb;
   const ymuint64* _bv2 = bv2 + pos2 * nb;
   for (ymuint i = 0; i < nb; ++ i, ++ _bv1, ++ _bv2) {
@@ -593,82 +909,77 @@ BfoMgr::cube_check_intersect(const ymuint64* bv1,
   return false;
 }
 
-// @brief リテラルの集合からキューブを表すビットベクタにセットする．
+#if 0
+// @brief 文字列からキューブを表すビットベクタにセットする．
 // @param[in] dst_bv コピー先のビットベクタ
 // @param[in] dst_pos コピー先のキューブ番号
-// @param[in] lit_list リテラルのリスト
-void
-BfoMgr::cube_set(ymuint64* dst_bv,
+// @param[in] str 内容を表す文字列
+// @return 正しい文字列なら true を返す．
+bool
+AlgMgr::cube_set(ymuint64* dst_bv,
 		 ymuint dst_pos,
-		 const vector<BfoLiteral>& lit_list)
+		 const char* str)
 {
   // まず空に初期化する．
-  ymuint nb = cube_size();
+  ymuint nb = _cube_size();
   ymuint64* dst = dst_bv + dst_pos * nb;
   for (ymuint i = 0; i < nb; ++ i) {
     dst[i] = 0ULL;
   }
 
-  // lit_list に従って内容を設定する．
-  for (ymuint i = 0; i < lit_list.size(); ++ i) {
-    BfoLiteral lit = lit_list[i];
-    ymuint var = lit.varid();
-    ymuint blk = block_pos(var);
-    ymuint sft = shift_num(var);
-    ymuint64 pat = lit.is_positive() ? kBfoPolP : kBfoPolN;
-    dst[blk] |= (pat << sft);
+  // str から変数を一つづつ読み出して設定する．
+  for ( ; ; ) {
+    // 次の非空白文字までスキップする
+    for ( ; ; ++ str) {
+      if ( !isspace(*str) ) {
+	break;
+      }
+    }
+    // [a-z]*'? とのマッチを行う．
+    string name;
+    bool error = false;
+    bool inverted = false;
+    for ( ; ; ++ str) {
+      char c = *str;
+      if ( c == '\0' ) {
+	break;
+      }
+      if ( isspace(c) ) {
+	break;
+      }
+      if ( c == '\'' ) {
+	inverted = true;
+	++ str;
+	break;
+      }
+      if ( c < 'a' || c > 'z' ) {
+	error = true;
+      }
+      name += c;
+    }
+    if ( error || name == string() ) {
+      return false;
+    }
+    ymuint var;
+    if ( !mVarNameMap.find(name, var) ) {
+      // 名前が見つからなかった．
+      return false;
+    }
+    set_literal(dst_bv, dst_pos, var, inverted);
   }
-}
 
-// @brief カバー(を表すビットベクタ)のコピーを行う．
-// @param[in] cube_num キューブ数
-// @param[in] dst_bv コピー先のビットベクタ
-// @param[in] dst_pos コピー先のキューブ位置
-// @param[in] src_bv ソースのビットベクタ
-// @param[in] src_pos ソースのキューブ位置
-void
-BfoMgr::cover_copy(ymuint cube_num,
-		   ymuint64* dst_bv,
-		   ymuint dst_pos,
-		   const ymuint64* src_bv,
-		   ymuint src_pos)
-{
-  ymuint nb = cube_size();
-  ymuint n = nb * cube_num;
-  ymuint64* dst = dst_bv + dst_pos * nb;
-  const ymuint64* src = src_bv + src_pos * nb;
-  for (ymuint i = 0; i < n; ++ i, ++ dst, ++ src) {
-    *dst = *src;
-  }
+  return true;
 }
-
-// @brief キューブ(を表すビットベクタ)のコピーを行う．
-// @param[in] dst_bv コピー先のビットベクタ
-// @param[in] dst_pos コピー先のキューブ番号
-// @param[in] src_bv ソースのビットベクタ
-// @param[in] src_pos ソースのキューブ番号
-void
-BfoMgr::cube_copy(ymuint64* dst_bv,
-		  ymuint dst_pos,
-		  const ymuint64* src_bv,
-		  ymuint src_pos)
-{
-  ymuint nb = cube_size();
-  ymuint64* dst = dst_bv + dst_pos * nb;
-  const ymuint64* src = src_bv + src_pos * nb;
-  for (ymuint i = 0; i < nb; ++ i, ++ dst, ++ src) {
-    *dst = *src;
-  }
-}
+#endif
 
 // @brief キューブ(を表すビットベクタ)をクリアする．
 // @param[in] dst_bv 対象のビットベクタ
 // @param[in] dst_pos 対象のキューブ番号
 void
-BfoMgr::cube_clear(ymuint64* dst_bv,
+AlgMgr::cube_clear(ymuint64* dst_bv,
 		   ymuint dst_pos)
 {
-  ymuint nb = cube_size();
+  ymuint nb = _cube_size();
   ymuint64* dst = dst_bv + dst_pos * nb;
   for (ymuint i = 0; i < nb; ++ i, ++ dst) {
     *dst = 0ULL;
@@ -685,14 +996,14 @@ BfoMgr::cube_clear(ymuint64* dst_bv,
 // @retval true 積が空でなかった．
 // @retval false 積が空だった．
 bool
-BfoMgr::cube_product(ymuint64* dst_bv,
+AlgMgr::cube_product(ymuint64* dst_bv,
 		     ymuint dst_pos,
 		     const ymuint64* bv1,
 		     ymuint pos1,
 		     const ymuint64* bv2,
 		     ymuint pos2)
 {
-  ymuint nb = cube_size();
+  ymuint nb = _cube_size();
   ymuint64* dst = dst_bv + dst_pos * nb;
   const ymuint64* _bv1 = bv1 + pos1 * nb;
   const ymuint64* _bv2 = bv2 + pos2 * nb;
@@ -720,14 +1031,14 @@ BfoMgr::cube_product(ymuint64* dst_bv,
 // @param[in] pos2 2つめのキューブ番号
 // @return 正しく割ることができたら true を返す．
 bool
-BfoMgr::cube_cofactor(ymuint64* dst_bv,
+AlgMgr::cube_cofactor(ymuint64* dst_bv,
 		      ymuint dst_pos,
 		      const ymuint64* bv1,
 		      ymuint pos1,
 		      const ymuint64* bv2,
 		      ymuint pos2)
 {
-  ymuint nb = cube_size();
+  ymuint nb = _cube_size();
   ymuint64* dst = dst_bv + dst_pos * nb;
   const ymuint64* _bv1 = bv1 + pos1 * nb;
   const ymuint64* _bv2 = bv2 + pos2 * nb;
@@ -748,7 +1059,7 @@ BfoMgr::cube_cofactor(ymuint64* dst_bv,
 //
 // キューブの場合は nc を 1 とする．
 void
-BfoMgr::print(ostream& s,
+AlgMgr::print(ostream& s,
 	      ymuint nc,
 	      const ymuint64* bv)
 {
@@ -758,12 +1069,12 @@ BfoMgr::print(ostream& s,
     plus = " + ";
     const char* spc = "";
     for (ymuint j = 0; j < variable_num(); ++ j) {
-      BfoPol pol = literal(bv, i, j);
-      if ( pol == kBfoPolP ) {
+      AlgPol pol = literal(bv, i, j);
+      if ( pol == kAlgPolP ) {
 	s << spc << varname(j);
 	spc = " ";
       }
-      else if ( pol == kBfoPolN ) {
+      else if ( pol == kAlgPolN ) {
 	s << spc << varname(j) << "'";
 	spc = " ";
       }
@@ -773,7 +1084,7 @@ BfoMgr::print(ostream& s,
 
 // @brief mTmpBuff を初期化する．
 void
-BfoMgr::init_buff()
+AlgMgr::_init_buff()
 {
   // とりあえず 128 を初期値とする．
   mTmpBuffSize = 128;
@@ -783,7 +1094,7 @@ BfoMgr::init_buff()
 // @brief mTmpBuff に必要な領域を確保する．
 // @param[in] req_size 要求するキューブ数
 void
-BfoMgr::resize_buff(ymuint req_size)
+AlgMgr::_resize_buff(ymuint req_size)
 {
   ymuint old_size = mTmpBuffSize;
   while ( mTmpBuffSize < req_size ) {
