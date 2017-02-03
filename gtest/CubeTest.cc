@@ -386,6 +386,45 @@ TEST_F(CubeTest, cofacter2)
   }
 }
 
+TEST_F(CubeTest, compare1)
+{
+  AlgCube cube1(mgr(), "a");
+  AlgCube cube2(mgr(), "b");
+
+  EXPECT_FALSE( cube1 == cube2 );
+  EXPECT_TRUE(  cube1 != cube2 );
+  EXPECT_FALSE( cube1 <  cube2 );
+  EXPECT_FALSE( cube1 <= cube2 );
+  EXPECT_TRUE(  cube1 >  cube2 );
+  EXPECT_TRUE(  cube1 >= cube2 );
+}
+
+TEST_F(CubeTest, compare2)
+{
+  AlgCube cube1(mgr(), "a");
+  AlgCube cube2(mgr(), "a b");
+
+  EXPECT_FALSE( cube1 == cube2 );
+  EXPECT_TRUE(  cube1 != cube2 );
+  EXPECT_TRUE(  cube1 <  cube2 );
+  EXPECT_TRUE(  cube1 <= cube2 );
+  EXPECT_FALSE( cube1 >  cube2 );
+  EXPECT_FALSE( cube1 >= cube2 );
+}
+
+TEST_F(CubeTest, compare3)
+{
+  AlgCube cube1(mgr(), "a");
+  AlgCube cube2(mgr(), "a");
+
+  EXPECT_TRUE(  cube1 == cube2 );
+  EXPECT_FALSE( cube1 != cube2 );
+  EXPECT_FALSE( cube1 <  cube2 );
+  EXPECT_TRUE(  cube1 <= cube2 );
+  EXPECT_FALSE( cube1 >  cube2 );
+  EXPECT_TRUE(  cube1 >= cube2 );
+}
+
 TEST_F(CubeTest, print1)
 {
   AlgCube cube(mgr());

@@ -403,14 +403,16 @@ public:
 
   /// @brief カバー/キューブの内容を出力する．
   /// @param[in] s 出力先のストリーム
-  /// @param[in] nc キューブ数
   /// @param[in] bv カバー/キューブを表すビットベクタ
+  /// @param[in] start キューブの開始位置
+  /// @param[in] end キューブの終了位置
   ///
-  /// キューブの場合は nc を 1 とする．
+  /// end は実際の末尾 + 1 を指す．
   void
   print(ostream& s,
-	ymuint nc,
-	const ymuint64* bv);
+	const ymuint64* bv,
+	ymuint start,
+	ymuint end);
 
 
 private:

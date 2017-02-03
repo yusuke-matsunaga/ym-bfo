@@ -437,6 +437,22 @@ TEST_F(CoverTest, sort4_7)
   EXPECT_EQ( AlgCover(mgr(), "a + b + c + d"), cover );
 }
 
+TEST_F(CoverTest, sort5_1)
+{
+  const char* str = "a + b + c + d + e";
+  AlgCover cover(mgr(), str);
+
+  EXPECT_EQ( AlgCover(mgr(), "a + b + c + d + e"), cover );
+}
+
+TEST_F(CoverTest, sort5_2)
+{
+  const char* str = "e + d + c + b + a";
+  AlgCover cover(mgr(), str);
+
+  EXPECT_EQ( AlgCover(mgr(), "a + b + c + d + e"), cover );
+}
+
 TEST_F(CoverTest, print1)
 {
   AlgCover cover(mgr());

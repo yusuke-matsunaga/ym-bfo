@@ -919,7 +919,7 @@ inline
 void
 AlgCover::print(ostream& s) const
 {
-  mgr().print(s, cube_num(), mBody);
+  mgr().print(s, mBody, 0, mCubeNum);
 }
 
 // @relates AlgCover

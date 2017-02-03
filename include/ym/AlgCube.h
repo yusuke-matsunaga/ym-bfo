@@ -602,7 +602,7 @@ inline
 void
 AlgCube::print(ostream& s) const
 {
-  mgr().print(s, 1, mBody);
+  mgr().print(s, mBody, 0, 1);
 }
 
 // @brief AlgCube の内容を出力する．

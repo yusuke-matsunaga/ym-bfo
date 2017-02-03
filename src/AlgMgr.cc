@@ -624,55 +624,60 @@ AlgMgr::_sort(ymuint64* bv,
   }
   if ( n == 2 ) {
     // (0, 1) と (1, 0) の2通りだけ
-    if ( cube_compare(bv, 0, bv, 1) < 0 ) {
+    ymuint pos0 = start;
+    ymuint pos1 = pos0 + 1;
+    if ( cube_compare(bv, pos0, bv, pos1) < 0 ) {
       // (1, 0) だったので交換する．
       _resize_buff(1);
-      cube_swap(bv, 0, bv, 1);
+      cube_swap(bv, pos0, bv, pos1);
     }
     return;
   }
   if ( n == 3 ) {
     // (0, 1, 2), (0, 2, 1), (1, 0, 2), (1, 2, 0), (2, 0, 1), (2, 1, 0)
     // の6通りなので虱潰し
-    if ( cube_compare(bv, 0, bv, 1) < 0 ) {
+    ymuint pos0 = start;
+    ymuint pos1 = pos0 + 1;
+    ymuint pos2 = pos1 + 1;
+    if ( cube_compare(bv, pos0, bv, pos1) < 0 ) {
       // (1, 0, 2), (1, 2, 0), (2, 1, 0)
-      if ( cube_compare(bv, 0, bv, 2) < 0 ) {
+      if ( cube_compare(bv, pos0, bv, pos2) < 0 ) {
 	// (1, 2, 0), (2, 1, 0)
-	if ( cube_compare(bv, 1, bv, 2) < 0 ) {
+	if ( cube_compare(bv, pos1, bv, pos2) < 0 ) {
 	  // (2, 1, 0)
 	  // 0 と 2 を交換
 	  _resize_buff(1);
-	  cube_swap(bv, 0, bv, 2);
+	  cube_swap(bv, pos0, bv, pos2);
 	}
 	else {
 	  // (1, 2, 0)
 	  // 0 <- 1, 1 <- 2, 2 <- 0
 	  _resize_buff(1);
-	  cube_rotate3(bv, 0, bv, 1, bv, 2);
+	  cube_rotate3(bv, pos0, bv, pos1, bv, pos2);
 	}
       }
       else {
 	// (1, 0, 2)
 	// 0 <-> 1
 	_resize_buff(0);
-	cube_swap(bv, 0, bv, 1);
+	cube_swap(bv, pos0, bv, pos1);
       }
     }
     else {
       // (0, 1, 2), (0, 2, 1), (2, 0, 1)
-      if ( cube_compare(bv, 0, bv, 2) < 0 ) {
+      if ( cube_compare(bv, pos0, bv, pos2) < 0 ) {
 	// (2, 0, 1)
 	// 0 <- 2, 2 <- 1, 1 <- 0
 	_resize_buff(1);
-	cube_rotate3(bv, 0, bv, 2, bv, 1);
+	cube_rotate3(bv, pos0, bv, pos2, bv, pos1);
       }
       else {
 	// (0, 1, 2), (0, 2, 1)
-	if ( cube_compare(bv, 1, bv, 2) < 0 ) {
+	if ( cube_compare(bv, pos1, bv, pos2) < 0 ) {
 	  // (0, 2, 1)
 	  // 1 <-> 2
 	  _resize_buff(1);
-	  cube_swap(bv, 1, bv, 2);
+	  cube_swap(bv, pos1, bv, pos2);
 	}
 	else {
 	  // (0, 1, 2)
@@ -683,39 +688,43 @@ AlgMgr::_sort(ymuint64* bv,
     return;
   }
   if ( n == 4 ) {
+    ymuint pos0 = start;
+    ymuint pos1 = pos0 + 1;
+    ymuint pos2 = pos1 + 1;
+    ymuint pos3 = pos2 + 1;
     _resize_buff(1);
     // 0 と 1 を整列
-    if ( cube_compare(bv, 0, bv, 1) < 0 ) {
-      cube_swap(bv, 0, bv, 1);
+    if ( cube_compare(bv, pos0, bv, pos1) < 0 ) {
+      cube_swap(bv, pos0, bv, pos1);
     }
     // 2 と 3 を整列
-    if ( cube_compare(bv, 2, bv, 3) < 0 ) {
-      cube_swap(bv, 2, bv, 3);
+    if ( cube_compare(bv, pos2, bv, pos3) < 0 ) {
+      cube_swap(bv, pos2, bv, pos3);
     }
     // 0 と 2 を比較
-    if ( cube_compare(bv, 0, bv, 2) < 0 ) {
-      if ( cube_compare(bv, 0, bv, 3) < 0 ) {
+    if ( cube_compare(bv, pos0, bv, pos2) < 0 ) {
+      if ( cube_compare(bv, pos0, bv, pos3) < 0 ) {
 	// (0, 1) と (2, 3) を交換
-	cube_swap(bv, 0, bv, 2);
-	cube_swap(bv, 1, bv, 3);
+	cube_swap(bv, pos0, bv, pos2);
+	cube_swap(bv, pos1, bv, pos3);
       }
-      else if ( cube_compare(bv, 1, bv, 3) < 0 ) {
+      else if ( cube_compare(bv, pos1, bv, pos3) < 0 ) {
 	// 0 <- 2, 2 <- 3, 3 <- 1, 1 <- 0
-	cube_rotate4(bv, 0, bv, 2, bv, 3, bv, 1);
+	cube_rotate4(bv, pos0, bv, pos2, bv, pos3, bv, pos1);
       }
       else {
 	// 0 <- 2, 2 <- 1, 1 <- 0
-	cube_rotate3(bv, 0, bv, 2, bv, 1);
+	cube_rotate3(bv, pos0, bv, pos2, bv, pos1);
       }
     }
-    else if ( cube_compare(bv, 1, bv, 2) < 0 ) {
-      if ( cube_compare(bv, 1, bv, 3) < 0 ) {
+    else if ( cube_compare(bv, pos1, bv, pos2) < 0 ) {
+      if ( cube_compare(bv, pos1, bv, pos3) < 0 ) {
 	// 1 <- 2, 2 <- 3, 3 <- 1
-	cube_rotate3(bv, 1, bv, 2, bv, 3);
+	cube_rotate3(bv, pos1, bv, pos2, bv, pos3);
       }
       else {
 	// 1 <- 2, 2 <- 1
-	cube_swap(bv, 1, bv, 2);
+	cube_swap(bv, pos1, bv, pos2);
       }
     }
     else {
@@ -911,69 +920,6 @@ AlgMgr::cube_check_intersect(const ymuint64* bv1,
   return false;
 }
 
-#if 0
-// @brief 文字列からキューブを表すビットベクタにセットする．
-// @param[in] dst_bv コピー先のビットベクタ
-// @param[in] dst_pos コピー先のキューブ番号
-// @param[in] str 内容を表す文字列
-// @return 正しい文字列なら true を返す．
-bool
-AlgMgr::cube_set(ymuint64* dst_bv,
-		 ymuint dst_pos,
-		 const char* str)
-{
-  // まず空に初期化する．
-  ymuint nb = _cube_size();
-  ymuint64* dst = dst_bv + dst_pos * nb;
-  for (ymuint i = 0; i < nb; ++ i) {
-    dst[i] = 0ULL;
-  }
-
-  // str から変数を一つづつ読み出して設定する．
-  for ( ; ; ) {
-    // 次の非空白文字までスキップする
-    for ( ; ; ++ str) {
-      if ( !isspace(*str) ) {
-	break;
-      }
-    }
-    // [a-z]*'? とのマッチを行う．
-    string name;
-    bool error = false;
-    bool inverted = false;
-    for ( ; ; ++ str) {
-      char c = *str;
-      if ( c == '\0' ) {
-	break;
-      }
-      if ( isspace(c) ) {
-	break;
-      }
-      if ( c == '\'' ) {
-	inverted = true;
-	++ str;
-	break;
-      }
-      if ( c < 'a' || c > 'z' ) {
-	error = true;
-      }
-      name += c;
-    }
-    if ( error || name == string() ) {
-      return false;
-    }
-    ymuint var;
-    if ( !mVarNameMap.find(name, var) ) {
-      // 名前が見つからなかった．
-      return false;
-    }
-    set_literal(dst_bv, dst_pos, var, inverted);
-  }
-
-  return true;
-}
-#endif
-
 // @brief キューブ(を表すビットベクタ)をクリアする．
 // @param[in] dst_bv 対象のビットベクタ
 // @param[in] dst_pos 対象のキューブ番号
@@ -1056,17 +1002,18 @@ AlgMgr::cube_cofactor(ymuint64* dst_bv,
 
 // @brief カバー/キューブの内容を出力する．
 // @param[in] s 出力先のストリーム
-// @param[in] nc キューブ数
-// @param[in] bv カバー/キューブを表すビットベクタ
+// @param[in] start キューブの開始位置
+// @param[in] end キューブの終了位置
 //
-// キューブの場合は nc を 1 とする．
+// end は実際の末尾 + 1 を指す．
 void
 AlgMgr::print(ostream& s,
-	      ymuint nc,
-	      const ymuint64* bv)
+	      const ymuint64* bv,
+	      ymuint start,
+	      ymuint end)
 {
   const char* plus = "";
-  for (ymuint i = 0; i < nc; ++ i) {
+  for (ymuint i = start; i < end; ++ i) {
     s << plus;
     plus = " + ";
     const char* spc = "";
