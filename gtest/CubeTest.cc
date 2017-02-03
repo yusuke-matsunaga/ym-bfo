@@ -425,6 +425,112 @@ TEST_F(CubeTest, compare3)
   EXPECT_TRUE(  cube1 >= cube2 );
 }
 
+TEST_F(CubeTest, check_containment1)
+{
+  AlgCube cube1(mgr(), "a");
+  AlgCube cube2(mgr(), "a b'");
+
+  EXPECT_FALSE( cube1.check_containment(cube2) );
+  EXPECT_TRUE(  cube2.check_containment(cube1) );
+}
+
+TEST_F(CubeTest, check_containment2)
+{
+  AlgCube cube1(mgr(), "a");
+  AlgCube cube2(mgr(), "a' b'");
+
+  EXPECT_FALSE( cube1.check_containment(cube2) );
+  EXPECT_FALSE( cube2.check_containment(cube1) );
+}
+
+TEST_F(CubeTest, check_containment3)
+{
+  AlgCube cube1(mgr(), "a c");
+  AlgCube cube2(mgr(), "a b'");
+
+  EXPECT_FALSE( cube1.check_containment(cube2) );
+  EXPECT_FALSE( cube2.check_containment(cube1) );
+}
+
+TEST_F(CubeTest, check_intersect1)
+{
+  AlgCube cube1(mgr(), "a c");
+  AlgCube cube2(mgr(), "a b'");
+
+  EXPECT_TRUE(  cube1.check_intersect(cube2) );
+  EXPECT_TRUE(  cube2.check_intersect(cube1) );
+}
+
+TEST_F(CubeTest, check_intersect2)
+{
+  AlgCube cube1(mgr(), "a c");
+  AlgCube cube2(mgr(), "a' b'");
+
+  EXPECT_FALSE( cube1.check_intersect(cube2) );
+  EXPECT_FALSE( cube2.check_intersect(cube1) );
+}
+
+TEST_F(CubeTest, int_product1)
+{
+  AlgCube cube1(mgr(), "a");
+  AlgCube cube2(mgr(), "b");
+
+  cube1 &= cube2;
+
+  EXPECT_EQ( AlgCube(mgr(), "a b"), cube1 );
+}
+
+TEST_F(CubeTest, int_product2)
+{
+  AlgCube cube1(mgr(), "a c");
+  AlgCube cube2(mgr(), "a b");
+
+  cube1 &= cube2;
+
+  EXPECT_EQ( AlgCube(mgr(), "a b c"), cube1 );
+}
+
+TEST_F(CubeTest, int_product3)
+{
+  AlgCube cube1(mgr(), "a c");
+  AlgCube cube2(mgr(), "a' b");
+
+  cube1 &= cube2;
+
+  EXPECT_EQ( AlgCube(mgr()), cube1 );
+}
+
+TEST_F(CubeTest, bin_product1)
+{
+  AlgCube cube1(mgr(), "a");
+  AlgCube cube2(mgr(), "b");
+
+  AlgCube cube3 = cube1 & cube2;
+
+  EXPECT_EQ( AlgCube(mgr(), "a b"), cube3 );
+}
+
+TEST_F(CubeTest, bin_product2)
+{
+  AlgCube cube1(mgr(), "a c");
+  AlgCube cube2(mgr(), "a b");
+
+  AlgCube cube3 = cube1 & cube2;
+
+  EXPECT_EQ( AlgCube(mgr(), "a b c"), cube3 );
+}
+
+TEST_F(CubeTest, bin_product3)
+{
+  AlgCube cube1(mgr(), "a c");
+  AlgCube cube2(mgr(), "a' b");
+
+  AlgCube cube3 = cube1 & cube2;
+
+  EXPECT_EQ( AlgCube(mgr()), cube3 );
+}
+
+
 TEST_F(CubeTest, print1)
 {
   AlgCube cube(mgr());
