@@ -836,6 +836,30 @@ AlgMgr::compare(ymuint nc1,
   return 0;
 }
 
+// @brief ビットベクタからハッシュ値を計算する．
+// @param[in] nc キューブ数
+// @param[in] bv ビットベクタ
+ymuint
+AlgMgr::hash(ymuint nc,
+	     const ymuint64* bv)
+{
+  // キューブは常にソートされているので
+  // 順番は考慮する必要はない．
+  // ただおなじキューブの中のビットに関しては
+  // 本当は区別しなければならないがどうしようもないので
+  // 16ビットに区切って単純に XOR を取る．
+  ymuint n = nc * _cube_size();
+  ymuint ans = 0;
+  for (ymuint i = 0; i < n; ++ i, ++ bv) {
+    ymuint64 pat = *bv;
+    ans ^= (pat & 0xFFFFULL); pat >>= 16;
+    ans ^= (pat & 0xFFFFULL); pat >>= 16;
+    ans ^= (pat & 0xFFFFULL); pat >>= 16;
+    ans ^= pat;
+  }
+  return ans;
+}
+
 // @brief キューブ(を表すビットベクタ)の比較を行う．
 // @param[in] bv1 1つめのカバーを表すビットベクタ
 // @param[in] pos1 1つめのキューブ番号

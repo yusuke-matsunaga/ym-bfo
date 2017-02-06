@@ -253,6 +253,13 @@ public:
 	  ymuint nc2,
 	  const ymuint64* bv2);
 
+  /// @brief ビットベクタからハッシュ値を計算する．
+  /// @param[in] nc キューブ数
+  /// @param[in] bv ビットベクタ
+  ymuint
+  hash(ymuint nc,
+       const ymuint64* bv);
+
 
 public:
   //////////////////////////////////////////////////////////////////////

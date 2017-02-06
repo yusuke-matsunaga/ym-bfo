@@ -37,6 +37,7 @@ BEGIN_NAMESPACE_YM_BFO
 class AlgLiteral;
 class AlgCube;
 class AlgCover;
+class AlgKernel;
 class AlgMgr;
 
 END_NAMESPACE_YM_BFO
@@ -57,6 +58,7 @@ enum AlgPol {
 using nsBfo::AlgLiteral;
 using nsBfo::AlgCube;
 using nsBfo::AlgCover;
+using nsBfo::AlgKernel;
 using nsBfo::AlgMgr;
 
 END_NAMESPACE_YM

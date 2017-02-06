@@ -26,6 +26,7 @@ add_subdirectory ( gtest )
 
 set ( bfo_SOURCES
   src/AlgMgr.cc
+  src/AlgKernelMgr.cc
   )
 
 

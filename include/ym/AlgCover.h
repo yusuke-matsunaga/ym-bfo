@@ -246,7 +246,10 @@ public:
   AlgCube
   common_cube() const;
 
-  /// @param[in]
+  /// @brief ハッシュ値を返す．
+  ymuint
+  hash() const;
+
   /// @brief 内容をわかりやすい形で出力する．
   /// @param[in] s 出力先のストリーム
   void
@@ -950,6 +953,14 @@ AlgCover::common_cube() const
   return AlgCube(mgr(), body);
 }
 
+// @brief ハッシュ値を返す．
+inline
+ymuint
+AlgCover::hash() const
+{
+  return mgr().hash(mCubeNum, mBody);
+}
+
 // @brief 内容をわかりやすい形で出力する．
 // @param[in] s 出力先のストリーム
 inline
@@ -1092,5 +1103,20 @@ AlgCover::get_capacity(ymuint cube_num)
 }
 
 END_NAMESPACE_YM_BFO
+
+BEGIN_NAMESPACE_YM
+
+/// @breif AlgCover をキーにしたハッシュ関数クラスの定義
+template <>
+struct HashFunc<AlgCover>
+{
+  ymuint
+  operator()(const AlgCover& cover) const
+  {
+    return cover.hash();
+  }
+};
+
+END_NAMESPACE_YM
 
 #endif // YM_ALGCOVER_H

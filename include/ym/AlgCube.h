@@ -12,6 +12,7 @@
 #include "ym/bfo_nsdef.h"
 #include "ym/AlgLiteral.h"
 #include "ym/AlgMgr.h"
+#include "ym/HashFunc.h"
 
 
 BEGIN_NAMESPACE_YM_BFO
@@ -102,6 +103,10 @@ public:
   AlgPol
   literal(ymuint pos) const;
 
+  /// @brief 指定したリテラルを含んでいたら true を返す．
+  bool
+  has_literal(AlgLiteral lit) const;
+
   /// @brief オペランドのキューブに含まれていたら true を返す．
   /// @param[in] right オペランドのキューブ
   ///
@@ -132,6 +137,10 @@ public:
   /// ただし，right のみに含まれるリテラルがあったら結果は空となる．
   const AlgCube&
   operator/=(const AlgCube& right);
+
+  /// @brief ハッシュ値を返す．
+  ymuint
+  hash() const;
 
   /// @brief 内容をわかりやすい形で出力する．
   /// @param[in] s 出力先のストリーム
@@ -415,6 +424,17 @@ AlgCube::literal(ymuint pos) const
   return mgr().literal(mBody, 0, pos);
 }
 
+// @brief 指定したリテラルを含んでいたら true を返す．
+inline
+bool
+AlgCube::has_literal(AlgLiteral lit) const
+{
+  ymuint varid = lit.varid();
+  AlgPol pol = literal(varid);
+  AlgPol ref_pol = lit.is_positive() ? kAlgPolP : kAlgPolN;
+  return pol == ref_pol;
+}
+
 // @brief リテラル数を返す．
 inline
 ymuint
@@ -446,6 +466,14 @@ AlgCube::check_intersect(const AlgCube& right) const
   ASSERT_COND( variable_num() == right.variable_num() );
 
   return mgr().cube_check_intersect(mBody, 0, right.mBody, 0);
+}
+
+// @brief ハッシュ値を返す．
+inline
+ymuint
+AlgCube::hash() const
+{
+  return mgr().hash(1, mBody);
 }
 
 // @brief 論理積を計算し自身に代入する．
@@ -620,5 +648,20 @@ operator<<(ostream& s,
 }
 
 END_NAMESPACE_YM_BFO
+
+BEGIN_NAMESPACE_YM
+
+/// @breif AlgCube をキーにしたハッシュ関数クラスの定義
+template <>
+struct HashFunc<AlgCube>
+{
+  ymuint
+  operator()(const AlgCube& cube) const
+  {
+    return cube.hash();
+  }
+};
+
+END_NAMESPACE_YM
 
 #endif // YM_ALGCUBE_H
