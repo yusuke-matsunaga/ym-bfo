@@ -107,7 +107,7 @@ AlgKernelMgr::_kernel_sub(const AlgCover& cover,
 
     // 定義により cover1 はカーネル
     // 対応するコカーネルは ckcube & ccube
-    ccube &= ckcube;
+    ccube *= ckcube;
 
     ymuint kid;
     if ( mKernelHash.find(&cover1, kid) ) {
@@ -122,7 +122,7 @@ AlgKernelMgr::_kernel_sub(const AlgCover& cover,
       mCokernelList.push_back(ckcube);
     }
 
-    skip_cube1 &= AlgCube(mMgr, lit);
+    skip_cube1 *= lit;
     _kernel_sub(cover1, lit_list, pos + 1, ccube, skip_cube1);
   }
 }
