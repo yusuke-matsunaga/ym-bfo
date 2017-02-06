@@ -375,7 +375,7 @@ TEST_F(CubeTest, int_product1)
   AlgCube cube1(mgr(), "a");
   AlgCube cube2(mgr(), "b'");
 
-  cube1 &= cube2;
+  cube1 *= cube2;
 
   EXPECT_EQ( AlgCube(mgr(), "a b'"), cube1 );
 }
@@ -385,7 +385,7 @@ TEST_F(CubeTest, int_product2)
   AlgCube cube1(mgr(), "a c");
   AlgCube cube2(mgr(), "a b");
 
-  cube1 &= cube2;
+  cube1 *= cube2;
 
   EXPECT_EQ( AlgCube(mgr(), "a b c"), cube1 );
 }
@@ -395,7 +395,7 @@ TEST_F(CubeTest, int_product3)
   AlgCube cube1(mgr(), "a c");
   AlgCube cube2(mgr(), "a' b");
 
-  cube1 &= cube2;
+  cube1 *= cube2;
 
   EXPECT_EQ( AlgCube(mgr()), cube1 );
 }
@@ -405,7 +405,7 @@ TEST_F(CubeTest, bin_product1)
   AlgCube cube1(mgr(), "b'");
   AlgCube cube2(mgr(), "a");
 
-  AlgCube cube3 = cube1 & cube2;
+  AlgCube cube3 = cube1 * cube2;
 
   EXPECT_EQ( AlgCube(mgr(), "a b'"), cube3 );
 }
@@ -415,7 +415,7 @@ TEST_F(CubeTest, bin_product2)
   AlgCube cube1(mgr(), "a c");
   AlgCube cube2(mgr(), "a b");
 
-  AlgCube cube3 = cube1 & cube2;
+  AlgCube cube3 = cube1 * cube2;
 
   EXPECT_EQ( AlgCube(mgr(), "a b c"), cube3 );
 }
@@ -425,12 +425,52 @@ TEST_F(CubeTest, bin_product3)
   AlgCube cube1(mgr(), "a c");
   AlgCube cube2(mgr(), "a' b");
 
-  AlgCube cube3 = cube1 & cube2;
+  AlgCube cube3 = cube1 * cube2;
 
   EXPECT_EQ( AlgCube(mgr()), cube3 );
 }
 
-TEST_F(CubeTest, int_cofactor1)
+TEST_F(CubeTest, int_lproduct1)
+{
+  AlgCube cube1(mgr(), "a c");
+  AlgLiteral lit(1, true);
+
+  cube1 *= lit;
+
+  EXPECT_EQ( AlgCube(mgr(), "a b' c"), cube1 );
+}
+
+TEST_F(CubeTest, bin_lproduct1)
+{
+  AlgCube cube1(mgr(), "a c");
+  AlgLiteral lit(1, true);
+
+  AlgCube cube3 = cube1 * lit;
+
+  EXPECT_EQ( AlgCube(mgr(), "a b' c"), cube3 );
+}
+
+TEST_F(CubeTest, int_lproduct2)
+{
+  AlgCube cube1(mgr(), "a c");
+  AlgLiteral lit(0, true);
+
+  cube1 *= lit;
+
+  EXPECT_EQ( AlgCube(mgr(), ""), cube1 );
+}
+
+TEST_F(CubeTest, bin_lproduct2)
+{
+  AlgCube cube1(mgr(), "a c");
+  AlgLiteral lit(0, true);
+
+  AlgCube cube3 = cube1 * lit;
+
+  EXPECT_EQ( AlgCube(mgr(), ""), cube3 );
+}
+
+TEST_F(CubeTest, int_division1)
 {
   AlgCube cube1(mgr(), "a b");
   AlgCube cube2(mgr(), "b");
@@ -440,7 +480,7 @@ TEST_F(CubeTest, int_cofactor1)
   EXPECT_EQ( AlgCube(mgr(), "a"), cube1 );
 }
 
-TEST_F(CubeTest, bin_cofactor1)
+TEST_F(CubeTest, bin_division1)
 {
   AlgCube cube1(mgr(), "a b");
   AlgCube cube2(mgr(), "b");
@@ -450,7 +490,7 @@ TEST_F(CubeTest, bin_cofactor1)
   EXPECT_EQ( AlgCube(mgr(), "a"), cube3 );
 }
 
-TEST_F(CubeTest, int_cofactor2)
+TEST_F(CubeTest, int_division2)
 {
   AlgCube cube1(mgr(), "a b");
   AlgCube cube2(mgr(), "b'");
@@ -460,7 +500,7 @@ TEST_F(CubeTest, int_cofactor2)
   EXPECT_EQ( AlgCube(mgr(), ""), cube1 );
 }
 
-TEST_F(CubeTest, bin_cofactor2)
+TEST_F(CubeTest, bin_division2)
 {
   AlgCube cube1(mgr(), "a b");
   AlgCube cube2(mgr(), "b'");
@@ -470,7 +510,7 @@ TEST_F(CubeTest, bin_cofactor2)
   EXPECT_EQ( AlgCube(mgr(), ""), cube3 );
 }
 
-TEST_F(CubeTest, int_cofactor3)
+TEST_F(CubeTest, int_division3)
 {
   AlgCube cube1(mgr(), "a b");
   AlgCube cube2(mgr(), "a b");
@@ -480,12 +520,52 @@ TEST_F(CubeTest, int_cofactor3)
   EXPECT_EQ( AlgCube(mgr(), ""), cube1 );
 }
 
-TEST_F(CubeTest, bin_cofactor3)
+TEST_F(CubeTest, bin_division3)
 {
   AlgCube cube1(mgr(), "a b");
   AlgCube cube2(mgr(), "a b");
 
   AlgCube cube3 = cube1 / cube2;
+
+  EXPECT_EQ( AlgCube(mgr(), ""), cube3 );
+}
+
+TEST_F(CubeTest, int_divisionl1)
+{
+  AlgCube cube1(mgr(), "a b");
+  AlgLiteral lit(1, false); // "b"
+
+  cube1 /= lit;
+
+  EXPECT_EQ( AlgCube(mgr(), "a"), cube1 );
+}
+
+TEST_F(CubeTest, bin_divisionl1)
+{
+  AlgCube cube1(mgr(), "a b");
+  AlgLiteral lit(1, false); // "b"
+
+  AlgCube cube3 = cube1 / lit;
+
+  EXPECT_EQ( AlgCube(mgr(), "a"), cube3 );
+}
+
+TEST_F(CubeTest, int_divisionl2)
+{
+  AlgCube cube1(mgr(), "a b");
+  AlgLiteral lit(1, true); // "b'"
+
+  cube1 /= lit;
+
+  EXPECT_EQ( AlgCube(mgr(), ""), cube1 );
+}
+
+TEST_F(CubeTest, bin_divisionl2)
+{
+  AlgCube cube1(mgr(), "a b");
+  AlgLiteral lit(1, true); // "b'"
+
+  AlgCube cube3 = cube1 / lit;
 
   EXPECT_EQ( AlgCube(mgr(), ""), cube3 );
 }

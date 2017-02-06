@@ -168,19 +168,25 @@ public:
   AlgCover
   operator*(const AlgCube& right) const;
 
+  /// @brief 論理積を計算する(リテラル版)．
+  /// @param[in] right オペランド
+  /// @return 計算結果を返す．
+  AlgCover
+  operator*(AlgLiteral right) const;
+
   /// @brief algebraic division を計算する．
   /// @param[in] right オペランド
   /// @return 計算結果を返す．
   AlgCover
   operator/(const AlgCover& right) const;
 
-  /// @brief キューブのコファクターを計算する．
+  /// @brief キューブによる商を計算する．
   /// @param[in] cube 対象のキューブ
   /// @return 計算結果を返す．
   AlgCover
   operator/(const AlgCube& cube) const;
 
-  /// @brief リテラルのコファクターを計算する．
+  /// @brief リテラルによる商を計算する．
   /// @param[in] lit 対象のリテラル
   /// @return 計算結果を返す．
   AlgCover
@@ -222,19 +228,25 @@ public:
   const AlgCover&
   operator*=(const AlgCube& right);
 
+  /// @brief 論理積を計算して代入する(リテラル版)．
+  /// @param[in] right オペランド
+  /// @return 演算後の自身への参照を返す．
+  const AlgCover&
+  operator*=(AlgLiteral right);
+
   /// @brief algebraic division を行って代入する．
   /// @param[in] right オペランド
   /// @return 演算後の自身への参照を返す．
   const AlgCover&
   operator/=(const AlgCover& right);
 
-  /// @brief キューブのコファクターを計算して代入する．
+  /// @brief キューブによる商を計算して代入する．
   /// @param[in] cube 対象のキューブ
   /// @return 演算後の自身への参照を返す．
   AlgCover
   operator/=(const AlgCube& cube);
 
-  /// @brief リテラルのコファクターを計算して代入する．
+  /// @brief リテラルによる商を計算して代入する．
   /// @param[in] lit 対象のリテラル
   /// @return 演算後の自身への参照を返す．
   const AlgCover&
@@ -799,6 +811,21 @@ AlgCover::operator*(const AlgCube& right) const
   return AlgCover(mgr(), nc, cap, body);
 }
 
+// @brief 論理積を計算する(リテラル版)．
+// @param[in] right オペランド
+// @return 計算結果を返す．
+inline
+AlgCover
+AlgCover::operator*(AlgLiteral right) const
+{
+  ymuint nc1 = cube_num();
+  ymuint cap = get_capacity(nc1);
+  ymuint64* body = mgr().new_body(cap);
+  ymuint nc = mgr().product(body, nc1, mBody, right);
+
+  return AlgCover(mgr(), nc, cap, body);
+}
+
 // @brief 論理積を計算して代入する．
 // @param[in] right オペランド
 // @return 演算後の自身への参照を返す．
@@ -843,6 +870,18 @@ AlgCover::operator*=(const AlgCube& right)
   return *this;
 }
 
+// @brief 論理積を計算して代入する(リテラル版)．
+// @param[in] right オペランド
+// @return 演算後の自身への参照を返す．
+inline
+const AlgCover&
+AlgCover::operator*=(AlgLiteral right)
+{
+  mCubeNum = mgr().product(mBody, mCubeNum, mBody, right);
+
+  return *this;
+}
+
 // @brief algebraic division を計算する．
 // @param[in] right オペランド
 // @return 計算結果を返す．
@@ -878,7 +917,7 @@ AlgCover::operator/=(const AlgCover& right)
   return *this;
 }
 
-// @brief キューブのコファクターを計算する．
+// @brief キューブによる商を計算する．
 // @param[in] cube 対象のキューブ
 // @return 計算結果を返す．
 inline
@@ -895,7 +934,7 @@ AlgCover::operator/(const AlgCube& cube) const
   return AlgCover(mgr(), nc, cap, body);
 }
 
-// @brief キューブのコファクターを計算して代入する．
+// @brief キューブによる商を計算して代入する．
 // @param[in] cube 対象のキューブ
 // @return 演算後の自身への参照を返す．
 inline
@@ -904,14 +943,13 @@ AlgCover::operator/=(const AlgCube& cube)
 {
   ASSERT_COND( variable_num() == cube.variable_num() );
 
-  ymuint nc1 = cube_num();
   // 結果のキューブ数は減るだけなのでキューブ容量は変更しない．
-  mCubeNum = mgr().division(mBody, nc1, mBody, 1, cube.mBody);
+  mCubeNum = mgr().division(mBody, mCubeNum, mBody, 1, cube.mBody);
 
   return *this;
 }
 
-// @brief リテラルのコファクターを計算する．
+// @brief リテラルによる商を計算する．
 // @param[in] lit 対象のリテラル
 // @return 計算結果を返す．
 inline
@@ -926,16 +964,15 @@ AlgCover::operator/(AlgLiteral lit) const
   return AlgCover(mgr(), nc, cap, body);
 }
 
-// @brief リテラルのコファクターを計算して代入する．
+// @brief リテラルによる商を計算して代入する．
 // @param[in] lit 対象のリテラル
 // @return 演算後の自身への参照を返す．
 inline
 const AlgCover&
 AlgCover::operator/=(AlgLiteral lit)
 {
-  ymuint nc1 = cube_num();
   // 結果のキューブ数は減るだけなのでキューブ容量は変更しない．
-  mCubeNum = mgr().division(mBody, nc1, mBody, lit);
+  mCubeNum = mgr().division(mBody, mCubeNum, mBody, lit);
 
   return *this;
 }

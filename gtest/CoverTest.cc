@@ -785,6 +785,46 @@ TEST_F(CoverTest, bin_product_c2)
   EXPECT_EQ( AlgCover(mgr(), "a' b"), cover3 );
 }
 
+TEST_F(CoverTest, int_product_l1)
+{
+  AlgCover cover1(mgr(), "a + b");
+  AlgLiteral lit(2, false); // "c"
+
+  cover1 *= lit;
+
+  EXPECT_EQ( AlgCover(mgr(), "a c + b c"), cover1 );
+}
+
+TEST_F(CoverTest, bin_product_l1)
+{
+  AlgCover cover1(mgr(), "a + b");
+  AlgLiteral lit(2, false); // "c"
+
+  AlgCover cover3 = cover1 * lit;
+
+  EXPECT_EQ( AlgCover(mgr(), "a c + b c"), cover3 );
+}
+
+TEST_F(CoverTest, int_product_l2)
+{
+  AlgCover cover1(mgr(), "a + b");
+  AlgLiteral lit(0, true); // "a'"
+
+  cover1 *= lit;
+
+  EXPECT_EQ( AlgCover(mgr(), "a' b"), cover1 );
+}
+
+TEST_F(CoverTest, bin_product_l2)
+{
+  AlgCover cover1(mgr(), "a + b");
+  AlgLiteral lit(0, true); // "a'"
+
+  AlgCover cover3 = cover1 * lit;
+
+  EXPECT_EQ( AlgCover(mgr(), "a' b"), cover3 );
+}
+
 TEST_F(CoverTest, int_division1)
 {
   AlgCover cover1(mgr(), "a b + a c + b c");

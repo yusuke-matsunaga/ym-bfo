@@ -470,6 +470,48 @@ AlgMgr::product(ymuint64* dst_bv,
   return wpos;
 }
 
+// @brief カバーとリテラルとの論理積を計算する．
+// @param[in] dst_bv 結果を格納するビットベクタ
+// @param[in] nc1 1つめのカバーのキューブ数
+// @param[in] bv1 1つめのカバーを表すビットベクタ
+// @param[in] lit 対象のリテラル
+// @return 結果のキューブ数を返す．
+ymuint
+AlgMgr::product(ymuint64* dst_bv,
+		ymuint nc1,
+		const ymuint64* bv1,
+		AlgLiteral lit)
+{
+  ymuint var_id = lit.varid();
+  ymuint blk = _block_pos(var_id);
+  ymuint sft = _shift_num(var_id);
+  ymuint64 pat = lit.is_positive() ? kAlgPolP : kAlgPolN;
+  ymuint64 pat1 = pat << sft;
+  ymuint64 mask = 3UL << sft;
+  ymuint64 nmask = ~mask;
+  ymuint nb = _cube_size();
+
+  // 単純には答の積項数は2つの積項数の積だが
+  // 相反するリテラルを含む積は数えない．
+  ymuint wpos = 0;
+  for (ymuint rpos1 = 0; rpos1 < nc1; ++ rpos1) {
+    ymuint rbase = rpos1 * nb;
+    ymuint64 tmp = bv1[rbase + blk] | pat1;
+    if ( (tmp & mask) == mask ) {
+      // 相反するリテラルがあった．
+      continue;
+    }
+    ymuint wbase = wpos * nb;
+    for (ymuint i = 0; i < nb; ++ i) {
+      dst_bv[wbase] = bv1[rbase];
+    }
+    dst_bv[wbase + blk] = tmp;
+    ++ wpos;
+  }
+
+  return wpos;
+}
+
 // @brief カバーの代数的除算を行う．
 // @param[in] dst_bv 結果を格納するビットベクタ
 // @param[in] nc1 1つめのカバーのキューブ数
@@ -495,7 +537,7 @@ AlgMgr::division(ymuint64* dst_bv,
   vector<bool> mark(nc1, false);
   for (ymuint i = 0; i < nc1; ++ i) {
     for (ymuint j = 0; j < nc2; ++ j) {
-      if ( cube_cofactor(mTmpBuff, i, bv1, i, bv2, j) ) {
+      if ( cube_division(mTmpBuff, i, bv1, i, bv2, j) ) {
 	mark[i] = true;
 	break;
       }
@@ -540,7 +582,7 @@ AlgMgr::division(ymuint64* dst_bv,
   return nc;
 }
 
-// @brief カバーをリテラルで割る(コファクター演算)．
+// @brief カバーをリテラルで割る．
 // @param[in] dst_bv 結果を格納するビットベクタ
 // @param[in] nc1 カバーのキューブ数
 // @param[in] bv1 カバーを表すビットベクタ
@@ -1014,7 +1056,7 @@ AlgMgr::cube_product(ymuint64* dst_bv,
   return true;
 }
 
-// @brief キューブによるコファクターを求める．
+// @brief キューブによる商を求める．
 // @param[in] dst_bv コピー先のビットベクタ
 // @param[in] dst_pos コピー先のキューブ番号
 // @param[in] bv1 1つめのカバーを表すビットベクタ
@@ -1023,7 +1065,7 @@ AlgMgr::cube_product(ymuint64* dst_bv,
 // @param[in] pos2 2つめのキューブ番号
 // @return 正しく割ることができたら true を返す．
 bool
-AlgMgr::cube_cofactor(ymuint64* dst_bv,
+AlgMgr::cube_division(ymuint64* dst_bv,
 		      ymuint dst_pos,
 		      const ymuint64* bv1,
 		      ymuint pos1,

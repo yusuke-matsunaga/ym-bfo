@@ -127,9 +127,18 @@ public:
   /// リテラル集合とみなすとユニオンを計算することになる<br>
   /// ただし，相反するリテラルとの積があったら答は空のキューブとなる．
   const AlgCube&
-  operator&=(const AlgCube& right);
+  operator*=(const AlgCube& right);
 
-  /// @brief コファクターを計算し自身に代入する．
+  /// @brief リテラルとの論理積を計算し自身に代入する．
+  /// @param[in] right オペランドのリテラル
+  /// @return 演算後の自身の参照を返す．
+  ///
+  /// リテラル集合とみなすとユニオンを計算することになる<br>
+  /// ただし，相反するリテラルとの積があったら答は空のキューブとなる．
+  const AlgCube&
+  operator*=(AlgLiteral right);
+
+  /// @brief キューブによる商を計算し自身に代入する．
   /// @param[in] right オペランドのキューブ
   /// @return 演算後の自身の参照を返す．
   ///
@@ -137,6 +146,15 @@ public:
   /// ただし，right のみに含まれるリテラルがあったら結果は空となる．
   const AlgCube&
   operator/=(const AlgCube& right);
+
+  /// @brief リテラルによる商を計算し自身に代入する．
+  /// @param[in] right オペランドのリテラル
+  /// @return 演算後の自身の参照を返す．
+  ///
+  /// リテラル集合として考えると集合差を計算することになる<br>
+  /// ただし，right のみに含まれるリテラルがあったら結果は空となる．
+  const AlgCube&
+  operator/=(AlgLiteral right);
 
   /// @brief ハッシュ値を返す．
   ymuint
@@ -182,21 +200,40 @@ private:
 };
 
 /// @relates AlgCube
-/// @brief AlgCube の論理積を計算する
+/// @brief キューブの論理積を計算する
 /// @param[in] left, right オペランド
 ///
 /// リテラル集合としてみると和集合となる<br>
 /// ただし，相反するリテラルが含まれていたら空キューブとなる．
 AlgCube
-operator&(const AlgCube& left,
+operator*(const AlgCube& left,
 	  const AlgCube& right);
 
 /// @relates AlgCube
-/// @brief コファクターを計算する
+/// @brief キューブとリテラルの論理積を計算する
+/// @param[in] left オペランドのキューブ
+/// @param[in] right オペランドのリテラル
+///
+/// リテラル集合としてみると和集合となる<br>
+/// ただし，相反するリテラルが含まれていたら空キューブとなる．
+AlgCube
+operator*(const AlgCube& left,
+	  AlgLiteral right);
+
+/// @relates AlgCube
+/// @brief キューブによる商を計算する
 /// @param[in] left, right オペランド
 AlgCube
 operator/(const AlgCube& left,
 	  const AlgCube& right);
+
+/// @relates AlgCube
+/// @brief リテラルによる商を計算する
+/// @param[in] left オペランドのキューブ
+/// @param[in] right オペランドのリテラル
+AlgCube
+operator/(const AlgCube& left,
+	  AlgLiteral right);
 
 /// @relates AlgCube
 /// @brief AlgCubeの比較演算子
@@ -483,7 +520,7 @@ AlgCube::hash() const
 // 相反するリテラルとの積があったら答は空のキューブとなる．
 inline
 const AlgCube&
-AlgCube::operator&=(const AlgCube& right)
+AlgCube::operator*=(const AlgCube& right)
 {
   ASSERT_COND( variable_num() == right.variable_num() );
 
@@ -495,20 +532,51 @@ AlgCube::operator&=(const AlgCube& right)
   return *this;
 }
 
-// @brief AlgCube の論理積を計算する
+// @brief キューブの論理積を計算する
 // @param[in] left, right オペランド
 //
 // リテラル集合としてみると和集合となる<br>
 // ただし，相反するリテラルが含まれていたら空キューブとなる．
 inline
 AlgCube
-operator&(const AlgCube& left,
+operator*(const AlgCube& left,
 	  const AlgCube& right)
 {
-  return AlgCube(left).operator&=(right);
+  return AlgCube(left).operator*=(right);
 }
 
-// @brief コファクターを計算し自身に代入する．
+// @brief リテラルとの論理積を計算し自身に代入する．
+// @param[in] right オペランドのリテラル
+// @return 演算後の自身の参照を返す．
+//
+// 相反するリテラルとの積があったら答は空のキューブとなる．
+inline
+const AlgCube&
+AlgCube::operator*=(AlgLiteral right)
+{
+  ymuint res = mgr().product(mBody, 1, mBody, right);
+  if ( res == 0 ) {
+    mgr().cube_clear(mBody, 0);
+  }
+
+  return *this;
+}
+
+// @brief キューブとリテラルの論理積を計算する
+// @param[in] left オペランドのキューブ
+// @param[in] right オペランドのリテラル
+//
+// リテラル集合としてみると和集合となる<br>
+// ただし，相反するリテラルが含まれていたら空キューブとなる．
+inline
+AlgCube
+operator*(const AlgCube& left,
+	  AlgLiteral right)
+{
+  return AlgCube(left).operator*=(right);
+}
+
+// @brief キューブによる商を計算し自身に代入する．
 // @param[in] right オペランドのキューブ
 // @return 演算後の自身の参照を返す．
 inline
@@ -517,7 +585,7 @@ AlgCube::operator/=(const AlgCube& right)
 {
   ASSERT_COND( variable_num() == right.variable_num() );
 
-  bool res = mgr().cube_cofactor(mBody, 0, mBody, 0, right.mBody, 0);
+  bool res = mgr().cube_division(mBody, 0, mBody, 0, right.mBody, 0);
   if ( !res ) {
     mgr().cube_clear(mBody, 0);
   }
@@ -525,12 +593,38 @@ AlgCube::operator/=(const AlgCube& right)
   return *this;
 }
 
-// @brief コファクターを計算する
+// @brief キューブによる商を計算する
 // @param[in] left, right オペランド
 inline
 AlgCube
 operator/(const AlgCube& left,
 	  const AlgCube& right)
+{
+  return AlgCube(left).operator/=(right);
+}
+
+// @brief リテラルによる商を計算し自身に代入する．
+// @param[in] right オペランドのリテラル
+// @return 演算後の自身の参照を返す．
+inline
+const AlgCube&
+AlgCube::operator/=(AlgLiteral right)
+{
+  ymuint res = mgr().division(mBody, 1, mBody, right);
+  if ( res == 0 ) {
+    mgr().cube_clear(mBody, 0);
+  }
+
+  return *this;
+}
+
+// @brief リテラルによる商を計算する
+// @param[in] left オペランドのキューブ
+// @param[in] right オペランドのリテラル
+inline
+AlgCube
+operator/(const AlgCube& left,
+	  AlgLiteral right)
 {
   return AlgCube(left).operator/=(right);
 }

@@ -180,6 +180,18 @@ public:
 	  ymuint nc2,
 	  const ymuint64* bv2);
 
+  /// @brief カバーとリテラルとの論理積を計算する．
+  /// @param[in] dst_bv 結果を格納するビットベクタ
+  /// @param[in] nc1 1つめのカバーのキューブ数
+  /// @param[in] bv1 1つめのカバーを表すビットベクタ
+  /// @param[in] lit 対象のリテラル
+  /// @return 結果のキューブ数を返す．
+  ymuint
+  product(ymuint64* dst_bv,
+	  ymuint nc1,
+	  const ymuint64* bv1,
+	  AlgLiteral lit);
+
   /// @brief カバーの代数的除算を行う．
   /// @param[in] dst_bv 結果を格納するビットベクタ
   /// @param[in] nc1 1つめのカバーのキューブ数
@@ -194,7 +206,7 @@ public:
 	   ymuint nc2,
 	   const ymuint64* bv2);
 
-  /// @brief カバーをリテラルで割る(コファクター演算)．
+  /// @brief カバーをリテラルで割る．
   /// @param[in] dst_bv 結果を格納するビットベクタ
   /// @param[in] nc1 カバーのキューブ数
   /// @param[in] bv1 カバーを表すビットベクタ
@@ -352,7 +364,7 @@ public:
 	       const ymuint64* bv2,
 	       ymuint pos2);
 
-  /// @brief キューブによるコファクターを求める．
+  /// @brief キューブによる商を求める．
   /// @param[in] dst_bv コピー先のビットベクタ
   /// @param[in] dst_pos コピー先のキューブ番号
   /// @param[in] bv1 1つめのカバーを表すビットベクタ
@@ -361,7 +373,7 @@ public:
   /// @param[in] pos2 2つめのキューブ番号
   /// @return 正しく割ることができたら true を返す．
   bool
-  cube_cofactor(ymuint64* dst_bv,
+  cube_division(ymuint64* dst_bv,
 		ymuint dst_pos,
 		const ymuint64* bv1,
 		ymuint pos1,
