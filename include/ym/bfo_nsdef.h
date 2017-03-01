@@ -35,6 +35,7 @@ BEGIN_NAMESPACE_YM_BFO
 
 // クラスの前方宣言
 class AlgLiteral;
+class AlgLitSet;
 class AlgCube;
 class AlgCover;
 class AlgMgr;
@@ -55,6 +56,7 @@ enum AlgPol {
 
 // 親の名前空間にインポートする．
 using nsBfo::AlgLiteral;
+using nsBfo::AlgLitSet;
 using nsBfo::AlgCube;
 using nsBfo::AlgCover;
 using nsBfo::AlgMgr;
