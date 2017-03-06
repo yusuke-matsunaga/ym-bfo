@@ -11,6 +11,7 @@
 
 #include "ym/bfo_nsdef.h"
 #include "ym/AlgLiteral.h"
+#include "ym/AlgLitSet.h"
 #include "ym/AlgMgr.h"
 #include "ym/HashFunc.h"
 
@@ -21,6 +22,8 @@ BEGIN_NAMESPACE_YM_BFO
 /// @class AlgCube AlgCube.h "ym/AlgCube.h"
 /// @brief キューブ(積項)を表すクラス
 ///
+/// 離散数学的には AlgLiteral の集合だが，相反するリテラル(x と x')は
+/// 同時には含まない．<br>
 /// 常に固定サイズのビット配列として実装する．<br>
 /// 1つの変数につき2ビットを使用する．<br>
 //////////////////////////////////////////////////////////////////////
@@ -119,6 +122,11 @@ public:
   /// @param[in] right オペランドのキューブ
   bool
   check_intersect(const AlgCube& right) const;
+
+  /// @brief 引数のリテラルをひとつでも含んでいたら true を返す．
+  /// @param[in] right 対象のリテラル集合
+  bool
+  contains(const AlgLitSet& right) const;
 
   /// @brief 論理積を計算し自身に代入する．
   /// @param[in] right オペランドのキューブ
@@ -511,6 +519,18 @@ ymuint
 AlgCube::hash() const
 {
   return mgr().hash(1, mBody);
+}
+
+// @brief 引数のリテラルをひとつでも含んでいたら true を返す．
+// @param[in] right 対象のリテラル集合
+inline
+bool
+AlgCube::contains(const AlgLitSet& right) const
+{
+  // 中身は check_intersect() と同じ
+  ASSERT_COND( variable_num() == right.variable_num() );
+
+  return mgr().cube_check_intersect(mBody, 0, right.mBody, 0);
 }
 
 // @brief 論理積を計算し自身に代入する．

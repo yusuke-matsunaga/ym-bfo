@@ -1086,6 +1086,42 @@ AlgMgr::cube_division(ymuint64* dst_bv,
   return true;
 }
 
+// @brief 要素のチェック
+// @param[in] bv ビットベクタ
+// @param[in] lit 対象のリテラル
+// @return lit を含んでいたら true を返す．
+bool
+AlgMgr::is_in(ymuint64* bv,
+	      AlgLiteral lit)
+{
+  ymuint var_id = lit.varid();
+  ymuint blk = _block_pos(var_id);
+  ymuint sft = _shift_num(var_id);
+  ymuint64 pat = lit.is_positive() ? kAlgPolP : kAlgPolN;
+  ymuint64 mask = pat << sft;
+  if ( bv[blk] & mask ) {
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+
+// @brief 要素の追加
+// @param[in] bv ビットベクタ
+// @param[in] lit 対象のリテラル
+void
+AlgMgr::add_lit(ymuint64* bv,
+		AlgLiteral lit)
+{
+  ymuint var_id = lit.varid();
+  ymuint blk = _block_pos(var_id);
+  ymuint sft = _shift_num(var_id);
+  ymuint64 pat = lit.is_positive() ? kAlgPolP : kAlgPolN;
+  ymuint64 mask = pat << sft;
+  bv[blk] |= mask;
+}
+
 // @brief カバー/キューブの内容を出力する．
 // @param[in] s 出力先のストリーム
 // @param[in] start キューブの開始位置
