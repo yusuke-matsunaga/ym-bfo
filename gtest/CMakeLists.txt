@@ -24,7 +24,7 @@ include_directories(
 
 add_executable ( CubeTest
   CubeTest.cc
-  $<TARGET_OBJECTS:ym_common_d>
+  $<TARGET_OBJECTS:ym_base_d>
   $<TARGET_OBJECTS:ym_bfo_d>
   )
 
@@ -45,7 +45,7 @@ add_test ( BfoCubeTest
 
 add_executable ( CoverTest
   CoverTest.cc
-  $<TARGET_OBJECTS:ym_common_d>
+  $<TARGET_OBJECTS:ym_base_d>
   $<TARGET_OBJECTS:ym_bfo_d>
   )
 
@@ -66,7 +66,7 @@ add_test ( BfoCoverTest
 
 add_executable ( MgrTest
   MgrTest.cc
-  $<TARGET_OBJECTS:ym_common_d>
+  $<TARGET_OBJECTS:ym_base_d>
   $<TARGET_OBJECTS:ym_bfo_d>
   )
 
