@@ -22,64 +22,20 @@ include_directories(
 #  テスト用のターゲットの設定
 # ===================================================================
 
-add_executable ( CubeTest
+ym_add_gtest ( CubeTest
   CubeTest.cc
   $<TARGET_OBJECTS:ym_base_d>
   $<TARGET_OBJECTS:ym_bfo_d>
   )
 
-target_compile_options ( CubeTest
-  PRIVATE "-g"
-  )
-
-target_link_libraries ( CubeTest
-  ${YM_LIB_DEPENDS}
-  pthread
-  ${GTEST_BOTH_LIBRARIES}
-  )
-
-add_test ( BfoCubeTest
-  CubeTest
-  )
-
-
-add_executable ( CoverTest
+ym_add_gtest ( CoverTest
   CoverTest.cc
   $<TARGET_OBJECTS:ym_base_d>
   $<TARGET_OBJECTS:ym_bfo_d>
   )
 
-target_compile_options ( CoverTest
-  PRIVATE "-g"
-  )
-
-target_link_libraries ( CoverTest
-  ${YM_LIB_DEPENDS}
-  pthread
-  ${GTEST_BOTH_LIBRARIES}
-  )
-
-add_test ( BfoCoverTest
-  CoverTest
-  )
-
-
-add_executable ( MgrTest
+ym_add_gtest ( MgrTest
   MgrTest.cc
   $<TARGET_OBJECTS:ym_base_d>
   $<TARGET_OBJECTS:ym_bfo_d>
-  )
-
-target_compile_options ( MgrTest
-  PRIVATE "-g"
-  )
-
-target_link_libraries ( MgrTest
-  ${YM_LIB_DEPENDS}
-  pthread
-  ${GTEST_BOTH_LIBRARIES}
-  )
-
-add_test ( BfoMgrTest
-  MgrTest
   )
