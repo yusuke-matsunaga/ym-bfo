@@ -13,6 +13,7 @@
 #include "ym/AlgCube.h"
 #include "ym/AlgLiteral.h"
 #include "ym/AlgMgr.h"
+#include "ym/HashFunc.h"
 
 
 BEGIN_NAMESPACE_YM_BFO
@@ -105,28 +106,28 @@ public:
   mgr() const;
 
   /// @brief 変数の数を返す．
-  ymuint
+  int
   variable_num() const;
 
   /// @brief キューブの数を返す．
-  ymuint
+  int
   cube_num() const;
 
   /// @brief リテラル数を返す．
-  ymuint
+  int
   literal_num() const;
 
   /// @brief 指定されたリテラルの出現回数を返す．
   /// @param[in] lit 対象のリテラル
-  ymuint
+  int
   literal_num(AlgLiteral lit) const;
 
   /// @brief 内容を返す．
   /// @param[in] cube_id キューブ番号 ( 0 <= cube_id < cube_num() )
   /// @param[in] var_id 変数番号 ( 0 <= var_id < variable_num() )
   AlgPol
-  literal(ymuint cube_id,
-	  ymuint var_id) const;
+  literal(int cube_id,
+	  int var_id) const;
 
   /// @brief 論理和を計算する．
   /// @param[in] right オペランド
@@ -259,7 +260,7 @@ public:
   common_cube() const;
 
   /// @brief ハッシュ値を返す．
-  ymuint
+  HashType
   hash() const;
 
   /// @brief 内容をわかりやすい形で出力する．
@@ -281,8 +282,8 @@ private:
   ///
   /// この関数は危険なので普通は使わないこと
   AlgCover(AlgMgr& mgr,
-	   ymuint cube_num,
-	   ymuint cube_cap,
+	   int cube_num,
+	   int cube_cap,
 	   ymuint64* body);
 
   /// @brief キューブ容量を変更する．
@@ -290,12 +291,12 @@ private:
   ///
   /// 現在のキューブ容量が大きかれば変更しない．
   void
-  resize(ymuint req_cap);
+  resize(int req_cap);
 
   /// @brief キューブ容量を計算する．
   static
-  ymuint
-  get_capacity(ymuint cube_num);
+  int
+  get_capacity(int cube_num);
 
   /// @brief 比較演算子(rich compare)
   /// @param[in] right オペランド
@@ -317,10 +318,10 @@ private:
   AlgMgr* mMgr;
 
   // キューブ数
-  ymuint mCubeNum;
+  int mCubeNum;
 
   // mBody の実際に確保されているキューブ容量
-  ymuint mCubeCap;
+  int mCubeCap;
 
   // 内容を表すビットベクタ
   ymuint64* mBody;
@@ -411,7 +412,7 @@ AlgCover::AlgCover(AlgMgr& mgr,
   mCubeCap(0)
 {
   resize(mCubeNum);
-  for (ymuint i = 0; i < mCubeNum; ++ i) {
+  for (int i = 0; i < mCubeNum; ++ i) {
     const AlgCube& cube = cube_list[i];
     mMgr->cube_copy(mBody, i, cube.mBody, 0);
   }
@@ -447,9 +448,9 @@ AlgCover::AlgCover(AlgMgr& mgr,
   mMgr(&mgr),
   mCubeCap(0)
 {
-  ymuint n = 0;
+  int n = 0;
   bool first = true;
-  for (ymuint i = 0; i < lit_list.size(); ++ i) {
+  for (int i = 0; i < lit_list.size(); ++ i) {
     if ( lit_list[i] == kAlgLiteralUndef ) {
       first = true;
     }
@@ -516,7 +517,7 @@ const AlgCover&
 AlgCover::operator=(const AlgCover& src)
 {
   if ( &src != this ) {
-    ymuint old_cap = mCubeCap;
+    int old_cap = mCubeCap;
     ymuint64* old_body = mBody;
     mCubeNum = src.mCubeNum;
     resize(mCubeNum);
@@ -561,8 +562,8 @@ AlgCover::~AlgCover()
 // この関数は危険なので普通は使わないこと
 inline
 AlgCover::AlgCover(AlgMgr& mgr,
-		   ymuint cube_num,
-		   ymuint cube_cap,
+		   int cube_num,
+		   int cube_cap,
 		   ymuint64* body) :
   mMgr(&mgr),
   mCubeNum(cube_num),
@@ -581,7 +582,7 @@ AlgCover::mgr() const
 
 // @brief 変数の数を返す．
 inline
-ymuint
+int
 AlgCover::variable_num() const
 {
   return mMgr->variable_num();
@@ -589,7 +590,7 @@ AlgCover::variable_num() const
 
 // @brief キューブの数を返す．
 inline
-ymuint
+int
 AlgCover::cube_num() const
 {
   return mCubeNum;
@@ -597,7 +598,7 @@ AlgCover::cube_num() const
 
 // @brief リテラル数を返す．
 inline
-ymuint
+int
 AlgCover::literal_num() const
 {
   return mgr().literal_num(cube_num(), mBody);
@@ -606,7 +607,7 @@ AlgCover::literal_num() const
 // @brief 指定されたリテラルの出現回数を返す．
 // @param[in] lit 対象のリテラル
 inline
-ymuint
+int
 AlgCover::literal_num(AlgLiteral lit) const
 {
   return mgr().literal_num(cube_num(), mBody, lit);
@@ -617,8 +618,8 @@ AlgCover::literal_num(AlgLiteral lit) const
 // @param[in] var_id 変数番号 ( 0 <= var_id < variable_num() )
 inline
 AlgPol
-AlgCover::literal(ymuint cube_id,
-		  ymuint var_id) const
+AlgCover::literal(int cube_id,
+		  int var_id) const
 {
   ASSERT_COND( cube_id < cube_num() );
 
@@ -634,11 +635,11 @@ AlgCover::operator+(const AlgCover& right) const
 {
   ASSERT_COND( variable_num() == right.variable_num() );
 
-  ymuint nc1 = cube_num();
-  ymuint nc2 = right.cube_num();
-  ymuint cap = get_capacity(nc1 + nc2);
+  int nc1 = cube_num();
+  int nc2 = right.cube_num();
+  int cap = get_capacity(nc1 + nc2);
   ymuint64* body = mgr().new_body(cap);
-  ymuint nc = mgr().sum(body, nc1, mBody, nc2, right.mBody);
+  int nc = mgr().sum(body, nc1, mBody, nc2, right.mBody);
 
   return AlgCover(mgr(), nc, cap, body);
 }
@@ -652,11 +653,11 @@ AlgCover::operator+(const AlgCube& right) const
 {
   ASSERT_COND( variable_num() == right.variable_num() );
 
-  ymuint nc1 = cube_num();
-  ymuint nc2 = 1;
-  ymuint cap = get_capacity(nc1 + nc2);
+  int nc1 = cube_num();
+  int nc2 = 1;
+  int cap = get_capacity(nc1 + nc2);
   ymuint64* body = mgr().new_body(cap);
-  ymuint nc = mgr().sum(body, nc1, mBody, nc2, right.mBody);
+  int nc = mgr().sum(body, nc1, mBody, nc2, right.mBody);
 
   return AlgCover(mgr(), nc, cap, body);
 }
@@ -670,9 +671,9 @@ AlgCover::operator+=(const AlgCover& right)
 {
   ASSERT_COND( variable_num() == right.variable_num() );
 
-  ymuint nc1 = cube_num();
-  ymuint nc2 = right.cube_num();
-  ymuint old_cap = mCubeCap;
+  int nc1 = cube_num();
+  int nc2 = right.cube_num();
+  int old_cap = mCubeCap;
   ymuint64* old_body = mBody;
   resize(nc1 + nc2);
   mCubeNum = mgr().sum(mBody, nc1, old_body, nc2, right.mBody);
@@ -692,9 +693,9 @@ AlgCover::operator+=(const AlgCube& right)
 {
   ASSERT_COND( variable_num() == right.variable_num() );
 
-  ymuint nc1 = cube_num();
-  ymuint nc2 = 1;
-  ymuint old_cap = mCubeCap;
+  int nc1 = cube_num();
+  int nc2 = 1;
+  int old_cap = mCubeCap;
   ymuint64* old_body = mBody;
   resize(nc1 + nc2);
   mCubeNum = mgr().sum(mBody, nc1, old_body, nc2, right.mBody);
@@ -714,11 +715,11 @@ AlgCover::operator-(const AlgCover& right) const
 {
   ASSERT_COND( variable_num() == right.variable_num() );
 
-  ymuint nc1 = cube_num();
-  ymuint nc2 = right.cube_num();
-  ymuint cap = get_capacity(nc1);
+  int nc1 = cube_num();
+  int nc2 = right.cube_num();
+  int cap = get_capacity(nc1);
   ymuint64* body = mgr().new_body(cap);
-  ymuint nc = mgr().diff(body, nc1, mBody, nc2, right.mBody);
+  int nc = mgr().diff(body, nc1, mBody, nc2, right.mBody);
 
   return AlgCover(mgr(), nc, cap, body);
 }
@@ -732,11 +733,11 @@ AlgCover::operator-(const AlgCube& right) const
 {
   ASSERT_COND( variable_num() == right.variable_num() );
 
-  ymuint nc1 = cube_num();
-  ymuint nc2 = 1;
-  ymuint cap = get_capacity(nc1);
+  int nc1 = cube_num();
+  int nc2 = 1;
+  int cap = get_capacity(nc1);
   ymuint64* body = mgr().new_body(cap);
-  ymuint nc = mgr().diff(body, nc1, mBody, nc2, right.mBody);
+  int nc = mgr().diff(body, nc1, mBody, nc2, right.mBody);
 
   return AlgCover(mgr(), nc, cap, body);
 }
@@ -750,8 +751,8 @@ AlgCover::operator-=(const AlgCover& right)
 {
   ASSERT_COND( variable_num() == right.variable_num() );
 
-  ymuint nc1 = cube_num();
-  ymuint nc2 = right.cube_num();
+  int nc1 = cube_num();
+  int nc2 = right.cube_num();
   // 結果のキューブ数は減るだけなのでキューブ容量の変更はしない．
   mCubeNum = mgr().diff(mBody, nc1, mBody, nc2, right.mBody);
 
@@ -767,8 +768,8 @@ AlgCover::operator-=(const AlgCube& right)
 {
   ASSERT_COND( variable_num() == right.variable_num() );
 
-  ymuint nc1 = cube_num();
-  ymuint nc2 = 1;
+  int nc1 = cube_num();
+  int nc2 = 1;
   // 結果のキューブ数は減るだけなのでキューブ容量の変更はしない．
   mCubeNum = mgr().diff(mBody, nc1, mBody, nc2, right.mBody);
 
@@ -784,11 +785,11 @@ AlgCover::operator*(const AlgCover& right) const
 {
   ASSERT_COND( variable_num() == right.variable_num() );
 
-  ymuint nc1 = cube_num();
-  ymuint nc2 = right.cube_num();
-  ymuint cap = get_capacity(nc1 * nc2);
+  int nc1 = cube_num();
+  int nc2 = right.cube_num();
+  int cap = get_capacity(nc1 * nc2);
   ymuint64* body = mgr().new_body(cap);
-  ymuint nc = mgr().product(body, nc1, mBody, nc2, right.mBody);
+  int nc = mgr().product(body, nc1, mBody, nc2, right.mBody);
 
   return AlgCover(mgr(), nc, cap, body);
 }
@@ -802,11 +803,11 @@ AlgCover::operator*(const AlgCube& right) const
 {
   ASSERT_COND( variable_num() == right.variable_num() );
 
-  ymuint nc1 = cube_num();
-  ymuint nc2 = 1;
-  ymuint cap = get_capacity(nc1 * nc2);
+  int nc1 = cube_num();
+  int nc2 = 1;
+  int cap = get_capacity(nc1 * nc2);
   ymuint64* body = mgr().new_body(cap);
-  ymuint nc = mgr().product(body, nc1, mBody, nc2, right.mBody);
+  int nc = mgr().product(body, nc1, mBody, nc2, right.mBody);
 
   return AlgCover(mgr(), nc, cap, body);
 }
@@ -818,10 +819,10 @@ inline
 AlgCover
 AlgCover::operator*(AlgLiteral right) const
 {
-  ymuint nc1 = cube_num();
-  ymuint cap = get_capacity(nc1);
+  int nc1 = cube_num();
+  int cap = get_capacity(nc1);
   ymuint64* body = mgr().new_body(cap);
-  ymuint nc = mgr().product(body, nc1, mBody, right);
+  int nc = mgr().product(body, nc1, mBody, right);
 
   return AlgCover(mgr(), nc, cap, body);
 }
@@ -835,9 +836,9 @@ AlgCover::operator*=(const AlgCover& right)
 {
   ASSERT_COND( variable_num() == right.variable_num() );
 
-  ymuint nc1 = cube_num();
-  ymuint nc2 = right.cube_num();
-  ymuint old_cap = mCubeCap;
+  int nc1 = cube_num();
+  int nc2 = right.cube_num();
+  int old_cap = mCubeCap;
   ymuint64* old_body = mBody;
   resize(nc1 * nc2);
   mCubeNum = mgr().product(mBody, nc1, old_body, nc2, right.mBody);
@@ -857,9 +858,9 @@ AlgCover::operator*=(const AlgCube& right)
 {
   ASSERT_COND( variable_num() == right.variable_num() );
 
-  ymuint nc1 = cube_num();
-  ymuint nc2 = 1;
-  ymuint old_cap = mCubeCap;
+  int nc1 = cube_num();
+  int nc2 = 1;
+  int old_cap = mCubeCap;
   ymuint64* old_body = mBody;
   resize(nc1 * nc2);
   mCubeNum = mgr().product(mBody, nc1, old_body, nc2, right.mBody);
@@ -891,11 +892,11 @@ AlgCover::operator/(const AlgCover& right) const
 {
   ASSERT_COND( variable_num() == right.variable_num() );
 
-  ymuint nc1 = cube_num();
-  ymuint nc2 = right.cube_num();
-  ymuint cap = get_capacity(nc1 / nc2);
+  int nc1 = cube_num();
+  int nc2 = right.cube_num();
+  int cap = get_capacity(nc1 / nc2);
   ymuint64* body = mgr().new_body(cap);
-  ymuint nc = mgr().division(body, nc1, mBody, nc2, right.mBody);
+  int nc = mgr().division(body, nc1, mBody, nc2, right.mBody);
 
   return AlgCover(mgr(), nc, cap, body);
 }
@@ -909,8 +910,8 @@ AlgCover::operator/=(const AlgCover& right)
 {
   ASSERT_COND( variable_num() == right.variable_num() );
 
-  ymuint nc1 = cube_num();
-  ymuint nc2 = right.cube_num();
+  int nc1 = cube_num();
+  int nc2 = right.cube_num();
   // 結果のキューブ数は減るだけなのでキューブ容量は変更しない．
   mCubeNum = mgr().division(mBody, nc1, mBody, nc2, right.mBody);
 
@@ -926,10 +927,10 @@ AlgCover::operator/(const AlgCube& cube) const
 {
   ASSERT_COND( variable_num() == cube.variable_num() );
 
-  ymuint nc1 = cube_num();
-  ymuint cap = get_capacity(nc1);
+  int nc1 = cube_num();
+  int cap = get_capacity(nc1);
   ymuint64* body = mgr().new_body(cap);
-  ymuint nc = mgr().division(body, nc1, mBody, 1, cube.mBody);
+  int nc = mgr().division(body, nc1, mBody, 1, cube.mBody);
 
   return AlgCover(mgr(), nc, cap, body);
 }
@@ -956,10 +957,10 @@ inline
 AlgCover
 AlgCover::operator/(AlgLiteral lit) const
 {
-  ymuint nc1 = cube_num();
-  ymuint cap = get_capacity(nc1);
+  int nc1 = cube_num();
+  int cap = get_capacity(nc1);
   ymuint64* body = mgr().new_body(cap);
-  ymuint nc = mgr().division(body, nc1, mBody, lit);
+  int nc = mgr().division(body, nc1, mBody, lit);
 
   return AlgCover(mgr(), nc, cap, body);
 }
@@ -992,7 +993,7 @@ AlgCover::common_cube() const
 
 // @brief ハッシュ値を返す．
 inline
-ymuint
+HashType
 AlgCover::hash() const
 {
   return mgr().hash(mCubeNum, mBody);
@@ -1116,9 +1117,9 @@ operator<<(ostream& s,
 // 現在のキューブ容量が大きかれば変更しない．
 inline
 void
-AlgCover::resize(ymuint req_cap)
+AlgCover::resize(int req_cap)
 {
-  ymuint new_cap = get_capacity(req_cap);
+  int new_cap = get_capacity(req_cap);
   if ( new_cap > mCubeCap ) {
     mCubeCap = new_cap;
     mBody = mgr().new_body(mCubeCap);
@@ -1127,12 +1128,12 @@ AlgCover::resize(ymuint req_cap)
 
 // @brief キューブ容量を計算する．
 inline
-ymuint
-AlgCover::get_capacity(ymuint cube_num)
+int
+AlgCover::get_capacity(int cube_num)
 {
   // 初期値を16としてcube_numを下回らない
   // ２のべき乗の数を求める．
-  ymuint ans = 16;
+  int ans = 16;
   while ( ans < cube_num ) {
     ans *= 2;
   }
@@ -1147,7 +1148,7 @@ BEGIN_NAMESPACE_YM
 template <>
 struct HashFunc<AlgCover>
 {
-  ymuint
+  HashType
   operator()(const AlgCover& cover) const
   {
     return cover.hash();

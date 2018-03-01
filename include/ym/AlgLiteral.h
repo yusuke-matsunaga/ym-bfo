@@ -22,7 +22,7 @@ BEGIN_NAMESPACE_YM_BFO
 ///
 /// ただの int だが整数型の変数と暗黙の型変換ができないようにクラスとして
 /// 定義している．
-/// だから ymuint を引数に持つコンストラクタの explicit 宣言は重要
+/// だから int を引数に持つコンストラクタの explicit 宣言は重要
 //////////////////////////////////////////////////////////////////////
 class AlgLiteral
 {
@@ -38,14 +38,14 @@ public:
   /// @param[in] inv 極性
   ///                - false: 反転なし (正極性)
   ///                - true:  反転あり (負極性)
-  AlgLiteral(ymuint varid,
+  AlgLiteral(int varid,
 	     bool inv);
 
   /// @brief index からの変換関数
   /// @param[in] index 変数番号を極性をエンコードしたもの
   static
   AlgLiteral
-  index2literal(ymuint index);
+  index2literal(int index);
 
   // コピーコンストラクタ,代入演算子,デストラクタはデフォルト
   // のものがそのまま使える．
@@ -62,7 +62,7 @@ public:
   ///                - false: 反転なし (正極性)
   ///                - true:  反転あり (負極性)
   void
-  set(ymuint varid,
+  set(int varid,
       bool inv = false);
 
 
@@ -73,7 +73,7 @@ public:
 
   /// @brief 変数番号を得る．
   /// @return 変数番号
-  ymuint
+  int
   varid() const;
 
   /// @brief 正極性のリテラルの時 true を返す．
@@ -98,11 +98,11 @@ public:
   make_negative() const;
 
   /// @brief ハッシュ用の関数
-  ymuint
+  HashType
   hash() const;
 
   /// @brief 配列のインデックスとして使用可能な数を返す．
-  ymuint
+  int
   index() const;
 
 
@@ -113,7 +113,7 @@ private:
 
   /// @brief 内部でのみ用いるコンストラクタ
   explicit
-  AlgLiteral(ymuint body);
+  AlgLiteral(int body);
 
 
 private:
@@ -122,7 +122,7 @@ private:
   //////////////////////////////////////////////////////////////////////
 
   // 変数番号と極性をパックしたもの
-  ymuint mBody;
+  int mBody;
 
 };
 
@@ -206,10 +206,10 @@ operator<<(ostream& s,
 // 内容を設定する．
 inline
 void
-AlgLiteral::set(ymuint varid,
+AlgLiteral::set(int varid,
 		bool inv)
 {
-  mBody = (varid << 1) + static_cast<ymuint>(inv);
+  mBody = (varid << 1) + static_cast<int>(inv);
 }
 
 // デフォルトコンストラクタ
@@ -221,7 +221,7 @@ AlgLiteral::AlgLiteral() :
 
 // 変数番号と極性を指定したコンストラクタ
 inline
-AlgLiteral::AlgLiteral(ymuint varid,
+AlgLiteral::AlgLiteral(int varid,
 		       bool inv)
 {
   set(varid, inv);
@@ -229,7 +229,7 @@ AlgLiteral::AlgLiteral(ymuint varid,
 
 // 内部でのみ用いるコンストラクタ
 inline
-AlgLiteral::AlgLiteral(ymuint body) :
+AlgLiteral::AlgLiteral(int body) :
   mBody(body)
 {
 }
@@ -237,17 +237,17 @@ AlgLiteral::AlgLiteral(ymuint body) :
 // @brief index からの変換関数
 inline
 AlgLiteral
-AlgLiteral::index2literal(ymuint index)
+AlgLiteral::index2literal(int index)
 {
   return AlgLiteral(index);
 }
 
 // 変数番号を得る．
 inline
-ymuint
+int
 AlgLiteral::varid() const
 {
-  return ymuint(mBody >> 1);
+  return int(mBody >> 1);
 }
 
 // @brief 正極性のリテラルの時 true を返す．
@@ -363,15 +363,15 @@ operator>=(AlgLiteral lit1,
 
 // ハッシュ用の関数
 inline
-ymuint
+HashType
 AlgLiteral::hash() const
 {
-  return mBody;
+  return static_cast<HashType>(mBody);
 }
 
 // @brief 配列のインデックスとして使用可能な数を返す．
 inline
-ymuint
+int
 AlgLiteral::index() const
 {
   return mBody;
@@ -407,7 +407,7 @@ BEGIN_NAMESPACE_YM
 template <>
 struct HashFunc<nsYm::AlgLiteral>
 {
-  ymuint
+  HashType
   operator()(nsYm::AlgLiteral lit) const
   {
     return lit.hash();

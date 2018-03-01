@@ -94,17 +94,17 @@ public:
   mgr() const;
 
   /// @brief 変数の数を返す．
-  ymuint
+  int
   variable_num() const;
 
   /// @brief リテラル数を返す．
-  ymuint
+  int
   literal_num() const;
 
   /// @brief 内容を読み出す．
   /// @param[in] pos 位置番号 ( 0 <= pos < variable_num() )
   AlgPol
-  literal(ymuint pos) const;
+  literal(int pos) const;
 
   /// @brief 指定したリテラルを含んでいたら true を返す．
   bool
@@ -165,7 +165,7 @@ public:
   operator/=(AlgLiteral right);
 
   /// @brief ハッシュ値を返す．
-  ymuint
+  HashType
   hash() const;
 
   /// @brief 内容をわかりやすい形で出力する．
@@ -365,7 +365,7 @@ AlgCube::AlgCube(AlgMgr& mgr,
   mBody(mMgr->new_body())
 {
   vector<AlgLiteral> lit_list;
-  ymuint n = mMgr->parse(str, lit_list);
+  int n = mMgr->parse(str, lit_list);
   if ( n == 1 ) {
     mMgr->set_literal(mBody, 0, lit_list);
   }
@@ -385,7 +385,7 @@ AlgCube::AlgCube(AlgMgr& mgr,
   mBody(mMgr->new_body())
 {
   vector<AlgLiteral> lit_list;
-  ymuint n = mMgr->parse(str.c_str(), lit_list);
+  int n = mMgr->parse(str.c_str(), lit_list);
   if ( n == 1 ) {
     mMgr->set_literal(mBody, 0, lit_list);
   }
@@ -454,7 +454,7 @@ AlgCube::mgr() const
 
 // @brief 変数の数を返す．
 inline
-ymuint
+int
 AlgCube::variable_num() const
 {
   return mgr().variable_num();
@@ -464,7 +464,7 @@ AlgCube::variable_num() const
 // @param[in] pos 位置番号 ( 0 <= pos < variable_num() )
 inline
 AlgPol
-AlgCube::literal(ymuint pos) const
+AlgCube::literal(int pos) const
 {
   return mgr().literal(mBody, 0, pos);
 }
@@ -474,7 +474,7 @@ inline
 bool
 AlgCube::has_literal(AlgLiteral lit) const
 {
-  ymuint varid = lit.varid();
+  int varid = lit.varid();
   AlgPol pol = literal(varid);
   AlgPol ref_pol = lit.is_positive() ? kAlgPolP : kAlgPolN;
   return pol == ref_pol;
@@ -482,7 +482,7 @@ AlgCube::has_literal(AlgLiteral lit) const
 
 // @brief リテラル数を返す．
 inline
-ymuint
+int
 AlgCube::literal_num() const
 {
   return mgr().literal_num(1, mBody);
@@ -515,7 +515,7 @@ AlgCube::check_intersect(const AlgCube& right) const
 
 // @brief ハッシュ値を返す．
 inline
-ymuint
+HashType
 AlgCube::hash() const
 {
   return mgr().hash(1, mBody);
@@ -574,7 +574,7 @@ inline
 const AlgCube&
 AlgCube::operator*=(AlgLiteral right)
 {
-  ymuint res = mgr().product(mBody, 1, mBody, right);
+  int res = mgr().product(mBody, 1, mBody, right);
   if ( res == 0 ) {
     mgr().cube_clear(mBody, 0);
   }
@@ -630,7 +630,7 @@ inline
 const AlgCube&
 AlgCube::operator/=(AlgLiteral right)
 {
-  ymuint res = mgr().division(mBody, 1, mBody, right);
+  int res = mgr().division(mBody, 1, mBody, right);
   if ( res == 0 ) {
     mgr().cube_clear(mBody, 0);
   }
@@ -769,7 +769,7 @@ BEGIN_NAMESPACE_YM
 template <>
 struct HashFunc<AlgCube>
 {
-  ymuint
+  HashType
   operator()(const AlgCube& cube) const
   {
     return cube.hash();

@@ -20,7 +20,7 @@ BEGIN_NAMESPACE_YM
 template <>
 struct HashFunc<const AlgCover*>
 {
-  ymuint
+  HashType
   operator()(const AlgCover* cover) const
   {
     return cover->hash();
@@ -58,13 +58,13 @@ public:
   find_kernels(const AlgCover& cover);
 
   /// @brief 直前の find_kernels() で求めたカーネルの個数を返す．
-  ymuint
+  int
   kernel_num() const;
 
   /// @brief 直前の find_kernels() で求めたカーネルを返す．
   /// @param[in] pos 位置番号 ( 0 <= pos < kernel_num() )
   const AlgCover&
-  kernel(ymuint pos) const;
+  kernel(int pos) const;
 
   /// @brief 直前の find_kernels() で求めたコカーネルを返す．
   /// @param[in] pos 位置番号 ( 0 <= pos < kernel_num() )
@@ -72,7 +72,7 @@ public:
   /// コカーネルはキューブだが一つのカーネルに複数のコカーネル
   /// が対応する場合があるので全体としてカバーで表す．
   const AlgCover&
-  cokernel(ymuint pos) const;
+  cokernel(int pos) const;
 
 
 private:
@@ -92,8 +92,8 @@ private:
   /// @param[in] skip_cube すでに試したリテラルの集合を表すキューブ
   void
   _kernel_sub(const AlgCover& cover,
-	      vector<pair<AlgLiteral, ymuint> >& lit_list,
-	      ymuint pos,
+	      vector<pair<AlgLiteral, int> >& lit_list,
+	      int pos,
 	      const AlgCube& ckcube,
 	      const AlgCube& skip_cube);
 
@@ -113,7 +113,7 @@ private:
   vector<AlgCover*> mCokernelList;
 
   // カーネルをキーにして番号を保持するハッシュ表
-  HashMap<const AlgCover*, ymuint> mKernelHash;
+  HashMap<const AlgCover*, int> mKernelHash;
 
 };
 
@@ -124,7 +124,7 @@ private:
 
 // @brief 直前の find_kernels() で求めたカーネルの個数を返す．
 inline
-ymuint
+int
 AlgKernelMgr::kernel_num() const
 {
   return mKernelList.size();
@@ -134,7 +134,7 @@ AlgKernelMgr::kernel_num() const
 // @param[in] pos 位置番号 ( 0 <= pos < kernel_num() )
 inline
 const AlgCover&
-AlgKernelMgr::kernel(ymuint pos) const
+AlgKernelMgr::kernel(int pos) const
 {
   ASSERT_COND( pos < kernel_num() );
 
@@ -148,7 +148,7 @@ AlgKernelMgr::kernel(ymuint pos) const
 // が対応する場合があるので全体としてカバーで表す．
 inline
 const AlgCover&
-AlgKernelMgr::cokernel(ymuint pos) const
+AlgKernelMgr::cokernel(int pos) const
 {
   ASSERT_COND( pos < kernel_num() );
 
