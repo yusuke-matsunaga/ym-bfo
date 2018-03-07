@@ -165,7 +165,7 @@ public:
   operator/=(AlgLiteral right);
 
   /// @brief ハッシュ値を返す．
-  HashType
+  SizeType
   hash() const;
 
   /// @brief 内容をわかりやすい形で出力する．
@@ -515,7 +515,7 @@ AlgCube::check_intersect(const AlgCube& right) const
 
 // @brief ハッシュ値を返す．
 inline
-HashType
+SizeType
 AlgCube::hash() const
 {
   return mgr().hash(1, mBody);
@@ -769,7 +769,7 @@ BEGIN_NAMESPACE_YM
 template <>
 struct HashFunc<AlgCube>
 {
-  HashType
+  SizeType
   operator()(const AlgCube& cube) const
   {
     return cube.hash();

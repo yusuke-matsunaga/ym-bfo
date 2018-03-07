@@ -260,7 +260,7 @@ public:
   common_cube() const;
 
   /// @brief ハッシュ値を返す．
-  HashType
+  SizeType
   hash() const;
 
   /// @brief 内容をわかりやすい形で出力する．
@@ -993,7 +993,7 @@ AlgCover::common_cube() const
 
 // @brief ハッシュ値を返す．
 inline
-HashType
+SizeType
 AlgCover::hash() const
 {
   return mgr().hash(mCubeNum, mBody);
@@ -1148,7 +1148,7 @@ BEGIN_NAMESPACE_YM
 template <>
 struct HashFunc<AlgCover>
 {
-  HashType
+  SizeType
   operator()(const AlgCover& cover) const
   {
     return cover.hash();

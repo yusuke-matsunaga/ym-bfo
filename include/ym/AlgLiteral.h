@@ -98,7 +98,7 @@ public:
   make_negative() const;
 
   /// @brief ハッシュ用の関数
-  HashType
+  SizeType
   hash() const;
 
   /// @brief 配列のインデックスとして使用可能な数を返す．
@@ -363,10 +363,10 @@ operator>=(AlgLiteral lit1,
 
 // ハッシュ用の関数
 inline
-HashType
+SizeType
 AlgLiteral::hash() const
 {
-  return static_cast<HashType>(mBody);
+  return static_cast<SizeType>(mBody);
 }
 
 // @brief 配列のインデックスとして使用可能な数を返す．
@@ -407,7 +407,7 @@ BEGIN_NAMESPACE_YM
 template <>
 struct HashFunc<nsYm::AlgLiteral>
 {
-  HashType
+  SizeType
   operator()(nsYm::AlgLiteral lit) const
   {
     return lit.hash();
