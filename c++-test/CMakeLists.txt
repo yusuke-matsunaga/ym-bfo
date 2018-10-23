@@ -22,19 +22,19 @@ include_directories(
 #  テスト用のターゲットの設定
 # ===================================================================
 
-ym_add_gtest ( CubeTest
+ym_add_gtest ( bfo_AlgCube_test
   CubeTest.cc
   $<TARGET_OBJECTS:ym_base_ad>
   $<TARGET_OBJECTS:ym_bfo_ad>
   )
 
-ym_add_gtest ( CoverTest
+ym_add_gtest ( bfo_AlgCover_test
   CoverTest.cc
   $<TARGET_OBJECTS:ym_base_ad>
   $<TARGET_OBJECTS:ym_bfo_ad>
   )
 
-ym_add_gtest ( MgrTest
+ym_add_gtest ( bfo_AlgMgr_test
   MgrTest.cc
   $<TARGET_OBJECTS:ym_base_ad>
   $<TARGET_OBJECTS:ym_bfo_ad>
