@@ -173,9 +173,9 @@ TEST(MgrTest, parse3)
   EXPECT_EQ( 3, n );
   EXPECT_EQ( 5, lit_list.size() );
   EXPECT_EQ( AlgLiteral(0, false), lit_list[0] );
-  EXPECT_EQ( kAlgLiteralUndef,     lit_list[1] );
+  EXPECT_EQ( AlgLiteralUndef,     lit_list[1] );
   EXPECT_EQ( AlgLiteral(1, false), lit_list[2] );
-  EXPECT_EQ( kAlgLiteralUndef,     lit_list[3] );
+  EXPECT_EQ( AlgLiteralUndef,     lit_list[3] );
   EXPECT_EQ( AlgLiteral(2, false), lit_list[4] );
 }
 
@@ -191,9 +191,9 @@ TEST(MgrTest, parse4)
   EXPECT_EQ( 3, n );
   EXPECT_EQ( 5, lit_list.size() );
   EXPECT_EQ( AlgLiteral(0, false), lit_list[0] );
-  EXPECT_EQ( kAlgLiteralUndef,     lit_list[1] );
+  EXPECT_EQ( AlgLiteralUndef,     lit_list[1] );
   EXPECT_EQ( AlgLiteral(1, false), lit_list[2] );
-  EXPECT_EQ( kAlgLiteralUndef,     lit_list[3] );
+  EXPECT_EQ( AlgLiteralUndef,     lit_list[3] );
   EXPECT_EQ( AlgLiteral(2, false), lit_list[4] );
 }
 
@@ -209,9 +209,9 @@ TEST(MgrTest, parse5)
   EXPECT_EQ( 3, n );
   EXPECT_EQ( 5, lit_list.size() );
   EXPECT_EQ( AlgLiteral(0, false), lit_list[0] );
-  EXPECT_EQ( kAlgLiteralUndef,     lit_list[1] );
+  EXPECT_EQ( AlgLiteralUndef,     lit_list[1] );
   EXPECT_EQ( AlgLiteral(1, false), lit_list[2] );
-  EXPECT_EQ( kAlgLiteralUndef,     lit_list[3] );
+  EXPECT_EQ( AlgLiteralUndef,     lit_list[3] );
   EXPECT_EQ( AlgLiteral(2, false), lit_list[4] );
 }
 

@@ -24,18 +24,15 @@ include_directories(
 
 ym_add_gtest ( bfo_AlgCube_test
   CubeTest.cc
-  $<TARGET_OBJECTS:ym_base_ad>
-  $<TARGET_OBJECTS:ym_bfo_ad>
+  $<TARGET_OBJECTS:ym_bfo_obj_d>
   )
 
 ym_add_gtest ( bfo_AlgCover_test
   CoverTest.cc
-  $<TARGET_OBJECTS:ym_base_ad>
-  $<TARGET_OBJECTS:ym_bfo_ad>
+  $<TARGET_OBJECTS:ym_bfo_obj_d>
   )
 
 ym_add_gtest ( bfo_AlgMgr_test
   MgrTest.cc
-  $<TARGET_OBJECTS:ym_base_ad>
-  $<TARGET_OBJECTS:ym_bfo_ad>
+  $<TARGET_OBJECTS:ym_bfo_obj_d>
   )

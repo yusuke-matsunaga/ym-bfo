@@ -10,8 +10,7 @@
 include_directories (
   ${PROJECT_BINARY_DIR}/include
   ${PROJECT_SOURCE_DIR}/ym-common/include
-  ${PROJECT_SOURCE_DIR}/ym-base/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  include
   )
 
 
@@ -24,7 +23,7 @@ include_directories (
 # サブディレクトリの設定
 # ===================================================================
 
-add_subdirectory ( c++-test )
+add_subdirectory ( tests )
 
 
 # ===================================================================
@@ -32,8 +31,8 @@ add_subdirectory ( c++-test )
 # ===================================================================
 
 set ( bfo_SOURCES
-  src/AlgMgr.cc
-  src/AlgKernelGen.cc
+  c++-srcs/AlgMgr.cc
+  c++-srcs/AlgKernelGen.cc
   )
 
 

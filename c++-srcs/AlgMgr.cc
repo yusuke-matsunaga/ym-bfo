@@ -18,7 +18,9 @@ BEGIN_NONAMESPACE
 
 // 名前を作る．
 string
-_varname(ymuint id)
+_varname(
+  SizeType id
+)
 {
   string ans;
   if ( id >= 26 ) {
@@ -31,43 +33,38 @@ _varname(ymuint id)
 
 END_NONAMESPACE
 
-const
-AlgLiteral kAlgLiteralUndef;
+const AlgLiteral AlgLiteralUndef;
 
 //////////////////////////////////////////////////////////////////////
 // クラス AlgMgr
 //////////////////////////////////////////////////////////////////////
 
 // @brief コンストラクタ
-// @param[in] variable_num 変数の数
-//
-// 変数名はデフォルトのものが使用される．
-AlgMgr::AlgMgr(ymuint variable_num) :
-  mVarNum(variable_num),
-  mVarNameList(mVarNum)
+AlgMgr::AlgMgr(
+  SizeType variable_num
+) : mVarNum{variable_num},
+    mVarNameList(mVarNum)
 {
   // 変数名を作る．
   // 変数番号を26進数で表して文字列にする．
-  for (ymuint i = 0; i < mVarNum; ++ i) {
+  for ( SizeType i = 0; i < mVarNum; ++ i ) {
     string name = _varname(i);
     mVarNameList[i] = name;
-    mVarNameMap.add(name, i);
+    mVarNameMap.emplace(name, i);
   }
 
   _init_buff();
 }
 
 // @brief コンストラクタ
-// @param[in] varname_list 変数名のリスト
-//
-// varname_list のサイズが変数の数になる．
-AlgMgr::AlgMgr(const vector<string>& varname_list) :
-  mVarNum(varname_list.size()),
-  mVarNameList(varname_list)
+AlgMgr::AlgMgr(
+  const vector<string>& varname_list
+) : mVarNum{varname_list.size()},
+    mVarNameList{varname_list}
 {
   // 変数名を登録する．
-  for (ymuint i = 0; i < mVarNum; ++ i) {
-    mVarNameMap.add(mVarNameList[i], i);
+  for ( SizeType i = 0; i < mVarNum; ++ i ) {
+    mVarNameMap.emplace(mVarNameList[i], i);
   }
 
   _init_buff();
@@ -82,10 +79,10 @@ AlgMgr::~AlgMgr()
 BEGIN_NONAMESPACE
 
 // 表引きを使ってリテラル数の計算を行う．
-ymuint
+SizeType
 _count(ymuint64 pat)
 {
-  ymuint table[] = {
+  SizeType table[] = {
     // utils/gen_bitcount_tbl.py で生成
     0,  1,  1,  0,  1,  2,  2,  0,  1,  2,  2,  0,  0,  0,  0,  0,
     1,  2,  2,  0,  2,  3,  3,  0,  2,  3,  3,  0,  0,  0,  0,  0,
@@ -112,16 +109,16 @@ _count(ymuint64 pat)
 END_NONAMESPACE
 
 // @brief ビットベクタ上のリテラル数を数える．
-// @param[in] nc キューブ数
-// @param[in] bv カバーを表すビットベクタ
-ymuint
-AlgMgr::literal_num(ymuint nc,
-		    const ymuint64* bv)
+SizeType
+AlgMgr::literal_num(
+  SizeType nc,
+  const ymuint64* bv
+)
 {
-  ymuint n = nc * _cube_size();
+  SizeType n = nc * _cube_size();
   // 8 ビットごとに区切って表引きで計算する．
-  ymuint ans = 0;
-  for (ymuint i = 0; i < n; ++ i, ++ bv) {
+  SizeType ans = 0;
+  for ( SizeType i = 0; i < n; ++ i, ++ bv ) {
     ymuint64 pat = *bv;
     ymuint64 p1 = pat & 0xFFUL;
     ans += _count(p1);
@@ -144,21 +141,20 @@ AlgMgr::literal_num(ymuint nc,
 }
 
 // @brief ビットベクタ上の特定のリテラルの出現頻度を数える．
-// @param[in] nc キューブ数
-// @param[in] bv カバーを表すビットベクタ
-// @param[in] lit 対象のリテラル
-ymuint
-AlgMgr::literal_num(ymuint nc,
-		    const ymuint64* bv,
-		    AlgLiteral lit)
+SizeType
+AlgMgr::literal_num(
+  SizeType nc,
+  const ymuint64* bv,
+  AlgLiteral lit
+)
 {
-  ymuint var_id = lit.varid();
-  ymuint blk = _block_pos(var_id);
-  ymuint sft = _shift_num(var_id);
+  SizeType var_id = lit.varid();
+  SizeType blk = _block_pos(var_id);
+  SizeType sft = _shift_num(var_id);
   ymuint64 pat = lit.is_positive() ? kAlgPolP : kAlgPolN;
   ymuint64 mask = pat << sft;
-  ymuint n = 0;
-  for (ymuint i = 0; i < nc; ++ i, blk += _cube_size()) {
+  SizeType n = 0;
+  for ( SizeType i = 0; i < nc; ++ i, blk += _cube_size() ) {
     if ( (bv[blk] & mask) == mask ) {
       ++ n;
     }
@@ -167,28 +163,25 @@ AlgMgr::literal_num(ymuint nc,
 }
 
 // @brief キューブ/カバー用の領域を確保する．
-// @param[in] cube_num キューブ数
-//
-// キューブの時は cube_num = 1 とする．
 ymuint64*
-AlgMgr::new_body(ymuint cube_num)
+AlgMgr::new_body(
+  SizeType cube_num
+)
 {
-  ymuint size = _cube_size() * cube_num;
+  SizeType size = _cube_size() * cube_num;
   ymuint64* body = new ymuint64[size];
-  for (ymuint i = 0; i < size; ++ i) {
+  for ( SizeType i = 0; i < size; ++ i ) {
     body[i] = 0ULL;
   }
   return body;
 }
 
 // @brief キューブ/カバー用の領域を削除する．
-// @param[in] p 領域を指すポインタ
-// @param[in] cube_num キューブ数
-//
-// キューブの時は cube_num = 1 とする．
 void
-AlgMgr::delete_body(ymuint64* p,
-		    ymuint cube_num)
+AlgMgr::delete_body(
+  ymuint64* p,
+  SizeType cube_num
+)
 {
   delete [] p;
 }
@@ -199,7 +192,9 @@ BEGIN_NONAMESPACE
 // 変数名として適切な文字なら true を返す．
 inline
 bool
-is_validchar(char c)
+is_validchar(
+  char c
+)
 {
   // utils/gen_validchar_tbl.py で生成
   bool table[] = {
@@ -226,20 +221,17 @@ is_validchar(char c)
 END_NONAMESPACE
 
 // @brief カバー/キューブを表す文字列をパーズする．
-// @param[in] str 対象の文字列
-// @param[out] lit_list パーズ結果のリテラルのリスト
-// @return キューブ数を返す．
-//
-// lit_list 中の kAlgLiteralUndef はキューブの区切りとみなす．
-ymuint
-AlgMgr::parse(const char* str,
-	      vector<AlgLiteral>& lit_list)
+SizeType
+AlgMgr::parse(
+  const char* str,
+  vector<AlgLiteral>& lit_list
+)
 {
   lit_list.clear();
 
   char c;
   string name;
-  ymuint var;
+  SizeType var;
 
   // 有限状態機械で実装する．
   // なんか書いててスッキリしないコード
@@ -262,7 +254,7 @@ AlgMgr::parse(const char* str,
   // '+' ならキューブの区切りマークを追加する．
   if ( c == '+' ) {
     ++ str;
-    lit_list.push_back(kAlgLiteralUndef);
+    lit_list.push_back(AlgLiteralUndef);
     goto state0;
   }
   // それ以外はエラー
@@ -279,16 +271,18 @@ AlgMgr::parse(const char* str,
   // ' なら inv をセットしたあとで name を処理する．
   if ( c == '\'' ) {
     ++ str;
-    if ( !mVarNameMap.find(name, var) ) {
+    if ( mVarNameMap.count(name) == 0 ) {
       goto state_error;
     }
+    var = mVarNameMap.at(name);
     lit_list.push_back(AlgLiteral(var, true));
     goto state0;
   }
   // それ以外なら一旦現在の name を登録する．
-  if ( !mVarNameMap.find(name, var) ) {
+  if ( mVarNameMap.count(name) == 0 ) {
     goto state_error;
   }
+  var = mVarNameMap.at(name);
   lit_list.push_back(AlgLiteral(var, false));
   goto state0;
 
@@ -297,10 +291,10 @@ AlgMgr::parse(const char* str,
   return 0;
 
  state_end:
-  ymuint cube_num = 0;
+  SizeType cube_num = 0;
   bool first = true;
-  for (ymuint i = 0; i < lit_list.size(); ++ i) {
-    if ( lit_list[i] == kAlgLiteralUndef ) {
+  for ( auto lit: lit_list ) {
+    if ( lit == AlgLiteralUndef ) {
       first = true;
     }
     else if ( first ) {
@@ -312,28 +306,23 @@ AlgMgr::parse(const char* str,
 }
 
 // @brief リテラルをセットする．
-// @param[in] dst_bv 対象のビットベクタ
-// @param[in] dst_pos 対象のキューブ位置
-// @param[in] lit_list リテラルのリスト
-//
-// lit_list 中の kAlgLiteralUndef はキューブの区切りとみなす．
 void
-AlgMgr::set_literal(ymuint64* dst_bv,
-		    ymuint dst_pos,
-		    const vector<AlgLiteral>& lit_list)
+AlgMgr::set_literal(
+  ymuint64* dst_bv,
+  SizeType dst_pos,
+  const vector<AlgLiteral>& lit_list
+)
 {
-  ymuint nb = _cube_size();
+  SizeType nb = _cube_size();
   ymuint64* _dst = dst_bv + dst_pos * nb;
-  ymuint n = lit_list.size();
-  for (ymuint i = 0; i < n; ++ i) {
-    AlgLiteral lit = lit_list[i];
-    if ( lit == kAlgLiteralUndef ) {
+  for ( auto lit: lit_list ) {
+    if ( lit == AlgLiteralUndef ) {
       _dst += nb;
     }
     else {
-      ymuint var = lit.varid();
-      ymuint blk = _block_pos(var);
-      ymuint sft = _shift_num(var);
+      SizeType var = lit.varid();
+      SizeType blk = _block_pos(var);
+      SizeType sft = _shift_num(var);
       ymuint64 pat = lit.is_negative() ? kAlgPolN : kAlgPolP;
       _dst[blk] |= (pat << sft);
     }
@@ -341,30 +330,23 @@ AlgMgr::set_literal(ymuint64* dst_bv,
 }
 
 // @brief 2つのカバーの論理和を計算する．
-// @param[in] dst_bv 結果を格納するビットベクタ
-// @param[in] nc1 1つめのカバーのキューブ数
-// @param[in] bv1 1つめのカバーを表すビットベクタ
-// @param[in] nc2 2つめのカバーのキューブ数
-// @param[in] bv2 2つめのカバーを表すビットベクタ
-// @return 結果のキューブ数を返す．
-//
-// dst_bv には十分な容量があると仮定する．<br>
-// dst_bv == bv1 の場合もあり得る．<br>
-ymuint
-AlgMgr::sum(ymuint64* dst_bv,
-	    ymuint nc1,
-	    const ymuint64* bv1,
-	    ymuint nc2,
-	    const ymuint64* bv2)
+SizeType
+AlgMgr::sum(
+  ymuint64* dst_bv,
+  SizeType nc1,
+  const ymuint64* bv1,
+  SizeType nc2,
+  const ymuint64* bv2
+)
 {
   // dst_bv == bv1 の時は bv1 のコピーを作る．
   _resize_buff(nc1);
   copy(nc1, mTmpBuff, 0, bv1, 0);
   bv1 = mTmpBuff;
 
-  ymuint rpos1 = 0;
-  ymuint rpos2 = 0;
-  ymuint wpos = 0;
+  SizeType rpos1 = 0;
+  SizeType rpos2 = 0;
+  SizeType wpos = 0;
   while ( rpos1 < nc1 && rpos2 < nc2 ) {
     int res = cube_compare(bv1, rpos1, bv2, rpos2);
     if ( res > 0 ) {
@@ -397,22 +379,18 @@ AlgMgr::sum(ymuint64* dst_bv,
 }
 
 // @brief 2つのカバーの差分を計算する．
-// @param[in] dst_bv 結果を格納するビットベクタ
-// @param[in] nc1 1つめのカバーのキューブ数
-// @param[in] bv1 1つめのカバーを表すビットベクタ
-// @param[in] nc2 2つめのカバーのキューブ数
-// @param[in] bv2 2つめのカバーを表すビットベクタ
-// @return 結果のキューブ数を返す．
-ymuint
-AlgMgr::diff(ymuint64* dst_bv,
-	     ymuint nc1,
-	     const ymuint64* bv1,
-	     ymuint nc2,
-	     const ymuint64* bv2)
+SizeType
+AlgMgr::diff(
+  ymuint64* dst_bv,
+  SizeType nc1,
+  const ymuint64* bv1,
+  SizeType nc2,
+  const ymuint64* bv2
+)
 {
-  ymuint rpos1 = 0;
-  ymuint rpos2 = 0;
-  ymuint wpos = 0;
+  SizeType rpos1 = 0;
+  SizeType rpos2 = 0;
+  SizeType wpos = 0;
   while ( rpos1 < nc1 && rpos2 < nc2 ) {
     int res = cube_compare(bv1, rpos1, bv2, rpos2);
     if ( res > 0 ) {
@@ -438,18 +416,14 @@ AlgMgr::diff(ymuint64* dst_bv,
 }
 
 // @brief 2つのカバーの論理積を計算する．
-// @param[in] dst_bv 結果を格納するビットベクタ
-// @param[in] nc1 1つめのカバーのキューブ数
-// @param[in] bv1 1つめのカバーを表すビットベクタ
-// @param[in] nc2 2つめのカバーのキューブ数
-// @param[in] bv2 2つめのカバーを表すビットベクタ
-// @return 結果のキューブ数を返す．
-ymuint
-AlgMgr::product(ymuint64* dst_bv,
-		ymuint nc1,
-		const ymuint64* bv1,
-		ymuint nc2,
-		const ymuint64* bv2)
+SizeType
+AlgMgr::product(
+  ymuint64* dst_bv,
+  SizeType nc1,
+  const ymuint64* bv1,
+  SizeType nc2,
+  const ymuint64* bv2
+)
 {
   // dst_bv == bv1 の時は bv1 のコピーを作る．
   _resize_buff(nc1);
@@ -458,9 +432,9 @@ AlgMgr::product(ymuint64* dst_bv,
 
   // 単純には答の積項数は2つの積項数の積だが
   // 相反するリテラルを含む積は数えない．
-  ymuint wpos = 0;
-  for (ymuint rpos1 = 0; rpos1 < nc1; ++ rpos1) {
-    for (ymuint rpos2 = 0; rpos2 < nc2; ++ rpos2) {
+  SizeType wpos = 0;
+  for ( SizeType rpos1 = 0; rpos1 < nc1; ++ rpos1 ) {
+    for ( SizeType rpos2 = 0; rpos2 < nc2; ++ rpos2 ) {
       if ( cube_product(dst_bv, wpos, bv1, rpos1, bv2, rpos2) ) {
 	++ wpos;
       }
@@ -471,38 +445,35 @@ AlgMgr::product(ymuint64* dst_bv,
 }
 
 // @brief カバーとリテラルとの論理積を計算する．
-// @param[in] dst_bv 結果を格納するビットベクタ
-// @param[in] nc1 1つめのカバーのキューブ数
-// @param[in] bv1 1つめのカバーを表すビットベクタ
-// @param[in] lit 対象のリテラル
-// @return 結果のキューブ数を返す．
-ymuint
-AlgMgr::product(ymuint64* dst_bv,
-		ymuint nc1,
-		const ymuint64* bv1,
-		AlgLiteral lit)
+SizeType
+AlgMgr::product(
+  ymuint64* dst_bv,
+  SizeType nc1,
+  const ymuint64* bv1,
+  AlgLiteral lit
+)
 {
-  ymuint var_id = lit.varid();
-  ymuint blk = _block_pos(var_id);
-  ymuint sft = _shift_num(var_id);
+  SizeType var_id = lit.varid();
+  SizeType blk = _block_pos(var_id);
+  SizeType sft = _shift_num(var_id);
   ymuint64 pat = lit.is_positive() ? kAlgPolP : kAlgPolN;
   ymuint64 pat1 = pat << sft;
   ymuint64 mask = 3UL << sft;
   ymuint64 nmask = ~mask;
-  ymuint nb = _cube_size();
+  SizeType nb = _cube_size();
 
   // 単純には答の積項数は2つの積項数の積だが
   // 相反するリテラルを含む積は数えない．
-  ymuint wpos = 0;
-  for (ymuint rpos1 = 0; rpos1 < nc1; ++ rpos1) {
-    ymuint rbase = rpos1 * nb;
+  SizeType wpos = 0;
+  for ( SizeType rpos1 = 0; rpos1 < nc1; ++ rpos1 ) {
+    SizeType rbase = rpos1 * nb;
     ymuint64 tmp = bv1[rbase + blk] | pat1;
     if ( (tmp & mask) == mask ) {
       // 相反するリテラルがあった．
       continue;
     }
-    ymuint wbase = wpos * nb;
-    for (ymuint i = 0; i < nb; ++ i) {
+    SizeType wbase = wpos * nb;
+    for ( SizeType i = 0; i < nb; ++ i ) {
       dst_bv[wbase] = bv1[rbase];
     }
     dst_bv[wbase + blk] = tmp;
@@ -513,18 +484,14 @@ AlgMgr::product(ymuint64* dst_bv,
 }
 
 // @brief カバーの代数的除算を行う．
-// @param[in] dst_bv 結果を格納するビットベクタ
-// @param[in] nc1 1つめのカバーのキューブ数
-// @param[in] bv1 1つめのカバーを表すビットベクタ
-// @param[in] nc2 2つめのカバー(除数)のキューブ数
-// @param[in] bv2 2つめのカバー(除数)を表すビットベクタ
-// @return 結果のキューブ数を返す．
-ymuint
-AlgMgr::division(ymuint64* dst_bv,
-		 ymuint nc1,
-		 const ymuint64* bv1,
-		 ymuint nc2,
-		 const ymuint64* bv2)
+SizeType
+AlgMgr::division(
+  ymuint64* dst_bv,
+  SizeType nc1,
+  const ymuint64* bv1,
+  SizeType nc2,
+  const ymuint64* bv2
+)
 {
   // 作業領域のビットベクタを確保する．
   // 大きさは nc1
@@ -535,8 +502,8 @@ AlgMgr::division(ymuint64* dst_bv,
   // ので bv1 の各キューブについて bv2 の各キューブで割ってみて
   // 成功した場合，その商を記録する．
   vector<bool> mark(nc1, false);
-  for (ymuint i = 0; i < nc1; ++ i) {
-    for (ymuint j = 0; j < nc2; ++ j) {
+  for ( SizeType i = 0; i < nc1; ++ i ) {
+    for ( SizeType j = 0; j < nc2; ++ j ) {
       if ( cube_division(mTmpBuff, i, bv1, i, bv2, j) ) {
 	mark[i] = true;
 	break;
@@ -545,17 +512,17 @@ AlgMgr::division(ymuint64* dst_bv,
   }
 
   // 商のキューブは tmp 中に nc2 回現れているはず．
-  vector<ymuint> pos_list;
+  vector<SizeType> pos_list;
   pos_list.reserve(nc1);
-  for (ymuint i = 0; i < nc1; ++ i) {
+  for ( SizeType i = 0; i < nc1; ++ i ) {
     if ( !mark[i] ) {
       // 対象ではない．
       continue;
     }
 
-    ymuint c = 1;
-    vector<ymuint> tmp_list;
-    for (ymuint i2 = i + 1; i2 < nc1; ++ i2) {
+    SizeType c = 1;
+    vector<SizeType> tmp_list;
+    for ( SizeType i2 = i + 1; i2 < nc1; ++ i2 ) {
       if ( mark[i2] && cube_compare(mTmpBuff, i, mTmpBuff, i2) == 0 ) {
 	++ c;
 	// i 番目のキューブと等しかったキューブ位置を記録する．
@@ -566,16 +533,16 @@ AlgMgr::division(ymuint64* dst_bv,
       // 見つけた
       pos_list.push_back(i);
       // tmp_list に含まれるキューブはもう調べなくて良い．
-      for (ymuint j = 0; j < tmp_list.size(); ++ j) {
-	ymuint pos = tmp_list[j];
+      for ( SizeType j = 0; j < tmp_list.size(); ++ j ) {
+	SizeType pos = tmp_list[j];
 	mark[pos] = false;
       }
     }
   }
 
-  ymuint nc = pos_list.size();
-  for (ymuint i = 0; i < nc; ++ i) {
-    ymuint pos = pos_list[i];
+  SizeType nc = pos_list.size();
+  for ( SizeType i = 0; i < nc; ++ i ) {
+    SizeType pos = pos_list[i];
     cube_copy(dst_bv, i, mTmpBuff, pos);
   }
 
@@ -583,27 +550,24 @@ AlgMgr::division(ymuint64* dst_bv,
 }
 
 // @brief カバーをリテラルで割る．
-// @param[in] dst_bv 結果を格納するビットベクタ
-// @param[in] nc1 カバーのキューブ数
-// @param[in] bv1 カバーを表すビットベクタ
-// @param[in] lit 対象のリテラル
-// @return 結果のキューブ数を返す．
-ymuint
-AlgMgr::division(ymuint64* dst_bv,
-		 ymuint nc1,
-		 const ymuint64* bv1,
-		 AlgLiteral lit)
+SizeType
+AlgMgr::division(
+  ymuint64* dst_bv,
+  SizeType nc1,
+  const ymuint64* bv1,
+  AlgLiteral lit
+)
 {
-  ymuint var_id = lit.varid();
-  ymuint blk = _block_pos(var_id);
-  ymuint sft = _shift_num(var_id);
+  SizeType var_id = lit.varid();
+  SizeType blk = _block_pos(var_id);
+  SizeType sft = _shift_num(var_id);
   ymuint64 pat = lit.is_positive() ? kAlgPolP : kAlgPolN;
   ymuint64 pat1 = pat << sft;
   ymuint64 mask = 3UL << sft;
   ymuint64 nmask = ~mask;
-  ymuint nb = _cube_size();
-  ymuint wpos = 0;
-  for (ymuint i = 0; i < nc1; ++ i, bv1 += nb) {
+  SizeType nb = _cube_size();
+  SizeType wpos = 0;
+  for ( SizeType i = 0; i < nc1; ++ i, bv1 += nb ) {
     if ( (bv1[blk] & mask) == pat1 ) {
       cube_copy(dst_bv, 0, bv1, 0);
       dst_bv[blk] &= nmask;
@@ -616,26 +580,23 @@ AlgMgr::division(ymuint64* dst_bv,
 }
 
 // @brief カバー中のすべてのキューブの共通部分を求める．
-// @param[in] dst_bv 結果を格納するビットベクタ
-// @param[in] nc1 カバーのキューブ数
-// @param[in] bv1 カバーを表すビットベクタ
-//
-// 共通部分がないときは空のキューブとなる．
 void
-AlgMgr::common_cube(ymuint64* dst_bv,
-		    ymuint nc1,
-		    const ymuint64* bv1)
+AlgMgr::common_cube(
+  ymuint64* dst_bv,
+  SizeType nc1,
+  const ymuint64* bv1
+)
 {
-  ymuint nb = _cube_size();
+  SizeType nb = _cube_size();
 
   // 最初のキューブをコピーする．
   cube_copy(dst_bv, 0, bv1, 0);
 
   // 2番目以降のキューブとの共通部分を求める．
-  ymuint offset = nb;
-  for (ymuint cube_pos = 1; cube_pos < nc1; ++ cube_pos) {
+  SizeType offset = nb;
+  for ( SizeType cube_pos = 1; cube_pos < nc1; ++ cube_pos ) {
     ymuint64 tmp = 0ULL;
-    for (ymuint i = 0; i < nb; ++ i) {
+    for ( SizeType i = 0; i < nb; ++ i ) {
       dst_bv[i] &= bv1[offset + i];
       tmp |= dst_bv[i];
     }
@@ -648,46 +609,40 @@ AlgMgr::common_cube(ymuint64* dst_bv,
 }
 
 // @brief カバー(を表すビットベクタ)のコピーを行う．
-// @param[in] cube_num キューブ数
-// @param[in] dst_bv コピー先のビットベクタ
-// @param[in] dst_pos コピー先のキューブ位置
-// @param[in] src_bv ソースのビットベクタ
-// @param[in] src_pos ソースのキューブ位置
 void
-AlgMgr::copy(ymuint cube_num,
-	     ymuint64* dst_bv,
-	     ymuint dst_pos,
-	     const ymuint64* src_bv,
-	     ymuint src_pos)
+AlgMgr::copy(
+  SizeType cube_num,
+  ymuint64* dst_bv,
+  SizeType dst_pos,
+  const ymuint64* src_bv,
+  SizeType src_pos
+)
 {
-  ymuint nb = _cube_size();
-  ymuint n = nb * cube_num;
+  SizeType nb = _cube_size();
   ymuint64* dst = dst_bv + dst_pos * nb;
   const ymuint64* src = src_bv + src_pos * nb;
-  for (ymuint i = 0; i < n; ++ i, ++ dst, ++ src) {
+  const ymuint64* src_end = src + cube_num * nb;
+  for ( ; src != src_end; ++ src, ++ dst ) {
     *dst = *src;
   }
 }
 
 // @brief マージソートを行う下請け関数
-// @param[in] bv 対象のビットベクタ
-// @param[in] start 開始位置
-// @param[in] end 終了位置
-//
-// bv[start] - bv[end - 1] の領域をソートする．
 void
-AlgMgr::_sort(ymuint64* bv,
-	      ymuint start,
-	      ymuint end)
+AlgMgr::_sort(
+  ymuint64* bv,
+  SizeType start,
+  SizeType end
+)
 {
-  ymuint n = end - start;
+  SizeType n = end - start;
   if ( n <= 1 ) {
     return;
   }
   if ( n == 2 ) {
     // (0, 1) と (1, 0) の2通りだけ
-    ymuint pos0 = start;
-    ymuint pos1 = pos0 + 1;
+    SizeType pos0 = start;
+    SizeType pos1 = pos0 + 1;
     if ( cube_compare(bv, pos0, bv, pos1) < 0 ) {
       // (1, 0) だったので交換する．
       _resize_buff(1);
@@ -698,9 +653,9 @@ AlgMgr::_sort(ymuint64* bv,
   if ( n == 3 ) {
     // (0, 1, 2), (0, 2, 1), (1, 0, 2), (1, 2, 0), (2, 0, 1), (2, 1, 0)
     // の6通りなので虱潰し
-    ymuint pos0 = start;
-    ymuint pos1 = pos0 + 1;
-    ymuint pos2 = pos1 + 1;
+    SizeType pos0 = start;
+    SizeType pos1 = pos0 + 1;
+    SizeType pos2 = pos1 + 1;
     if ( cube_compare(bv, pos0, bv, pos1) < 0 ) {
       // (1, 0, 2), (1, 2, 0), (2, 1, 0)
       if ( cube_compare(bv, pos0, bv, pos2) < 0 ) {
@@ -750,10 +705,10 @@ AlgMgr::_sort(ymuint64* bv,
     return;
   }
   if ( n == 4 ) {
-    ymuint pos0 = start;
-    ymuint pos1 = pos0 + 1;
-    ymuint pos2 = pos1 + 1;
-    ymuint pos3 = pos2 + 1;
+    SizeType pos0 = start;
+    SizeType pos1 = pos0 + 1;
+    SizeType pos2 = pos1 + 1;
+    SizeType pos3 = pos2 + 1;
     _resize_buff(1);
     // 0 と 1 を整列
     if ( cube_compare(bv, pos0, bv, pos1) < 0 ) {
@@ -796,11 +751,11 @@ AlgMgr::_sort(ymuint64* bv,
   }
 
   // 半分に分割してそれぞれソートする．
-  ymuint hn = (n + 1) / 2;
-  ymuint start1 = start;
-  ymuint end1 = start + hn;
-  ymuint start2 = end1;
-  ymuint end2 = end;
+  SizeType hn = (n + 1) / 2;
+  SizeType start1 = start;
+  SizeType end1 = start + hn;
+  SizeType start2 = end1;
+  SizeType end2 = end;
   _sort(bv, start1, end1);
   _sort(bv, start2, end2);
 
@@ -815,9 +770,9 @@ AlgMgr::_sort(ymuint64* bv,
   // 前半部分を一旦 mTmpBuff にコピーする．
   _resize_buff(hn);
   copy(hn, mTmpBuff, 0, bv, start1);
-  ymuint rpos1 = 0;
-  ymuint rpos2 = start2;
-  ymuint wpos = start1;
+  SizeType rpos1 = 0;
+  SizeType rpos2 = start2;
+  SizeType wpos = start1;
   while ( rpos1 < hn && rpos2 < end2 ) {
     int comp_res = cube_compare(mTmpBuff, rpos1, bv, rpos2);
     if ( comp_res > 0 ) {
@@ -843,23 +798,15 @@ AlgMgr::_sort(ymuint64* bv,
 }
 
 // @brief カバー(を表すビットベクタ)の比較を行う．
-// @param[in] nc1 1つめのカバーのキューブ数
-// @param[in] bv1 1つめのカバーを表すビットベクタ
-// @param[in] nc2 2つめカバーのキューブ数
-// @param[in] bv2 2つめのカバーを表すビットベクタ
-// @retval -1 bv1 <  bv2
-// @retval  0 bv1 == bv2
-// @retval  1 bv1 >  bv2
-//
-// 比較はキューブごとの辞書式順序で行う．
 int
-AlgMgr::compare(ymuint nc1,
-		const ymuint64* bv1,
-		ymuint nc2,
-		const ymuint64* bv2)
+AlgMgr::compare(
+  SizeType nc1,
+  const ymuint64* bv1,
+  SizeType nc2,
+  const ymuint64* bv2)
 {
-  ymuint rpos1 = 0;
-  ymuint rpos2 = 0;
+  SizeType rpos1 = 0;
+  SizeType rpos2 = 0;
   for ( ; rpos1 < nc1 && rpos2 < nc2; ++ rpos1, ++ rpos2 ) {
     int res = cube_compare(bv1, rpos1, bv2, rpos2);
     if ( res != 0 ) {
@@ -879,20 +826,21 @@ AlgMgr::compare(ymuint nc1,
 }
 
 // @brief ビットベクタからハッシュ値を計算する．
-// @param[in] nc キューブ数
-// @param[in] bv ビットベクタ
-ymuint
-AlgMgr::hash(ymuint nc,
-	     const ymuint64* bv)
+SizeType
+AlgMgr::hash(
+  SizeType nc,
+  const ymuint64* bv
+)
 {
   // キューブは常にソートされているので
   // 順番は考慮する必要はない．
   // ただおなじキューブの中のビットに関しては
   // 本当は区別しなければならないがどうしようもないので
   // 16ビットに区切って単純に XOR を取る．
-  ymuint n = nc * _cube_size();
-  ymuint ans = 0;
-  for (ymuint i = 0; i < n; ++ i, ++ bv) {
+  SizeType n = nc * _cube_size();
+  const ymuint64* bv_end = bv + n;
+  SizeType ans = 0;
+  for ( ; bv != bv_end; ++ bv ) {
     ymuint64 pat = *bv;
     ans ^= (pat & 0xFFFFULL); pat >>= 16;
     ans ^= (pat & 0xFFFFULL); pat >>= 16;
@@ -903,23 +851,19 @@ AlgMgr::hash(ymuint nc,
 }
 
 // @brief キューブ(を表すビットベクタ)の比較を行う．
-// @param[in] bv1 1つめのカバーを表すビットベクタ
-// @param[in] pos1 1つめのキューブ番号
-// @param[in] bv2 2つめのカバーを表すビットベクタ
-// @param[in] pos2 2つめのキューブ番号
-// @retval -1 bv1 <  bv2
-// @retval  0 bv1 == bv2
-// @retval  1 bv1 >  bv2
 int
-AlgMgr::cube_compare(const ymuint64* bv1,
-		     ymuint pos1,
-		     const ymuint64* bv2,
-		     ymuint pos2)
+AlgMgr::cube_compare(
+  const ymuint64* bv1,
+  SizeType pos1,
+  const ymuint64* bv2,
+  SizeType pos2
+)
 {
-  ymuint nb = _cube_size();
+  SizeType nb = _cube_size();
   const ymuint64* _bv1 = bv1 + pos1 * nb;
   const ymuint64* _bv2 = bv2 + pos2 * nb;
-  for (ymuint i = 0; i < nb; ++ i, ++ _bv1, ++ _bv2) {
+  const ymuint64* _bv1_end = _bv1 + nb;
+  for ( ; _bv1 != _bv1_end; ++ _bv1, ++ _bv2 ) {
     ymuint64 pat1 = *_bv1;
     ymuint64 pat2 = *_bv2;
     if ( pat1 < pat2 ) {
@@ -933,20 +877,19 @@ AlgMgr::cube_compare(const ymuint64* bv1,
 }
 
 // @brief 2つのキューブの積が空でない時 true を返す．
-// @param[in] bv1 1つめのカバーを表すビットベクタ
-// @param[in] pos1 1つめのキューブ番号
-// @param[in] bv2 2つめのカバーを表すビットベクタ
-// @param[in] pos2 2つめのキューブ番号
 bool
-AlgMgr::cube_check_product(const ymuint64* bv1,
-			   ymuint pos1,
-			   const ymuint64* bv2,
-			   ymuint pos2)
+AlgMgr::cube_check_product(
+  const ymuint64* bv1,
+  SizeType pos1,
+  const ymuint64* bv2,
+  SizeType pos2
+)
 {
-  ymuint nb = _cube_size();
+  SizeType nb = _cube_size();
   const ymuint64* _bv1 = bv1 + pos1 * nb;
   const ymuint64* _bv2 = bv2 + pos2 * nb;
-  for (ymuint i = 0; i < nb; ++ i, ++ _bv1, ++ _bv2) {
+  const ymuint64* _bv1_end = _bv1 + nb;
+  for ( ; _bv1 != _bv1_end; ++ _bv1, ++ _bv2 ) {
     ymuint64 tmp = *_bv1 | *_bv2;
     ymuint64 mask1 = 0x5555555555555555ULL;
     ymuint64 mask2 = 0xAAAAAAAAAAAAAAAAULL;
@@ -961,21 +904,19 @@ AlgMgr::cube_check_product(const ymuint64* bv1,
 }
 
 // @brief 一方のキューブが他方のキューブに含まれているか調べる．
-// @param[in] bv1 1つめのカバーを表すビットベクタ
-// @param[in] pos1 1つめのキューブ番号
-// @param[in] bv2 2つめのカバーを表すビットベクタ
-// @param[in] pos2 2つめのキューブ番号
-// @return 1つめのキューブが2つめのキューブ に含まれていたら true を返す．
 bool
-AlgMgr::cube_check_containment(const ymuint64* bv1,
-			       ymuint pos1,
-			       const ymuint64* bv2,
-			       ymuint pos2)
+AlgMgr::cube_check_containment(
+  const ymuint64* bv1,
+  SizeType pos1,
+  const ymuint64* bv2,
+  SizeType pos2
+)
 {
-  ymuint nb = _cube_size();
+  SizeType nb = _cube_size();
   const ymuint64* _bv1 = bv1 + pos1 * nb;
   const ymuint64* _bv2 = bv2 + pos2 * nb;
-  for (ymuint i = 0; i < nb; ++ i, ++ _bv1, ++ _bv2) {
+  const ymuint64* _bv1_end = _bv1 + nb;
+  for ( ; _bv1 != _bv1_end; ++ _bv1, ++ _bv2 ) {
     if ( (~(*_bv1) & *_bv2) != 0ULL ) {
       return false;
     }
@@ -984,21 +925,19 @@ AlgMgr::cube_check_containment(const ymuint64* bv1,
 }
 
 // @brief ２つのキューブに共通なリテラルがあれば true を返す．
-// @param[in] bv1 1つめのカバーを表すビットベクタ
-// @param[in] pos1 1つめのキューブ番号
-// @param[in] bv2 2つめのカバーを表すビットベクタ
-// @param[in] pos2 2つめのキューブ番号
-// @return ２つのキューブに共通なリテラルがあれば true を返す．
 bool
-AlgMgr::cube_check_intersect(const ymuint64* bv1,
-			     ymuint pos1,
-			     const ymuint64* bv2,
-			     ymuint pos2)
+AlgMgr::cube_check_intersect(
+  const ymuint64* bv1,
+  SizeType pos1,
+  const ymuint64* bv2,
+  SizeType pos2
+)
 {
-  ymuint nb = _cube_size();
+  SizeType nb = _cube_size();
   const ymuint64* _bv1 = bv1 + pos1 * nb;
   const ymuint64* _bv2 = bv2 + pos2 * nb;
-  for (ymuint i = 0; i < nb; ++ i, ++ _bv1, ++ _bv2) {
+  const ymuint64* _bv1_end = _bv1 + nb;
+  for ( ; _bv1 != _bv1_end; ++ _bv1, ++ _bv2 ) {
     if ( (*_bv1 & *_bv2) != 0ULL ) {
       return true;
     }
@@ -1007,41 +946,37 @@ AlgMgr::cube_check_intersect(const ymuint64* bv1,
 }
 
 // @brief キューブ(を表すビットベクタ)をクリアする．
-// @param[in] dst_bv 対象のビットベクタ
-// @param[in] dst_pos 対象のキューブ番号
 void
-AlgMgr::cube_clear(ymuint64* dst_bv,
-		   ymuint dst_pos)
+AlgMgr::cube_clear(
+  ymuint64* dst_bv,
+  SizeType dst_pos
+)
 {
-  ymuint nb = _cube_size();
+  SizeType nb = _cube_size();
   ymuint64* dst = dst_bv + dst_pos * nb;
-  for (ymuint i = 0; i < nb; ++ i, ++ dst) {
+  ymuint64* dst_end = dst + nb;
+  for ( ; dst != dst_end; ++ dst ) {
     *dst = 0ULL;
   }
 }
 
 // @brief 2つのキューブの積を計算する．
-// @param[in] dst_bv コピー先のビットベクタ
-// @param[in] dst_pos コピー先のキューブ番号
-// @param[in] bv1 1つめのカバーを表すビットベクタ
-// @param[in] pos1 1つめのキューブ番号
-// @param[in] bv2 2つめのカバーを表すビットベクタ
-// @param[in] pos2 2つめのキューブ番号
-// @retval true 積が空でなかった．
-// @retval false 積が空だった．
 bool
-AlgMgr::cube_product(ymuint64* dst_bv,
-		     ymuint dst_pos,
-		     const ymuint64* bv1,
-		     ymuint pos1,
-		     const ymuint64* bv2,
-		     ymuint pos2)
+AlgMgr::cube_product(
+  ymuint64* dst_bv,
+  SizeType dst_pos,
+  const ymuint64* bv1,
+  SizeType pos1,
+  const ymuint64* bv2,
+  SizeType pos2
+)
 {
-  ymuint nb = _cube_size();
+  SizeType nb = _cube_size();
   ymuint64* dst = dst_bv + dst_pos * nb;
   const ymuint64* _bv1 = bv1 + pos1 * nb;
   const ymuint64* _bv2 = bv2 + pos2 * nb;
-  for (ymuint i = 0; i < nb; ++ i, ++ dst, ++ _bv1, ++ _bv2) {
+  const ymuint64* _bv1_end = _bv1 + nb;
+  for ( ; _bv1 != _bv1_end; ++ dst, ++ _bv1, ++ _bv2 ) {
     ymuint64 tmp = *_bv1 | *_bv2;
     ymuint64 mask1 = 0x5555555555555555ULL;
     ymuint64 mask2 = 0xAAAAAAAAAAAAAAAAULL;
@@ -1057,26 +992,22 @@ AlgMgr::cube_product(ymuint64* dst_bv,
 }
 
 // @brief キューブによる商を求める．
-// @param[in] dst_bv コピー先のビットベクタ
-// @param[in] dst_pos コピー先のキューブ番号
-// @param[in] bv1 1つめのカバーを表すビットベクタ
-// @param[in] pos1 1つめのキューブ番号
-// @param[in] bv2 2つめのカバーを表すビットベクタ
-// @param[in] pos2 2つめのキューブ番号
-// @return 正しく割ることができたら true を返す．
 bool
-AlgMgr::cube_division(ymuint64* dst_bv,
-		      ymuint dst_pos,
-		      const ymuint64* bv1,
-		      ymuint pos1,
-		      const ymuint64* bv2,
-		      ymuint pos2)
+AlgMgr::cube_division(
+  ymuint64* dst_bv,
+  SizeType dst_pos,
+  const ymuint64* bv1,
+  SizeType pos1,
+  const ymuint64* bv2,
+  SizeType pos2
+)
 {
-  ymuint nb = _cube_size();
+  SizeType nb = _cube_size();
   ymuint64* dst = dst_bv + dst_pos * nb;
   const ymuint64* _bv1 = bv1 + pos1 * nb;
   const ymuint64* _bv2 = bv2 + pos2 * nb;
-  for (ymuint i = 0; i < nb; ++ i, ++ dst, ++ _bv1, ++ _bv2) {
+  const ymuint64* _bv1_end = _bv1 + nb;
+  for ( ; _bv1 != _bv1_end; ++ dst, ++ _bv1, ++ _bv2 ) {
     if ( (~(*_bv1) & *_bv2) != 0ULL ) {
       // この場合の dst の値は不定
       return false;
@@ -1087,16 +1018,15 @@ AlgMgr::cube_division(ymuint64* dst_bv,
 }
 
 // @brief 要素のチェック
-// @param[in] bv ビットベクタ
-// @param[in] lit 対象のリテラル
-// @return lit を含んでいたら true を返す．
 bool
-AlgMgr::is_in(ymuint64* bv,
-	      AlgLiteral lit)
+AlgMgr::is_in(
+  ymuint64* bv,
+  AlgLiteral lit
+)
 {
-  ymuint var_id = lit.varid();
-  ymuint blk = _block_pos(var_id);
-  ymuint sft = _shift_num(var_id);
+  SizeType var_id = lit.varid();
+  SizeType blk = _block_pos(var_id);
+  SizeType sft = _shift_num(var_id);
   ymuint64 pat = lit.is_positive() ? kAlgPolP : kAlgPolN;
   ymuint64 mask = pat << sft;
   if ( bv[blk] & mask ) {
@@ -1108,38 +1038,35 @@ AlgMgr::is_in(ymuint64* bv,
 }
 
 // @brief 要素の追加
-// @param[in] bv ビットベクタ
-// @param[in] lit 対象のリテラル
 void
-AlgMgr::add_lit(ymuint64* bv,
-		AlgLiteral lit)
+AlgMgr::add_lit(
+  ymuint64* bv,
+  AlgLiteral lit
+)
 {
-  ymuint var_id = lit.varid();
-  ymuint blk = _block_pos(var_id);
-  ymuint sft = _shift_num(var_id);
+  SizeType var_id = lit.varid();
+  SizeType blk = _block_pos(var_id);
+  SizeType sft = _shift_num(var_id);
   ymuint64 pat = lit.is_positive() ? kAlgPolP : kAlgPolN;
   ymuint64 mask = pat << sft;
   bv[blk] |= mask;
 }
 
 // @brief カバー/キューブの内容を出力する．
-// @param[in] s 出力先のストリーム
-// @param[in] start キューブの開始位置
-// @param[in] end キューブの終了位置
-//
-// end は実際の末尾 + 1 を指す．
 void
-AlgMgr::print(ostream& s,
-	      const ymuint64* bv,
-	      ymuint start,
-	      ymuint end)
+AlgMgr::print(
+  ostream& s,
+  const ymuint64* bv,
+  SizeType start,
+  SizeType end
+)
 {
   const char* plus = "";
-  for (ymuint i = start; i < end; ++ i) {
+  for ( SizeType i = start; i < end; ++ i ) {
     s << plus;
     plus = " + ";
     const char* spc = "";
-    for (ymuint j = 0; j < variable_num(); ++ j) {
+    for ( SizeType j = 0; j < variable_num(); ++ j ) {
       AlgPol pol = literal(bv, i, j);
       if ( pol == kAlgPolP ) {
 	s << spc << varname(j);
@@ -1163,11 +1090,12 @@ AlgMgr::_init_buff()
 }
 
 // @brief mTmpBuff に必要な領域を確保する．
-// @param[in] req_size 要求するキューブ数
 void
-AlgMgr::_resize_buff(ymuint req_size)
+AlgMgr::_resize_buff(
+  SizeType req_size
+)
 {
-  ymuint old_size = mTmpBuffSize;
+  SizeType old_size = mTmpBuffSize;
   while ( mTmpBuffSize < req_size ) {
     mTmpBuffSize <<= 1;
   }
